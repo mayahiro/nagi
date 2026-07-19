@@ -1,0 +1,12 @@
+[submodule "nagi-rs"]
+	path = nagi-rs
+	url = git@github.com:mayahiro/nagi-rs.git
+[submodule "nagi-go"]
+	path = nagi-go
+	url = git@github.com:mayahiro/nagi-go.git
+[submodule "nagicli-go"]
+	path = nagicli-go
+	url = git@github.com:mayahiro/nagicli-go.git
+[submodule "nagitui-go"]
+	path = nagitui-go
+	url = git@github.com:mayahiro/nagitui-go.git
