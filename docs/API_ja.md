@@ -34,6 +34,10 @@ Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgeneric�
 
 Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します
 
+Production terminal runnerはterminal input、非同期EffectまたはStreamの通知、resize、最も近いclock-driven deadlineを待機し、idle中の周期的pollingを行いません
+Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変更しません
+既定のterminal optionはnon-urgent描画を最大120 FPSへ制限し、minimum frame intervalをzeroにすると制限を無効化できます
+
 ## Semantic viewとInteraction
 
 Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportは大規模content向けのvariantです

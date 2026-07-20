@@ -79,7 +79,7 @@ A Reliable or Batch producer blocked by capacity is released when space is
 available or the subscription stops. Every subscriptions preserve Reliable
 and Batch catch-up implicitly through their next due timestamp instead of
 allocating an unbounded backlog. Latest Every subscriptions skip missed
-intervals and produce one value at a polling boundary
+intervals and produce one value at a scheduling boundary
 
 Backpressure, replacement, discarded-value, lifecycle, and producer-failure
 counters remain observable through runtime and test-support diagnostics

@@ -48,6 +48,13 @@ state. The terminal runner renders the final dirty view before restoration. Go
 also provides `RunTerminalContext` for external `context.Context` cancellation;
 that path returns `ctx.Err()` after restoring the terminal
 
+Production terminal runners wait for terminal input, asynchronous Effect or
+Stream notifications, resize, and the nearest clock-driven deadline. They do
+not poll periodically while idle. Wake-up notifications may coalesce without
+changing queue or Delivery semantics. Default terminal options limit
+non-urgent rendering to at most 120 frames per second; setting the minimum
+frame interval to zero disables that render limit
+
 ## Semantic views and interaction
 
 Core nodes include Text, RichText, Paragraph, safe ANSI Text, SurfaceNode,
