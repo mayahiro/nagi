@@ -1,0 +1,6 @@
+nagi-fixture-v1	widget-list-view
+unfiltered	labels=Alpha|Beta|Gamma	query=	offset=0	limit=9	selected=8	visible=0,1,2	normalized=2
+ascii-fold	labels=Alpha|BETA|gamma	query=et	offset=0	limit=9	selected=0	visible=1	normalized=0
+unicode-exact	labels=Éclair|éclair	query=é	offset=0	limit=9	selected=0	visible=1	normalized=0
+window	labels=A|B|C|D	query=	offset=1	limit=2	selected=3	visible=1,2	normalized=1
+empty-page	labels=A|B	query=	offset=9	limit=2	selected=0	visible=-	normalized=none

@@ -1,0 +1,6 @@
+nagi-fixture-v1	ansi-text
+# input is decoded before parsing; expected span fields use pipe separators
+basic	input=plain\x1B[31;1mred\x1B[0m!	text=plainred!	foregrounds=default|index:1|default	backgrounds=default|default|default	attributes=-|bold|-
+extended	input=\x1B[38;5;200mA\x1B[48;2;1;2;3mB\x1B[38:2::4:5:6;3mC	text=ABC	foregrounds=index:200|index:200|rgb:4,5,6	backgrounds=default|rgb:1,2,3|rgb:1,2,3	attributes=-|-|italic
+controls	input=before\x1B]8;;https://invalid.example\x07link\x1B]8;;\x07\x1B[2J\x1BPpayload\x1B\\after\u{0008}	text=beforelinkafter	foregrounds=default	backgrounds=default	attributes=-
+c1	input=A\u{009B}32mB\u{009B}0mC\u{009D}title\u{009C}D	text=ABCD	foregrounds=default|index:2|default	backgrounds=default|default|default	attributes=-|-|-

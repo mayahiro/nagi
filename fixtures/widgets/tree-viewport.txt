@@ -1,0 +1,9 @@
+nagi-fixture-v1	widget-tree-viewport
+empty	count=0	selected=0	height=3	start=0	end=0
+disabled	count=5	selected=3	height=0	start=0	end=5
+beginning	count=8	selected=0	height=3	start=0	end=3
+middle	count=8	selected=4	height=3	start=3	end=6
+end	count=8	selected=7	height=3	start=5	end=8
+even-height	count=8	selected=4	height=4	start=2	end=6
+selection-clamped	count=4	selected=99	height=2	start=2	end=4
+height-clamped	count=3	selected=2	height=9	start=0	end=3

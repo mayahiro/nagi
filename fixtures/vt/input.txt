@@ -1,0 +1,27 @@
+nagi-fixture-v1	vt-input
+ascii	input=ab	expected=text:U+0061|text:U+0062
+unicode	input=\u{65E5}\u{672C}	expected=text:U+65E5|text:U+672C
+invalid-run	input=\xFF\xFEA	expected=text:U+FFFD|text:U+0041
+invalid-separated	input=\xF0(\x8C\xBC	expected=text:U+FFFD|text:U+0028|text:U+FFFD
+incomplete-utf8	input=\xF0\x9F	expected=text:U+FFFD
+c0-keys	input=\r\t\x7F\x01	expected=key:enter:-:-:unknown:legacy|key:tab:-:-:unknown:legacy|key:backspace:-:-:unknown:legacy|key:char-U+0061:control:-:unknown:legacy
+lone-escape	input=\x1B	expected=key:escape:-:-:unknown:legacy
+alt-character	input=\x1Ba	expected=key:char-U+0061:alt:U+0061:unknown:legacy
+alt-unicode	input=\x1B\u{65E5}	expected=key:char-U+65E5:alt:U+65E5:unknown:legacy
+arrows	input=\x1B[A\x1BOB\x1B[C\x1BOD	expected=key:up:-:-:unknown:legacy|key:down:-:-:unknown:legacy|key:right:-:-:unknown:legacy|key:left:-:-:unknown:legacy
+modified-arrow	input=\x1B[1;6A	expected=key:up:shift+control:-:unknown:legacy
+back-tab	input=\x1B[Z	expected=key:tab:shift:-:unknown:legacy
+editing-keys	input=\x1B[H\x1B[F\x1B[2~\x1B[3~\x1B[5~\x1B[6~	expected=key:home:-:-:unknown:legacy|key:end:-:-:unknown:legacy|key:insert:-:-:unknown:legacy|key:delete:-:-:unknown:legacy|key:page-up:-:-:unknown:legacy|key:page-down:-:-:unknown:legacy
+function-keys	input=\x1BOP\x1B[15;3~\x1B[24~	expected=key:f1:-:-:unknown:legacy|key:f5:alt:-:unknown:legacy|key:f12:-:-:unknown:legacy
+paste	input=\x1B[200~a\x1B[A\x1B[201~	expected=paste:U+0061+U+001B+U+005B+U+0041
+empty-paste	input=\x1B[200~\x1B[201~	expected=paste:-
+invalid-paste	input=\x1B[200~\xFF\xFEA\x1B[201~	expected=paste:U+FFFD+U+0041
+incomplete-paste	input=\x1B[200~abc	expected=unknown:1B5B3230307E
+mouse	input=\x1B[<0;1;2M\x1B[<0;1;2m\x1B[<32;3;4M\x1B[<64;5;6M\x1B[<20;7;8M	expected=mouse:press:left:0,1:-|mouse:release:left:0,1:-|mouse:move:left:2,3:-|mouse:scroll:wheel-up:4,5:-|mouse:press:left:6,7:shift+control
+focus	input=\x1B[I\x1B[O	expected=focus-in|focus-out
+cursor-response	input=\x1B[12;34R	expected=response:1B5B31323B333452
+device-response	input=\x1B[?1;2c	expected=response:1B5B3F313B3263
+osc-response	input=\x1B]10;rgb:FFFF/0000/0000\x1B\\	expected=response:1B5D31303B7267623A464646462F303030302F303030301B5C
+unknown-csi	input=\x1B[?9999h	expected=unknown:1B5B3F3939393968
+incomplete-csi	input=\x1B[12	expected=unknown:1B5B3132
+double-escape	input=\x1B\x1B	expected=key:escape:-:-:unknown:legacy|key:escape:-:-:unknown:legacy

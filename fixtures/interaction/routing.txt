@@ -1,0 +1,7 @@
+nagi-fixture-v1	event-routing
+# paths are child:parent pairs in logical tree order; - is no parent
+focused-consumes	paths=root:-,panel:root,input:panel	root=root	focused=input	consume=input	expected=input
+ancestor-consumes	paths=root:-,panel:root,input:panel	root=root	focused=input	consume=panel	expected=input,panel
+root-consumes	paths=root:-,panel:root,input:panel	root=root	focused=input	consume=root	expected=input,panel,root
+unhandled	paths=root:-,panel:root,input:panel	root=root	focused=input	consume=none	expected=input,panel,root
+no-focus	paths=root:-,panel:root,input:panel	root=root	focused=none	consume=none	expected=root

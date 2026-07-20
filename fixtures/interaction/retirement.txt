@@ -1,0 +1,6 @@
+nagi-fixture-v1	interaction-retirement
+# reconciliation is the end-of-frame retirement point for IDs absent from active
+retained	previous-focus=a,b	current-focus=a,b	active=a,b	focused=b	capture=b	text=a,b	scroll=b	expected-focused=b	expected-capture=b	expected-text=a,b	expected-scroll=b
+removed-focused	previous-focus=a,b	current-focus=a	active=a	focused=b	capture=b	text=b	scroll=b	expected-focused=a	expected-capture=none	expected-text=-	expected-scroll=-
+retained-nonfocus-state	previous-focus=a	current-focus=a	active=a,c	focused=a	capture=c	text=c	scroll=c	expected-focused=a	expected-capture=c	expected-text=c	expected-scroll=c
+all-removed	previous-focus=a,b	current-focus=-	active=-	focused=a	capture=b	text=a,b	scroll=a,b	expected-focused=none	expected-capture=none	expected-text=-	expected-scroll=-

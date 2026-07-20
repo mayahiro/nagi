@@ -1,0 +1,14 @@
+nagi-fixture-v1	text-graphemes
+empty	text=	boundaries=0
+ascii	text=abc	boundaries=0,1,2,3
+japanese	text=日本語	boundaries=0,3,6,9
+combining	text=e\u{301}	boundaries=0,3
+hangul-jamo	text=\u{1100}\u{1161}\u{11A8}	boundaries=0,9
+indic-conjunct	text=\u{915}\u{94D}\u{937}	boundaries=0,9
+zwj-emoji	text=\u{1F469}\u{200D}\u{1F4BB}	boundaries=0,11
+family-emoji	text=\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}	boundaries=0,25
+regional-indicator	text=\u{1F1EF}\u{1F1F5}	boundaries=0,8
+regional-indicator-three	text=\u{1F1EF}\u{1F1F5}\u{1F1FA}	boundaries=0,8,12
+variation-selector	text=\u{A9}\u{FE0F}	boundaries=0,5
+keycap	text=1\u{FE0F}\u{20E3}	boundaries=0,7
+crlf	text=\r\n	boundaries=0,2

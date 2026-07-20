@@ -1,0 +1,10 @@
+nagi-fixture-v1	widget-scrollbar
+zero-track	content=100	viewport=20	offset=40	track=0	start=0	length=0
+empty-content	content=0	viewport=0	offset=0	track=5	start=0	length=5
+viewport-fits	content=5	viewport=10	offset=99	track=4	start=0	length=4
+top	content=100	viewport=20	offset=0	track=10	start=0	length=2
+middle	content=100	viewport=20	offset=40	track=10	start=4	length=2
+end	content=100	viewport=20	offset=80	track=10	start=8	length=2
+clamped-end	content=100	viewport=20	offset=999	track=10	start=8	length=2
+zero-viewport	content=100	viewport=0	offset=50	track=10	start=4	length=1
+maximum	content=18446744073709551615	viewport=18446744073709551614	offset=18446744073709551615	track=7	start=1	length=6

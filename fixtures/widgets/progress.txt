@@ -1,0 +1,9 @@
+nagi-fixture-v1	widget-progress
+zero-width	current=1	total=2	width=0	filled=0	expected=
+zero-total	current=0	total=0	width=5	filled=0	expected=░░░░░
+zero-total-current	current=10	total=0	width=5	filled=0	expected=░░░░░
+quarter	current=1	total=4	width=8	filled=2	expected=██░░░░░░
+third-floor	current=1	total=3	width=10	filled=3	expected=███░░░░░░░
+complete	current=4	total=4	width=6	filled=6	expected=██████
+over-complete	current=9	total=4	width=6	filled=6	expected=██████
+maximum	current=18446744073709551615	total=18446744073709551615	width=7	filled=7	expected=███████

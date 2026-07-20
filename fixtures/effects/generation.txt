@@ -1,0 +1,6 @@
+nagi-fixture-v1	effect-generation
+# actions: latest:key:task, complete:task:message, cancel:key
+replace-before-complete	actions=latest:search:a;latest:search:b;complete:a:A;complete:b:B	expected=B	cancelled=a	generations=search:2	stale=1
+complete-before-replace	actions=latest:search:a;complete:a:A;latest:search:b;complete:b:B	expected=A,B	cancelled=-	generations=search:2	stale=0
+independent-keys	actions=latest:left:a;latest:right:b;complete:b:B;complete:a:A	expected=B,A	cancelled=-	generations=left:1,right:1	stale=0
+explicit-cancel	actions=latest:search:a;cancel:search;complete:a:A	expected=-	cancelled=a	generations=search:1	stale=1

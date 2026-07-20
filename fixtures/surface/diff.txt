@@ -1,0 +1,7 @@
+nagi-fixture-v1	surface-diff
+identical	width=3	height=1	previous=write,0,0,0041+0042+0043,-	current=write,0,0,0041+0042+0043,-	expected=none
+single	width=3	height=1	previous=-	current=write,1,0,0058,-	expected=0:1-2
+separate	width=3	height=1	previous=-	current=write,0,0,0058,-;write,2,0,0059,-	expected=0:0-1,0:2-3
+wide-content	width=3	height=1	previous=write,0,0,65E5,-	current=write,0,0,672C,-	expected=0:0-2
+overwrite-continuation	width=3	height=1	previous=write,0,0,65E5,-	current=write,0,0,65E5,-;write,1,0,0058,-	expected=0:0-2
+wide-style	width=3	height=1	previous=write,0,0,65E5,-	current=write,0,0,65E5,bold	expected=0:0-2

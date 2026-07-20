@@ -1,0 +1,8 @@
+nagi-fixture-v1	text-invalid-utf8
+valid	input=abc	expected=abc
+single-invalid	input=a\xFFb	expected=a\u{FFFD}b
+invalid-run	input=\xFF\xFEA	expected=\u{FFFD}A
+overlong	input=\xC0\xAF	expected=\u{FFFD}
+interrupted-four-byte	input=\xF0(\x8C\xBC	expected=\u{FFFD}(\u{FFFD}
+surrogate	input=\xED\xA0\x80	expected=\u{FFFD}
+valid-replacement	input=\u{FFFD}	expected=\u{FFFD}

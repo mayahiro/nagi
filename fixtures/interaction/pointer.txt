@@ -1,0 +1,6 @@
+nagi-fixture-v1	pointer-routing
+# records are back-to-front id@rect@clip entries; tuples are x,y,width,height
+frontmost	records=back@0,0,3,2@0,0,3,2;front@0,0,3,2@0,0,3,2	point=1,1	capture=none	expected=front
+clipped-out	records=child@0,0,5,1@0,0,2,1	point=3,0	capture=none	expected=none
+clipped-in	records=child@0,0,5,1@0,0,2,1	point=1,0	capture=none	expected=child
+captured-outside	records=back@0,0,2,1@0,0,2,1	point=9,9	capture=back	expected=back

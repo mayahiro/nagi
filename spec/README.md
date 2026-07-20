@@ -1,0 +1,29 @@
+# Nagi TUI semantic specifications
+
+These documents define the observable semantics shared by the native Rust and
+Go implementations of Nagi TUI
+
+The specifications are intentionally language-neutral. Rust and Go APIs may
+use different shapes when that is idiomatic, but equivalent inputs must produce
+equivalent observable results
+
+The words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY describe requirement
+strength
+
+## Specification index
+
+- [Lifecycle and state](lifecycle.md)
+- [Geometry](geometry.md)
+- [Layout](layout.md)
+- [Core nodes](core-nodes.md)
+- [Unicode and terminal text](text.md)
+- [Cell surfaces](surface.md)
+- [VT input](vt-input.md)
+- [VT output](vt-output.md)
+- [Unix terminal session](terminal-session.md)
+- [Focus](focus.md)
+- [Event routing](event-routing.md)
+- [Effects and subscriptions](effects.md)
+- [Scheduling](scheduling.md)
+- [Standard widgets](widgets.md)
+- [Testing](testing.md)

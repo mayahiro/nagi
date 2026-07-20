@@ -1,0 +1,6 @@
+nagi-fixture-v1	subscription-lifecycle
+# declaration frames use |; leaves use commas
+retain-same-key	frames=every:clock:10:reliable|every:clock:10:reliable	starts=clock:1	stops=-	active=clock	generations=clock:1
+replace-configuration	frames=every:clock:10:reliable|every:clock:20:reliable	starts=clock:1,clock:2	stops=clock:1	active=clock	generations=clock:2
+pause-resume	frames=stream:logs:latest|-|stream:logs:latest	starts=logs:1,logs:2	stops=logs:1	active=logs	generations=logs:2
+independent-keys	frames=stream:a:reliable,stream:b:latest|stream:b:latest,stream:c:reliable	starts=a:1,b:1,c:1	stops=a:1	active=b,c	generations=a:1,b:1,c:1

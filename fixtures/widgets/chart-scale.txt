@@ -1,0 +1,8 @@
+nagi-fixture-v1	widget-chart-scale
+minimum	value=-10	minimum=-10	maximum=10	cells=5	expected=0
+middle	value=0	minimum=-10	maximum=10	cells=5	expected=2
+maximum	value=10	minimum=-10	maximum=10	cells=5	expected=4
+clamp-low	value=-20	minimum=-10	maximum=10	cells=5	expected=0
+clamp-high	value=20	minimum=-10	maximum=10	cells=5	expected=4
+single-cell	value=5	minimum=0	maximum=10	cells=1	expected=0
+signed-range	value=0	minimum=-2147483648	maximum=2147483647	cells=5	expected=2

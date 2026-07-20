@@ -1,0 +1,7 @@
+nagi-fixture-v1	modal-routing
+# paths are child:parent pairs in logical tree order; - is no parent
+background-target	paths=root:-,background:root,modal:root,input:modal	root=root	modal=modal	target=background	consume=none	expected=modal,root
+modal-child-target	paths=root:-,background:root,modal:root,input:modal	root=root	modal=modal	target=input	consume=none	expected=input,modal,root
+no-target	paths=root:-,background:root,modal:root,input:modal	root=root	modal=modal	target=none	consume=none	expected=modal,root
+modal-consumes	paths=root:-,background:root,modal:root,input:modal	root=root	modal=modal	target=background	consume=modal	expected=modal
+child-consumes	paths=root:-,background:root,modal:root,input:modal	root=root	modal=modal	target=input	consume=input	expected=input

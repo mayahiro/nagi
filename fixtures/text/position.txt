@@ -1,0 +1,9 @@
+nagi-fixture-v1	text-position
+start	text=A日B	byte=0	cell=0
+after-ascii	text=A日B	byte=1	cell=1
+inside-wide-byte	text=A日B	byte=2	cell=none
+after-wide	text=A日B	byte=4	cell=3
+end	text=A日B	byte=5	cell=4
+inside-wide-cell	text=A日B	byte=none	cell=2
+combining-boundary	text=e\u{301}x	byte=3	cell=1
+inside-combining	text=e\u{301}x	byte=1	cell=none

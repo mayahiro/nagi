@@ -1,0 +1,7 @@
+nagi-fixture-v1	widget-bar-chart
+empty-maximum	value=7	maximum=0	width=8	filled=0
+zero	value=0	maximum=10	width=8	filled=0
+half	value=5	maximum=10	width=8	filled=4
+clamped	value=20	maximum=10	width=8	filled=8
+zero-width	value=10	maximum=10	width=0	filled=0
+unsigned-range	value=18446744073709551615	maximum=18446744073709551615	width=65535	filled=65535

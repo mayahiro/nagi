@@ -1,0 +1,6 @@
+nagi-fixture-v1	widget-file-picker
+empty	hidden=-	show-hidden=false	selected=0	viewport=3	visible=-	normalized=none	start=0	end=0	page-up=none	page-down=none
+filtered	hidden=false,true,false,false	show-hidden=false	selected=1	viewport=2	visible=0,2,3	normalized=0	start=0	end=2	page-up=0	page-down=2
+shown	hidden=false,true,false,false	show-hidden=true	selected=1	viewport=3	visible=0,1,2,3	normalized=1	start=0	end=3	page-up=0	page-down=3
+middle	hidden=false,false,false,false,false	show-hidden=false	selected=3	viewport=3	visible=0,1,2,3,4	normalized=3	start=2	end=5	page-up=0	page-down=4
+unbounded	hidden=false,false,false	show-hidden=false	selected=2	viewport=0	visible=0,1,2	normalized=2	start=0	end=3	page-up=0	page-down=2

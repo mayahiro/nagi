@@ -1,0 +1,8 @@
+nagi-fixture-v1	widget-calendar
+leap-eve	date=2024-02-28	delta-days=1	expected-days=2024-02-29	delta-months=1	expected-months=2024-03-28	weekday=3	month-days=29	monday-offset=3	sunday-offset=4
+leap-day	date=2024-02-29	delta-days=1	expected-days=2024-03-01	delta-months=12	expected-months=2025-02-28	weekday=4	month-days=29	monday-offset=3	sunday-offset=4
+common-century	date=1900-02-28	delta-days=1	expected-days=1900-03-01	delta-months=1	expected-months=1900-03-28	weekday=3	month-days=28	monday-offset=3	sunday-offset=4
+leap-century	date=2000-02-29	delta-days=1	expected-days=2000-03-01	delta-months=12	expected-months=2001-02-28	weekday=2	month-days=29	monday-offset=1	sunday-offset=2
+year-boundary	date=2023-12-31	delta-days=1	expected-days=2024-01-01	delta-months=1	expected-months=2024-01-31	weekday=0	month-days=31	monday-offset=4	sunday-offset=5
+minimum	date=0001-01-01	delta-days=-1	expected-days=0001-01-01	delta-months=-1	expected-months=0001-01-01	weekday=1	month-days=31	monday-offset=0	sunday-offset=1
+maximum	date=9999-12-31	delta-days=1	expected-days=9999-12-31	delta-months=1	expected-months=9999-12-31	weekday=5	month-days=31	monday-offset=2	sunday-offset=3

@@ -1,0 +1,6 @@
+nagi-fixture-v1	subscription-every
+# advances are cumulative steps in milliseconds
+reliable-catch-up	interval=10	policy=reliable	capacity=4	advances=9,1,20	checkpoints=-|1|2,3
+latest-skips	interval=10	policy=latest	capacity=4	advances=35	checkpoints=1
+batch-count	interval=5	policy=batch:3:100	capacity=4	advances=5,5,5	checkpoints=-|-|1,2,3
+batch-deadline	interval=5	policy=batch:4:10	capacity=4	advances=5,9,1	checkpoints=-|-|1,2,3

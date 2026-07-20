@@ -1,0 +1,6 @@
+nagi-fixture-v1	geometry-rect-translate
+identity	rect=4,-3,8,9	delta=0,0	translated=4,-3,8,9
+negative	rect=4,-3,8,9	delta=-10,9	translated=-6,6,8,9
+large-size	rect=2147483646,0,2147483647,2147483647	delta=1,-1	translated=2147483647,-1,2147483647,2147483647
+overflow-x	rect=2147483647,0,1,1	delta=1,0	translated=none
+underflow-y	rect=0,-2147483648,1,1	delta=0,-1	translated=none

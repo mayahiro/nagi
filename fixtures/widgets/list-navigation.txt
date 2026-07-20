@@ -1,0 +1,10 @@
+nagi-fixture-v1	widget-list-navigation
+empty	count=0	selected=0	action=normalize	expected=none
+clamp	count=3	selected=99	action=normalize	expected=2
+up-middle	count=3	selected=1	action=up	expected=0
+up-start	count=3	selected=0	action=up	expected=0
+down-middle	count=3	selected=1	action=down	expected=2
+down-end	count=3	selected=2	action=down	expected=2
+home	count=4	selected=3	action=home	expected=0
+end	count=4	selected=0	action=end	expected=3
+invalid-then-up	count=3	selected=99	action=up	expected=1

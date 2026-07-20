@@ -1,0 +1,7 @@
+nagi-fixture-v1	geometry-point-translate
+identity	point=4,-3	delta=0,0	translated=4,-3
+negative	point=4,-3	delta=-10,9	translated=-6,6
+to-maximum	point=2147483646,2147483646	delta=1,1	translated=2147483647,2147483647
+to-minimum	point=-2147483647,-2147483647	delta=-1,-1	translated=-2147483648,-2147483648
+overflow-x	point=2147483647,0	delta=1,0	translated=none
+underflow-y	point=0,-2147483648	delta=0,-1	translated=none

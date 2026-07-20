@@ -1,0 +1,4 @@
+nagi-fixture-v1	effect-cancellation
+# actions: scoped:scope:task, complete:task:message, cancel-scope:scope
+scope-isolation	actions=scoped:screen-a:a;scoped:screen-b:b;cancel-scope:screen-a;complete:a:A;complete:b:B	expected=B	cancelled=a	stale=1
+cancel-two-in-scope	actions=scoped:screen:a;scoped:screen:b;scoped:other:c;cancel-scope:screen;complete:a:A;complete:b:B;complete:c:C	expected=C	cancelled=a,b	stale=2

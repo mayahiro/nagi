@@ -1,0 +1,11 @@
+nagi-fixture-v1	text-wrap
+empty	text=	cells=4	profile=modern	expected=
+ascii	text=abcd	cells=2	profile=modern	expected=ab|cd
+mixed	text=A日B	cells=2	profile=modern	expected=A|日|B
+wide-over-limit	text=日本	cells=1	profile=modern	expected=日|本
+zero-limit	text=ab	cells=0	profile=modern	expected=a|b
+zero-width-before-over-limit	text=\u{301}A	cells=0	profile=modern	expected=\u{301}|A
+combining	text=e\u{301}x	cells=1	profile=modern	expected=e\u{301}|x
+newline	text=a\nb	cells=8	profile=modern	expected=a|b
+trailing-newline	text=a\n	cells=8	profile=modern	expected=a|
+literal-separator	text=\u{7C}a	cells=1	profile=modern	expected=\u{7C}|a

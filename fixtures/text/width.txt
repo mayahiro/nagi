@@ -1,0 +1,13 @@
+nagi-fixture-v1	text-width
+empty	text=	modern=0	cjk=0
+ascii	text=A	modern=1	cjk=1
+japanese	text=日本語	modern=6	cjk=6
+combining	text=e\u{301}	modern=1	cjk=1
+combining-only	text=\u{301}	modern=0	cjk=0
+ambiguous	text=\u{B7}	modern=1	cjk=2
+zwj-emoji	text=\u{1F469}\u{200D}\u{1F4BB}	modern=2	cjk=2
+regional-indicator	text=\u{1F1EF}\u{1F1F5}	modern=2	cjk=2
+emoji-variation	text=\u{A9}\u{FE0F}	modern=2	cjk=2
+text-variation	text=\u{A9}\u{FE0E}	modern=1	cjk=1
+keycap	text=1\u{FE0F}\u{20E3}	modern=2	cjk=2
+control	text=\r\n	modern=0	cjk=0

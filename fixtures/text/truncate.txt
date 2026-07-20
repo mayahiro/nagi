@@ -1,0 +1,8 @@
+nagi-fixture-v1	text-truncate
+zero	text=abc	cells=0	profile=modern	expected=
+ascii-exact	text=abc	cells=2	profile=modern	expected=ab
+japanese-boundary	text=日本語	cells=3	profile=modern	expected=日
+combining	text=e\u{301}x	cells=1	profile=modern	expected=e\u{301}
+emoji	text=A\u{1F469}\u{200D}\u{1F4BB}B	cells=3	profile=modern	expected=A\u{1F469}\u{200D}\u{1F4BB}
+ambiguous-modern	text=\u{B7}x	cells=1	profile=modern	expected=\u{B7}
+ambiguous-cjk	text=\u{B7}x	cells=1	profile=cjk	expected=

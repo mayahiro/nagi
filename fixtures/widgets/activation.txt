@@ -1,0 +1,21 @@
+nagi-fixture-v1	widget-activation
+button-enter	widget=button	event=enter	enabled=true	activate=true
+button-space	widget=button	event=space	enabled=true	activate=true
+button-control-space	widget=button	event=control-space	enabled=true	activate=false
+button-key-release	widget=button	event=key-release	enabled=true	activate=false
+button-left-press	widget=button	event=mouse-left-press	enabled=true	activate=true
+button-left-release	widget=button	event=mouse-left-release	enabled=true	activate=false
+button-right-press	widget=button	event=mouse-right-press	enabled=true	activate=false
+button-disabled	widget=button	event=enter	enabled=false	activate=false
+list-enter	widget=list	event=enter	enabled=true	activate=true
+list-space	widget=list	event=space	enabled=true	activate=true
+list-left-press	widget=list	event=mouse-left-press	enabled=true	activate=true
+list-disabled	widget=list	event=enter	enabled=false	activate=false
+checkbox-enter	widget=checkbox	event=enter	enabled=true	activate=true
+radio-space	widget=radio	event=space	enabled=true	activate=true
+tabs-left-press	widget=tabs	event=mouse-left-press	enabled=true	activate=true
+select-enter	widget=select	event=enter	enabled=true	activate=true
+table-enter	widget=table	event=enter	enabled=true	activate=true
+tree-space	widget=tree	event=space	enabled=true	activate=true
+command-palette-enter	widget=command-palette	event=enter	enabled=true	activate=true
+checkbox-disabled	widget=checkbox	event=enter	enabled=false	activate=false

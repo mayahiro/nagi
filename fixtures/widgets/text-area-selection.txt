@@ -1,0 +1,10 @@
+nagi-fixture-v1	widget-text-area-selection
+shift-left-wide	initial=A日B	cursor=4	anchor=-	operation=shift-left	text=	offset=0	expected=A日B	expected-cursor=1	expected-anchor=4
+extend-selection	initial=A日B	cursor=1	anchor=4	operation=shift-left	text=	offset=0	expected=A日B	expected-cursor=0	expected-anchor=4
+collapse-left	initial=A日B	cursor=4	anchor=1	operation=left	text=	offset=0	expected=A日B	expected-cursor=1	expected-anchor=-
+collapse-right	initial=A日B	cursor=1	anchor=4	operation=right	text=	offset=0	expected=A日B	expected-cursor=4	expected-anchor=-
+replace-selection	initial=A日B	cursor=4	anchor=1	operation=insert	text=e\u{301}	offset=3	expected=Ae\u{301}B	expected-cursor=4	expected-anchor=-
+backspace-selection	initial=ab\ncd	cursor=4	anchor=1	operation=backspace	text=	offset=0	expected=ad	expected-cursor=1	expected-anchor=-
+delete-selection	initial=A日B	cursor=1	anchor=4	operation=delete	text=	offset=0	expected=AB	expected-cursor=1	expected-anchor=-
+select-all	initial=alpha	cursor=2	anchor=-	operation=select-all	text=	offset=0	expected=alpha	expected-cursor=5	expected-anchor=0
+normalized-anchor	initial=A日B	cursor=4	anchor=2	operation=shift-right	text=	offset=0	expected=A日B	expected-cursor=5	expected-anchor=1

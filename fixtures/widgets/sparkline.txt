@@ -1,0 +1,7 @@
+nagi-fixture-v1	widget-sparkline
+empty	values=-	width=4	bounds=-	expected=    
+levels	values=0,1,2,3,4,5,6,7	width=8	bounds=0,7	expected=▁▂▃▄▅▆▇█
+newest	values=0,1,2,3,4,5,6,7,8,9	width=3	bounds=-	expected=▆▇█
+explicit-clamp	values=0,5,10	width=3	bounds=2,8	expected=▁▄█
+constant	values=5,5	width=3	bounds=-	expected= ▁▁
+unsigned-range	values=0,18446744073709551615	width=2	bounds=-	expected=▁█

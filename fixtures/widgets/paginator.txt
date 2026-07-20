@@ -1,0 +1,7 @@
+nagi-fixture-v1	widget-paginator
+empty	total=0	page=0	limit=7	normalized=none	start=0	end=0	previous=none	next=none
+beginning	total=10	page=0	limit=5	normalized=0	start=0	end=5	previous=0	next=1
+middle	total=10	page=5	limit=5	normalized=5	start=3	end=8	previous=4	next=6
+end	total=10	page=9	limit=5	normalized=9	start=5	end=10	previous=8	next=9
+all	total=4	page=2	limit=0	normalized=2	start=0	end=4	previous=1	next=3
+clamped	total=4	page=99	limit=2	normalized=3	start=2	end=4	previous=2	next=3

@@ -1,0 +1,13 @@
+nagi-fixture-v1	widget-text-area-edit
+insert-wide	initial=ab	cursor=1	operation=insert	text=日	expected=a日b	expected-cursor=4
+insert-combining	initial=A	cursor=1	operation=insert	text=e\u{301}	expected=Ae\u{301}	expected-cursor=4
+left-wide	initial=A日B	cursor=4	operation=left	text=	expected=A日B	expected-cursor=1
+right-normalized	initial=A日B	cursor=2	operation=right	text=	expected=A日B	expected-cursor=4
+down-clamps-column	initial=A日\nxy	cursor=4	operation=down	text=	expected=A日\nxy	expected-cursor=7
+up-preserves-column	initial=A日\nxy	cursor=6	operation=up	text=	expected=A日\nxy	expected-cursor=1
+home-current-line	initial=A日\nxy	cursor=6	operation=home	text=	expected=A日\nxy	expected-cursor=5
+end-current-line	initial=A日\nxy	cursor=1	operation=end	text=	expected=A日\nxy	expected-cursor=4
+backspace-wide	initial=A日\nxy	cursor=4	operation=backspace	text=	expected=A\nxy	expected-cursor=1
+delete-newline	initial=A\nB	cursor=1	operation=delete	text=	expected=AB	expected-cursor=1
+up-first-boundary	initial=A\nB	cursor=1	operation=up	text=	expected=A\nB	expected-cursor=1
+down-last-boundary	initial=A\nB	cursor=3	operation=down	text=	expected=A\nB	expected-cursor=3

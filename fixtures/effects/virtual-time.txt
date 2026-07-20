@@ -1,0 +1,5 @@
+nagi-fixture-v1	effect-virtual-time
+# effects are delay-ms:message; checkpoints are cumulative advance-ms steps separated by commas
+batch-deadline	mode=batch	effects=10:late,5:early	advances=4,1,5	checkpoints=-|early|early,late
+sequence-relative	mode=sequence	effects=5:first,5:second	advances=5,4,1	checkpoints=first|first|first,second
+zero-delay-sequence	mode=sequence	effects=0:first,0:second	advances=0	checkpoints=first,second

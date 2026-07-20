@@ -1,0 +1,11 @@
+nagi-fixture-v1	text-input-edit
+insert-wide	initial=AB	cursor=1	operation=insert	text=日	expected=A日B	expected-cursor=4
+paste-emoji	initial=A	cursor=1	operation=paste	text=👩‍💻	expected=A👩‍💻	expected-cursor=12
+left-emoji	initial=A👩‍💻B	cursor=12	operation=left	text=-	expected=A👩‍💻B	expected-cursor=1
+right-emoji	initial=A👩‍💻B	cursor=1	operation=right	text=-	expected=A👩‍💻B	expected-cursor=12
+backspace-emoji	initial=A👩‍💻B	cursor=12	operation=backspace	text=-	expected=AB	expected-cursor=1
+delete-emoji	initial=A👩‍💻B	cursor=1	operation=delete	text=-	expected=AB	expected-cursor=1
+backspace-combining	initial=éB	cursor=3	operation=backspace	text=-	expected=B	expected-cursor=0
+home	initial=日本	cursor=6	operation=home	text=-	expected=日本	expected-cursor=0
+end	initial=日本	cursor=0	operation=end	text=-	expected=日本	expected-cursor=6
+clamp-inside	initial=日本	cursor=2	operation=insert	text=A	expected=A日本	expected-cursor=1

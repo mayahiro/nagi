@@ -1,0 +1,15 @@
+nagi-fixture-v1	focus-transition
+# Lists use comma-separated Node IDs; a lone - means none
+retain	previous=a,b	current=a,b	focused=b	action=reconcile	expected=b
+removed-next	previous=a,b,c	current=a,c	focused=b	action=reconcile	expected=c
+removed-previous	previous=a,b,c	current=a,b	focused=c	action=reconcile	expected=b
+removed-replaced	previous=a	current=x,y	focused=a	action=reconcile	expected=x
+removed-empty	previous=a	current=-	focused=a	action=reconcile	expected=none
+unfocused-stays	previous=a,b	current=a,b	focused=none	action=reconcile	expected=none
+tab-first	previous=-	current=a,b,c	focused=none	action=next	expected=a
+tab-next	previous=-	current=a,b,c	focused=b	action=next	expected=c
+tab-wrap	previous=-	current=a,b,c	focused=c	action=next	expected=a
+backtab-last	previous=-	current=a,b,c	focused=none	action=previous	expected=c
+backtab-previous	previous=-	current=a,b,c	focused=b	action=previous	expected=a
+backtab-wrap	previous=-	current=a,b,c	focused=a	action=previous	expected=c
+traverse-empty	previous=-	current=-	focused=none	action=next	expected=none

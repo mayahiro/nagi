@@ -1,0 +1,6 @@
+nagi-fixture-v1	widget-spinner
+first	tick=0	label=	expected=⠋
+second	tick=1	label=Loading	expected=⠙ Loading
+last	tick=9	label=待機	expected=⠏ 待機
+wrap	tick=10	label=	expected=⠋
+maximum	tick=18446744073709551615	label=Work	expected=⠴ Work

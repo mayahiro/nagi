@@ -1,0 +1,5 @@
+nagi-fixture-v1	runtime-frame-coalescing
+# initial frame is always timestamp zero
+rate-limited	interval=16	actions=enqueue:1;enqueue:2;step;advance:15;step;advance:1;step	updates=1,2	frames=0,16
+urgent-bypass	interval=16	actions=enqueue:1;step;urgent;step	updates=1	frames=0,0
+zero-unlimited	interval=0	actions=enqueue:1;step;enqueue:2;step	updates=1,2	frames=0,0,0

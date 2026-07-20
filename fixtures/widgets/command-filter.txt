@@ -1,0 +1,7 @@
+nagi-fixture-v1	widget-command-filter
+empty-query	label=Open File	keywords=read,load	query=	match=true
+ascii-label-case	label=Open File	keywords=-	query=FILE	match=true
+ascii-keyword-case	label=Save	keywords=write,persist	query=WRITE	match=true
+unicode-exact	label=日本語	keywords=-	query=日本	match=true
+non-ascii-not-folded	label=Édit	keywords=-	query=édit	match=false
+miss	label=Close	keywords=quit,exit	query=open	match=false

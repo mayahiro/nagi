@@ -1,0 +1,6 @@
+nagi-fixture-v1	subscription-backpressure
+# actions are send:message, advance:milliseconds, or poll
+reliable-order	policy=reliable	capacity=4	actions=send:A;send:B;send:C;poll	checkpoints=A,B,C	replacements=0
+latest-replaces	policy=latest	capacity=4	actions=send:A;send:B;send:C;poll	checkpoints=C	replacements=2
+batch-count	policy=batch:3:100	capacity=4	actions=send:A;send:B;poll;send:C;poll	checkpoints=-|A,B,C	replacements=0
+batch-deadline	policy=batch:4:10	capacity=4	actions=send:A;send:B;poll;advance:9;poll;advance:1;poll	checkpoints=-|-|A,B	replacements=0
