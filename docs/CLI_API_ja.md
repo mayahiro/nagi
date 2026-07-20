@@ -108,7 +108,7 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 
 完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)を参照してください
 
-## v0.2.0の制約
+## 制約
 
 Coreは設定file読み込み、shell completion生成、interactive prompt、TUI統合を行いません
 

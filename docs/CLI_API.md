@@ -113,7 +113,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Go subcommand example](../nagicli-go/examples/subcommands/main.go) as complete
 entry points
 
-## v0.2.0 limitations
+## Limitations
 
 The core does not load configuration files, generate shell completions, run
 interactive prompts, or integrate a TUI. Long-running handlers must poll their

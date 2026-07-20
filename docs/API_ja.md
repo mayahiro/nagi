@@ -30,7 +30,7 @@ Applicationは4個のoperationを実装します
 
 `update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります
 
-Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust command palette](../nagi-rs/crates/nagi-tui/examples/command_palette/main.rs)と[Go command palette](../nagitui-go/examples/command-palette/main.go)を参照してください
+Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
 
 Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します
 
@@ -42,7 +42,7 @@ Stateful、focusable、event受信Nodeにはapplication定義の安定した`Nod
 
 Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
 
-ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。ScrollViewportはaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、解決済み`ScrollState`の通知に対応します
+ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。ScrollViewportはaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、解決済み`ScrollState`の通知に対応します。Childの構築、measure、render treeの走査はvirtualizeしないため、大規模dataではapplicationが渡すchild数を制限する必要があります
 
 ## EffectとSubscription
 
@@ -99,10 +99,11 @@ Application testではreal sleepやterminal timingへ依存しないようにvir
 
 ## Interactive example
 
-Exampleは実terminalで実行します
+Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行します
 
 | Example | Rust | Go |
 | --- | --- | --- |
+| Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | Log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |

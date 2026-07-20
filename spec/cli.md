@@ -10,7 +10,7 @@ framework or argument parser.
 
 ## Supported process model
 
-The v0.2.0 process integration targets Linux and macOS on x86-64 and ARM64.
+Process integration targets Linux and macOS on x86-64 and ARM64.
 Public parsing APIs take arguments after the program name. Process helpers
 remove the executable entry from the platform argument list before parsing.
 
@@ -127,7 +127,7 @@ line order.
 ## Diagnostics
 
 A Diagnostic contains a stable code, message, canonical command path, optional
-usage text, and Exit Status. The v0.2.0 codes are:
+usage text, and Exit Status. The codes are:
 
 ```text
 invalid-specification

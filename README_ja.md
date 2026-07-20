@@ -4,7 +4,7 @@
 
 NagiはRustとGoにネイティブ実装を持つ端末application基盤のfamilyです
 
-全画面の対話型TUI、command実行型CLI、両者が実際に共有するTextとVTの小さな基盤を分離します
+全画面の対話型TUI、command実行型CLI、独立して再利用できるTextとVTの基盤を分離します
 
 ## Repository
 
@@ -30,8 +30,6 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 既存のNagi TUI実装はRustとGoのnative runtime、Unicode対応Text、typed VT codec、Cell Surface、決定的test harness、21個の標準Widgetを提供します
 
 Nagi CLIはRustとGoのnative Command Graph、typed value parsing、決定的HelpとDiagnostic、注入可能runtime、協調的SIGINT cancellation、processなしのtest driver、対応するbasicとsubcommand exampleを提供します
-
-これらの追加は`v0.2.0`で利用できます
 
 ## 利用例と契約
 

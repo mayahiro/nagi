@@ -5,7 +5,7 @@
 Nagi is a family of native Rust and Go libraries for terminal applications
 
 The family separates full-screen interactive TUI applications, command-style
-CLI applications, and the small text and VT foundations they genuinely share
+CLI applications, and independently reusable Text and VT foundations
 
 ## Repositories
 
@@ -43,7 +43,7 @@ harnesses, and 21 standard widgets
 Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
 deterministic help and diagnostics, injected runtimes, cooperative SIGINT
 cancellation, process-free test drivers, and matching basic and subcommand
-examples. These additions are available in v0.2.0
+examples
 
 ## Usage and contracts
 

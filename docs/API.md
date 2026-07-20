@@ -39,9 +39,9 @@ update runs
 
 Rust uses the `App` trait and an associated `Message` type. Go uses the generic
 `App[Message]` interface. See the matching
-[Rust command palette](../nagi-rs/crates/nagi-tui/examples/command_palette/main.rs)
-and [Go command palette](../nagitui-go/examples/command-palette/main.go) for a
-complete minimal application
+[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs) and
+[Go counter](../nagitui-go/examples/counter/main.go) for complete minimal
+applications
 
 An application can return `Effect::exit()` or `ExitEffect` after updating its
 state. The terminal runner renders the final dirty view before restoration. Go
@@ -67,7 +67,9 @@ focus without changing its layout or routing
 ANSI Text accepts terminal-like log text, applies SGR colors and attributes,
 and discards every other control sequence before creating ordinary styled
 spans. ScrollViewport can select its axis, follow growing content while at the
-end, keep a focused descendant visible, and report resolved `ScrollState`
+end, keep a focused descendant visible, and report resolved `ScrollState`. It
+does not virtualize child construction, measurement, or render-tree traversal,
+so applications must bound the supplied children for large data sets
 
 ## Effects and subscriptions
 
@@ -141,10 +143,12 @@ they do not depend on real sleeps or terminal timing
 
 ## Interactive examples
 
-Run examples in a real terminal
+Run Rust commands from `nagi-rs` and Go commands from `nagitui-go` in a real
+terminal
 
 | Example | Rust | Go |
 | --- | --- | --- |
+| Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | Log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
