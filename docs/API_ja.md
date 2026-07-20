@@ -36,13 +36,13 @@ Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して
 
 ## Semantic viewとInteraction
 
-Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します
+Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportは大規模content向けのvariantです
 
 Stateful、focusable、event受信Nodeにはapplication定義の安定した`NodeId`が必要です。IDはview再構築後も維持し、collection内の位置だけから導出してはいけません。Duplicate IDはruntime errorです
 
 Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
 
-ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。ScrollViewportはaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、解決済み`ScrollState`の通知に対応します。Childの構築、measure、render treeの走査はvirtualizeしないため、大規模dataではapplicationが渡すchild数を制限する必要があります
+ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。両方のviewport形式がaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、解決済み`ScrollState`の通知に対応します。ScrollViewportはeagerなchild treeを受け取ります。VirtualScrollViewportは代わりにcontent全体のCell extentを受け取り、解決済みのvisible `VirtualViewport`に対応する`VirtualFragment`だけを構築してsemantic traversalへ入れます。標準ListとTableのviewportはsemantic rowにこのvirtual pathを使用しますが、既存collection APIは全itemまたはrow metadataをmaterializeし、Listのfilterは全件を走査します。Collection access自体もlazyにする場合はCore virtual viewportを直接使用します。標準ListとTableのvirtual viewport内では各rowを1 Cell高とし、折り返しまたは複数行のcontentをclipします
 
 ## EffectとSubscription
 
@@ -107,6 +107,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | Log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
+| Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
 | Extended widget gallery | `cargo run -p nagi-tui-widgets --example extended_widget_gallery` | `go run ./examples/extended-widget-gallery` |
 | Dashboard | `cargo run -p nagi-tui-widgets --example dashboard` | `go run ./examples/dashboard` |

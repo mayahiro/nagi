@@ -49,6 +49,10 @@ Geometry and Style types for application-facing APIs
 | Styled input | `Node::text_input_styled(...)` | `tui.StyledTextInput[M](...)` |
 | Scroll viewport | `Node::scroll_viewport(...)` | `tui.ScrollViewport[M](...)` |
 | Configured viewport | `Node::scroll_viewport_with_options(...)` | `tui.ScrollViewportWithOptions[M](...)` |
+| Virtual viewport | `Node::virtual_scroll_viewport(...)` | `tui.VirtualScrollViewport[M](...)` |
+| Configured virtual viewport | `Node::virtual_scroll_viewport_with_options(...)` | `tui.VirtualScrollViewportWithOptions[M](...)` |
+| Visible virtual request | `VirtualViewport` | `tui.VirtualViewport` |
+| Virtual fragment | `VirtualFragment::new(...)` | `tui.NewVirtualFragment[M](...)` |
 | Modal scope | `Node::modal(...)` | `tui.Modal[M](...)` |
 
 Node modifiers follow the same mapping pattern: Rust uses `with_id`,

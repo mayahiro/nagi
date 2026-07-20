@@ -38,7 +38,7 @@ workspace because Cargo crates remain separately selectable dependencies
 
 The existing Nagi TUI implementation provides native Rust and Go runtimes,
 Unicode-aware text, typed VT codecs, cell surfaces, deterministic test
-harnesses, and 21 standard widgets
+harnesses, 21 standard widgets, and virtual ScrollViewports for large content
 
 Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
 deterministic help and diagnostics, injected runtimes, cooperative SIGINT
@@ -55,6 +55,7 @@ examples
 - [Public TUI API guide](docs/API.md) and [Japanese version](docs/API_ja.md)
 - [Public CLI API guide](docs/CLI_API.md) and [Japanese version](docs/CLI_API_ja.md)
 - [Rust and Go API mapping](docs/API_MAPPING.md) and [Japanese version](docs/API_MAPPING_ja.md)
+- [Reproducible performance baselines](BENCHMARKS.md)
 
 ## Supported environments
 

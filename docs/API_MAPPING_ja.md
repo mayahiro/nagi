@@ -45,6 +45,10 @@ Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonical
 | Styled input | `Node::text_input_styled(...)` | `tui.StyledTextInput[M](...)` |
 | Scroll viewport | `Node::scroll_viewport(...)` | `tui.ScrollViewport[M](...)` |
 | 設定付きviewport | `Node::scroll_viewport_with_options(...)` | `tui.ScrollViewportWithOptions[M](...)` |
+| Virtual viewport | `Node::virtual_scroll_viewport(...)` | `tui.VirtualScrollViewport[M](...)` |
+| 設定付きvirtual viewport | `Node::virtual_scroll_viewport_with_options(...)` | `tui.VirtualScrollViewportWithOptions[M](...)` |
+| Visible virtual request | `VirtualViewport` | `tui.VirtualViewport` |
+| Virtual fragment | `VirtualFragment::new(...)` | `tui.NewVirtualFragment[M](...)` |
 | Modal scope | `Node::modal(...)` | `tui.Modal[M](...)` |
 
 Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focusable`、`tab_stop`、`with_focused_style`、`on_event`、`with_length`は、Goの`WithID`、`Focusable`、`TabStop`、`WithFocusedStyle`、`OnEvent`、`WithLength`に対応します

@@ -32,8 +32,14 @@ spinner ticks, and modal visibility
   normalizes to the nearest preceding visible original index, or the first
   visible item
 - An optional Core ScrollViewport uses a caller-supplied stable ID and `Length`,
-  retains its offset, and follows keyboard selection to keep it visible. The
-  default List tree remains unchanged when no viewport is configured
+  retains its offset, follows keyboard selection to keep it visible, and
+  constructs semantic rows only for the visible range. Filtering and optional
+  window calculation still inspect the application-supplied item metadata,
+  and the existing List API materializes the complete item collection. A lazy
+  collection source uses the Core virtual ScrollViewport directly. A List row
+  inside the virtual viewport is exactly one Cell high and clips text that
+  would otherwise wrap. The default List tree remains unchanged when no
+  viewport is configured
 
 ## Button
 
@@ -138,7 +144,10 @@ spinner ticks, and modal visibility
   wrapping or splitting graphemes
 - An optional body ScrollViewport keeps the header outside the viewport and
   therefore fixed. Its height uses `Length`, its stable ID and offset remain
-  Core Runtime state, and keyboard selection is kept visible
+  Core Runtime state, keyboard selection is kept visible, and semantic row
+  construction is bounded by the visible body height. The existing Table API
+  still materializes the complete row metadata collection. A virtualized body
+  row is exactly one Cell high and clips multiline content
 
 ## Tree
 

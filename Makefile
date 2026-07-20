@@ -1,7 +1,11 @@
-.PHONY: build check check-submodules format format-check lint test
+.PHONY: bench build check check-submodules format format-check lint test
 
 FIXTURE_ROOT := $(CURDIR)/fixtures
 GO_WORK := $(CURDIR)/go.work
+
+bench:
+	$(MAKE) -C nagi-rs bench
+	GOWORK=$(GO_WORK) $(MAKE) -C nagitui-go bench
 
 build:
 	$(MAKE) -C nagi-rs build

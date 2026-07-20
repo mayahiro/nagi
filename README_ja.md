@@ -27,7 +27,7 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 
 ## 現在の状態
 
-既存のNagi TUI実装はRustとGoのnative runtime、Unicode対応Text、typed VT codec、Cell Surface、決定的test harness、21個の標準Widgetを提供します
+既存のNagi TUI実装はRustとGoのnative runtime、Unicode対応Text、typed VT codec、Cell Surface、決定的test harness、21個の標準Widget、大規模content向けvirtual ScrollViewportを提供します
 
 Nagi CLIはRustとGoのnative Command Graph、typed value parsing、決定的HelpとDiagnostic、注入可能runtime、協調的SIGINT cancellation、processなしのtest driver、対応するbasicとsubcommand exampleを提供します
 
@@ -41,6 +41,7 @@ Nagi CLIはRustとGoのnative Command Graph、typed value parsing、決定的Hel
 - [Public TUI API guide](docs/API_ja.md)
 - [Public CLI API guide](docs/CLI_API_ja.md)
 - [RustとGoのAPI対応表](docs/API_MAPPING_ja.md)
+- [再現可能なperformance baseline](BENCHMARKS.md)
 
 ## 対応環境
 

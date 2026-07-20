@@ -53,7 +53,7 @@ that path returns `ctx.Err()` after restoring the terminal
 Core nodes include Text, RichText, Paragraph, safe ANSI Text, SurfaceNode,
 TextInput, Spacer, Gap, Row, Column, Stack, Padding, Border, Panel, Align, Clip,
 ScrollViewport, and Modal. Layout uses integer terminal cells and stable
-rounding rules
+rounding rules. VirtualScrollViewport is the large-content variant
 
 Every stateful, focusable, or event-receiving node needs an application-defined
 stable `NodeId`. IDs must survive rebuilding and must not be derived only from a
@@ -66,10 +66,17 @@ focus without changing its layout or routing
 
 ANSI Text accepts terminal-like log text, applies SGR colors and attributes,
 and discards every other control sequence before creating ordinary styled
-spans. ScrollViewport can select its axis, follow growing content while at the
-end, keep a focused descendant visible, and report resolved `ScrollState`. It
-does not virtualize child construction, measurement, or render-tree traversal,
-so applications must bound the supplied children for large data sets
+spans. Both viewport forms can select their axis, follow growing content while
+at the end, keep a focused descendant visible, and report resolved
+`ScrollState`. ScrollViewport receives an eager child tree.
+VirtualScrollViewport instead receives a complete cell extent and builds one
+`VirtualFragment` for the resolved visible `VirtualViewport`; only that
+fragment enters semantic traversal. Standard List and Table viewports use this
+virtual path for semantic rows. Their existing collection APIs still
+materialize all item or row metadata, and List filtering scans it. Applications
+that also need lazy collection access should use the Core virtual viewport
+directly. Standard List and Table rows inside their virtual viewports are one
+Cell high and clip wrapped or multiline content
 
 ## Effects and subscriptions
 
@@ -152,6 +159,7 @@ terminal
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | Log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
+| Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
 | Extended widget gallery | `cargo run -p nagi-tui-widgets --example extended_widget_gallery` | `go run ./examples/extended-widget-gallery` |
 | Dashboard | `cargo run -p nagi-tui-widgets --example dashboard` | `go run ./examples/dashboard` |
