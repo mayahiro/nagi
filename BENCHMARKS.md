@@ -8,12 +8,14 @@ highest-priority metrics. I/O and wake-ups remain performance metrics
 
 ## ScrollViewport purpose
 
-This benchmark compares three warmed 80 by 24 Cell frame paths over 100,000
+This benchmark compares four warmed 80 by 24 Cell frame paths over 100,000
 one-Cell rows
 
 - The eager case constructs the complete child tree on every application view
 - The virtual case declares the complete extent and constructs the 24-row
   visible fragment
+- The virtual stick-to-end growth case adds one row per frame while following
+  the content end and constructs the final 24-row visible fragment
 - The virtual-identified case additionally assigns a stable precomputed ID to
   every visible row, exercising the ID-bearing tree index path
 - All cases perform semantic tree preparation, layout, rendering, and Surface
@@ -53,9 +55,11 @@ Results recorded on 2026-07-20
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Rust | eager | 267.796 ms | 100,083 | 21,594,680 | 21,500,184 | 0 |
 | Rust | virtual | 0.079 ms | 105 | 99,264 | 99,176 | 0 |
+| Rust | virtual stick-to-end growth | 0.079 ms | 105 | 99,264 | 99,176 | 0 |
 | Rust | virtual-identified | 0.082 ms | 106 | 99,280 | 99,192 | 0 |
 | Go | eager | 291.618 ms | 12 | 44,910,384 | not measured | not measured |
 | Go | virtual | 0.103 ms | 9 | 110,448 | not measured | not measured |
+| Go | virtual stick-to-end growth | 0.106 ms | 9 | 110,448 | not measured | not measured |
 | Go | virtual-identified | 0.104 ms | 10 | 110,464 | not measured | not measured |
 
 On this workload, virtual median frame time is about 1/3,390 of eager time in
@@ -64,6 +68,11 @@ Rust and 1/407 in Go. Adding stable IDs to all 24 visible rows adds one
 allocation and 16 allocated bytes in both implementations. The timing
 difference is within run-to-run noise. The identified path does not make
 tree-index work proportional to the declared 100,000 rows
+
+The stick-to-end path previews the offset that interaction preparation will
+commit, so initial rendering and content growth construct only the final
+visible fragment. Its allocation results match the fixed-content virtual path
+in both implementations, and its timing difference is within run-to-run noise
 
 Compared with the previous virtual baseline on the same reference environment,
 Rust reduced median frame time from 0.228 ms to 0.079 ms, allocations from
@@ -86,6 +95,10 @@ Deterministic tests in both implementations scroll through 256 frames and
 verify that only visible rows are constructed and the semantic tree remains
 bounded. The Go implementation also compares retained heap after two 512-frame
 windows with garbage collection between them, allowing 1 MiB for runtime noise
+
+Both implementations also verify that initial stick-to-end rendering and
+content growth invoke the fragment builder once per frame, construct only the
+visible rows, and preserve a manual offset after the user leaves the end
 
 The text implementations retain their materialized APIs while exposing
 streaming grapheme and wrapped-line APIs for allocation-sensitive paths. Shared
