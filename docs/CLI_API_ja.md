@@ -6,8 +6,6 @@ Nagi CLIは外部から観測できるcommand semanticsを揃えたnative Rust A
 
 両実装はCommand Graphを検証し、platform argument valueをtyped Invocationへparseし、注入されたContextを通じてHandlerを実行し、明示的なExit Statusを返します
 
-CLI packageとpublic contractは予定するv0.2.0 releaseで導入します
-
 言語非依存の[command application specification](../spec/cli.md)をpublic behaviorの契約とします
 
 `fixtures/cli`配下の共有fixtureでparsing、Diagnostic、Help、runtime output、cancellation、byte保持を確認します

@@ -7,9 +7,6 @@ semantics. Both implementations validate a Command Graph, parse platform
 argument values into a typed Invocation, execute a Handler through an injected
 Context, and return an explicit Exit Status
 
-The CLI packages and their public contract are introduced for the planned
-v0.2.0 release
-
 The language-neutral [command application specification](../spec/cli.md) is
 the public behavioral contract. Shared fixtures under `fixtures/cli` verify
 parsing, diagnostics, help, runtime output, cancellation, and byte preservation

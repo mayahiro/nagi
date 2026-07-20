@@ -43,31 +43,18 @@ harnesses, and 21 standard widgets
 Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
 deterministic help and diagnostics, injected runtimes, cooperative SIGINT
 cancellation, process-free test drivers, and matching basic and subcommand
-examples. These additions define the planned v0.2.0 release
+examples. These additions are available in v0.2.0
 
-## Specifications and guides
+## Usage and contracts
 
+- [Runnable Rust examples](nagi-rs/README.md#examples)
+- [Runnable Go Text and VT example](nagi-go/README.md#example)
+- [Runnable Go TUI examples](nagitui-go/README.md#examples)
+- [Runnable Go CLI examples](nagicli-go/README.md#examples)
 - [Nagi semantic specifications](spec/README.md), including [CLI commands](spec/cli.md)
 - [Public TUI API guide](docs/API.md) and [Japanese version](docs/API_ja.md)
 - [Public CLI API guide](docs/CLI_API.md) and [Japanese version](docs/CLI_API_ja.md)
 - [Rust and Go API mapping](docs/API_MAPPING.md) and [Japanese version](docs/API_MAPPING_ja.md)
-- [Compatibility and migration guide](docs/MIGRATION.md) and [Japanese version](docs/MIGRATION_ja.md)
-
-Fixtures use the `nagi-fixture-v1` header, Surface snapshots use
-`nagi-surface-v1`, and implementations discover shared fixtures through
-`NAGI_FIXTURES`
-
-## Development checkout
-
-Initialize the implementation repositories and run the coordinated checks
-
-```sh
-git submodule update --init --recursive
-make check
-```
-
-The root `go.work` connects the three Go modules only for this development
-checkout. Published module manifests do not use local `replace` directives
 
 ## Supported environments
 

@@ -31,28 +31,18 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 
 Nagi CLIはRustとGoのnative Command Graph、typed value parsing、決定的HelpとDiagnostic、注入可能runtime、協調的SIGINT cancellation、processなしのtest driver、対応するbasicとsubcommand exampleを提供します
 
-これらの追加を予定する`v0.2.0` releaseとします
+これらの追加は`v0.2.0`で利用できます
 
-## 仕様とguide
+## 利用例と契約
 
+- [実行可能なRust example](nagi-rs/README_ja.md#example)
+- [実行可能なGo TextとVTのexample](nagi-go/README_ja.md#example)
+- [実行可能なGo TUI example](nagitui-go/README_ja.md#example)
+- [実行可能なGo CLI example](nagicli-go/README_ja.md#example)
 - [Nagi semantic specification](spec/README.md)と[CLI command仕様](spec/cli.md)
 - [Public TUI API guide](docs/API_ja.md)
 - [Public CLI API guide](docs/CLI_API_ja.md)
 - [RustとGoのAPI対応表](docs/API_MAPPING_ja.md)
-- [互換性とmigration guide](docs/MIGRATION_ja.md)
-
-Fixture headerは`nagi-fixture-v1`、Surface snapshotは`nagi-surface-v1`を使用し、実装は`NAGI_FIXTURES`から共有fixtureを探索します
-
-## 開発用checkout
-
-実装repositoryを初期化して全体確認を実行します
-
-```sh
-git submodule update --init --recursive
-make check
-```
-
-Rootの`go.work`はこの開発checkout内だけで3個のGo moduleを接続します。公開module manifestにはlocal `replace`を置きません
 
 ## 対応環境
 
