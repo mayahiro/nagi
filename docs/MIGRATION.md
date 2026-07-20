@@ -24,8 +24,24 @@ release line depends on it
 The Go TUI root package is named `tui`. The shared `nagi-go` module has no root
 package
 
-Nagi CLI is a separate product and is not a renamed part of CellTUI. The
-`nagicli-go` repository remains a specification-only scaffold during Phase F0
+Nagi CLI is a separate product and is not a renamed part of CellTUI. It is
+introduced in Nagi v0.2.0 through the Rust `nagi-cli` and `nagi-cli-test`
+crates and the independent `github.com/mayahiro/nagicli-go` module
+
+## v0.2.0 CLI addition
+
+The Rust workspace advances as one unit from v0.1.0 to v0.2.0. Existing TUI
+crate names and documented TUI behavior remain unchanged, while applications
+can add `nagi-cli` and `nagi-cli-test` as new dependencies
+
+The Go shared and TUI modules keep their independent release lines. Go CLI
+applications add `github.com/mayahiro/nagicli-go@v0.2.0`, which depends on the
+existing `github.com/mayahiro/nagi-go/text` package and not on
+`github.com/mayahiro/nagitui-go`
+
+There is no CellTUI CLI API to rename or compatibility alias to retain. The
+new Rust and Go APIs are aligned by the Nagi CLI specification and shared
+fixtures
 
 ## Canonical type ownership
 
@@ -68,8 +84,8 @@ repository's development ADRs
   1.0
 - Rust workspace crates use one coordinated version
 - The three Go modules are versioned independently and use ordinary module tags
-- Matching Rust and Go TUI releases are identified by a tested Nagi
+- Matching Rust and Go TUI or CLI releases are identified by a tested Nagi
   specification and fixture revision
 
-Use the [public API guide](API.md) and
+Use the [TUI API guide](API.md), [CLI API guide](CLI_API.md), and
 [Rust and Go API mapping](API_MAPPING.md) for current entry points

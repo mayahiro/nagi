@@ -1,0 +1,15 @@
+nagi-fixture-v1	cli-errors
+unknown-long	argv=--wat	env=	expected=unknown-option
+unknown-short	argv=-z	env=	expected=unknown-option
+unknown-short-cluster	argv=-vz	env=	expected=unknown-option
+unexpected-flag-value	argv=--verbose=yes	env=	expected=unexpected-option-value
+missing-option-value	argv=--output	env=	expected=missing-option-value
+duplicate-flag	argv=-f|-f	env=	expected=duplicate-option
+duplicate-value	argv=-o|a|--output|b	env=	expected=duplicate-option
+invalid-possible-value	argv=--color|blue	env=	expected=invalid-value
+requires	argv=--token|secret	env=	expected=requires
+conflicts	argv=-fn	env=	expected=conflicts
+missing-child-option	argv=serve|localhost	env=	expected=missing-required
+missing-child-positional	argv=serve|--mode|http	env=	expected=missing-required
+unexpected-child-positional	argv=serve|--mode|http|one|two	env=	expected=unexpected-argument
+invalid-integer	argv=serve|--mode|http|--port|many|host	env=	expected=invalid-value

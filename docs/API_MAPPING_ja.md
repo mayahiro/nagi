@@ -2,7 +2,7 @@
 
 [English](API_MAPPING.md)
 
-Nagi TUIは外部から観測できる挙動を揃えながら、各言語の標準的な命名と所有規約を使用します。この対応表は主要なpublic entry pointを対象とし、完全なmethod signatureは生成されるAPI documentを正とします
+Nagiは外部から観測できるTUIとCLIの挙動を揃えながら、各言語の標準的な命名と所有規約を使用します。この対応表は主要なpublic entry pointを対象とし、完全なmethod signatureは生成されるAPI documentを正とします
 
 ## Package
 
@@ -14,6 +14,8 @@ Nagi TUIは外部から観測できる挙動を揃えながら、各言語の標
 | GeometryとSurface | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
 | 標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
+| CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
+| CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonicalなGeometry型とStyle型を再公開します
 
@@ -111,4 +113,33 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 
 `ScrollAxis`、`ScrollOffset`、`ScrollState`はGoの同名typeへ直接対応します。Rust test supportは`Harness::scroll_state`と`Harness::exit_requested`、Goは`Harness.ScrollState`と`Harness.ExitRequested`を使用します
 
-Application composition全体は[public API guide](API_ja.md)と対応するRustとGoのexampleを参照してください
+## CLI command application
+
+| 用途 | Rust | Go |
+| --- | --- | --- |
+| Command定義 | `Command::new` | `cli.NewCommand` |
+| Flag、count、value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
+| Positional argument | `Argument::new` | `cli.Positional` |
+| Raw、string、integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
+| Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
+| Custom parser | `value_parser` | `cli.CustomParser` |
+| Parsed command | `Invocation` | `cli.Invocation` |
+| Value source | `ValueSource` | `cli.ValueSource` |
+| Runtime service | `Context` | `cli.Context` |
+| Handler result | `Outcome` | `cli.Outcome` |
+| Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
+| Process実行 | `Command::run_process` | `Command.RunProcess` |
+| Manual cancellation | `cancellation_pair` | `context.WithCancel`と`NewContextWithCancellation` |
+| Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
+
+Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
+
+Goはraw byteをstringへ保持し、parser resultを`any`とgenericな`ValueAs` helperで公開します
+
+Rust cancellationはatomic token、Go cancellationは`context.Context`を使用します
+
+これらの表現差はparsing、Help、Diagnostic、Exit Statusを変更しません
+
+完全な契約は[public CLI API guide](CLI_API_ja.md)と[command application semantics](../spec/cli.md)を参照してください
+
+TUI application composition全体は[public API guide](API_ja.md)と対応するRustとGoのexampleを参照してください

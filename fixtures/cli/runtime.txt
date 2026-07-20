@@ -1,0 +1,7 @@
+nagi-fixture-v1	cli-runtime
+success	argv=file	env=NAGI_TEST=ok	stdin=hello	cwd=/work	cancelled=false	status=0	stdout=command=nagi\ncwd=/work\nenv=ok\nstdin=hello\n	stderr=
+parse-error	argv=--wat	env=	stdin=	cwd=/work	cancelled=false	status=2	stdout=	stderr=error[unknown-option]: unknown option '--wat'\nusage: nagi [OPTIONS] [INPUT] [EXTRA]...\n
+parse-control	argv=--bad\x1B	env=	stdin=	cwd=/work	cancelled=false	status=2	stdout=	stderr=error[unknown-option]: unknown option '--bad\\x1B'\nusage: nagi [OPTIONS] [INPUT] [EXTRA]...\n
+parse-invalid-utf8	argv=--\xFF	env=	stdin=	cwd=/work	cancelled=false	status=2	stdout=	stderr=error[unknown-option]: unknown option '--\\xFF'\nusage: nagi [OPTIONS] [INPUT] [EXTRA]...\n
+handler-error	argv=fail	env=	stdin=	cwd=/work	cancelled=false	status=1	stdout=	stderr=error[handler-error]: requested failure\n
+cancelled	argv=file	env=	stdin=	cwd=/work	cancelled=true	status=130	stdout=	stderr=

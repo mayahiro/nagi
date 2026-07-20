@@ -1,0 +1,16 @@
+nagi-fixture-v1	cli-parsing
+empty	argv=	env=	expected=ok;command=nagi;values=color=value:default:6175746F
+long-and-positionals	argv=--verbose|--output|out|file|extra	env=	expected=ok;command=nagi;values=color=value:default:6175746F,extra=values:cli:6578747261,input=value:cli:66696C65,output=value:cli:6F7574,verbose=count:1
+attached-long	argv=--output=out|file	env=	expected=ok;command=nagi;values=color=value:default:6175746F,input=value:cli:66696C65,output=value:cli:6F7574
+attached-short	argv=-oout|file	env=	expected=ok;command=nagi;values=color=value:default:6175746F,input=value:cli:66696C65,output=value:cli:6F7574
+short-cluster	argv=-vvf|file	env=	expected=ok;command=nagi;values=color=value:default:6175746F,force=flag:true,input=value:cli:66696C65,verbose=count:2
+repeated-values	argv=-t|one|--tag=two|file	env=	expected=ok;command=nagi;values=color=value:default:6175746F,input=value:cli:66696C65,tag=values:cli:6F6E65+cli:74776F
+terminator	argv=--|--verbose|-x	env=	expected=ok;command=nagi;values=color=value:default:6175746F,extra=values:cli:2D78,input=value:cli:2D2D766572626F7365
+environment	argv=	env=NAGI_CONFIG=/etc/nagi	expected=ok;command=nagi;values=color=value:default:6175746F,config=value:env:2F6574632F6E616769
+command-line-precedence	argv=--config|cli	env=NAGI_CONFIG=/etc/nagi	expected=ok;command=nagi;values=color=value:default:6175746F,config=value:cli:636C69
+subcommand	argv=--verbose|serve|--mode|http|localhost	env=	expected=ok;command=nagi/serve;values=color=value:default:6175746F,host=value:cli:6C6F63616C686F7374,mode=value:cli:68747470,port=value:default:38303830,verbose=count:1
+subcommand-alias	argv=s|-mhttps|example	env=	expected=ok;command=nagi/serve;values=color=value:default:6175746F,host=value:cli:6578616D706C65,mode=value:cli:6874747073,port=value:default:38303830
+root-help	argv=--help	env=	expected=action;kind=help;command=nagi
+child-help	argv=serve|--help	env=	expected=action;kind=help;command=nagi/serve
+version	argv=--version	env=	expected=action;kind=version;value=1.2.3
+invalid-utf8-positional	argv=\xFF	env=	expected=ok;command=nagi;values=color=value:default:6175746F,input=value:cli:FF

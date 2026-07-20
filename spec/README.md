@@ -1,7 +1,7 @@
-# Nagi TUI semantic specifications
+# Nagi semantic specifications
 
 These documents define the observable semantics shared by the native Rust and
-Go implementations of Nagi TUI
+Go implementations of Nagi TUI and Nagi CLI
 
 The specifications are intentionally language-neutral. Rust and Go APIs may
 use different shapes when that is idiomatic, but equivalent inputs must produce
@@ -26,4 +26,5 @@ strength
 - [Effects and subscriptions](effects.md)
 - [Scheduling](scheduling.md)
 - [Standard widgets](widgets.md)
+- [Command applications](cli.md)
 - [Testing](testing.md)

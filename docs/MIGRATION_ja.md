@@ -20,7 +20,25 @@ Stable releaseが旧namespaceへ依存していないため互換aliasは提供�
 
 Go TUIのroot package名は`tui`です。共有`nagi-go` moduleにはroot packageを置きません
 
-Nagi CLIは別製品であり、CellTUIの一部を改名したものではありません。`nagicli-go` repositoryはPhase F0では仕様骨格だけを保持します
+Nagi CLIは別製品であり、CellTUIの一部を改名したものではありません
+
+Nagi v0.2.0でRustの`nagi-cli`と`nagi-cli-test` crate、独立した`github.com/mayahiro/nagicli-go` moduleとして導入します
+
+## v0.2.0のCLI追加
+
+Rust workspaceは1個のrelease単位としてv0.1.0からv0.2.0へ進みます
+
+既存TUI crateの名前とdocument済みTUI behaviorは維持し、applicationは新しい依存として`nagi-cli`と`nagi-cli-test`を追加できます
+
+Goの共有moduleとTUI moduleは独立したrelease lineを維持します
+
+Go CLI applicationは`github.com/mayahiro/nagicli-go@v0.2.0`を追加します
+
+このmoduleは既存の`github.com/mayahiro/nagi-go/text`へ依存し、`github.com/mayahiro/nagitui-go`へは依存しません
+
+改名対象または互換aliasを維持するCellTUI CLI APIは存在しません
+
+新しいRustとGo APIはNagi CLI specificationと共有fixtureで整合させます
 
 ## Canonical型の所有先
 
@@ -54,6 +72,6 @@ Nagi repositoryはCellTUIの履歴をmergeせず独立した履歴を使用し�
 - 1.0より前のminor releaseにはbreaking public APIまたはbehavior変更が含まれる場合がある
 - Rust workspaceのcrateは1個の協調versionを使用する
 - 3個のGo moduleは独立してversioningし、通常のmodule tagを使用する
-- 対応するRustとGoのTUI releaseはtest済みNagi specificationとfixture revisionで識別する
+- 対応するRustとGoのTUIまたはCLI releaseはtest済みNagi specificationとfixture revisionで識別する
 
-現在のentry pointは[public API guide](API_ja.md)と[RustとGoのAPI対応表](API_MAPPING_ja.md)を参照してください
+現在のentry pointは[TUI API guide](API_ja.md)、[CLI API guide](CLI_API_ja.md)、[RustとGoのAPI対応表](API_MAPPING_ja.md)を参照してください

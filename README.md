@@ -11,10 +11,10 @@ CLI applications, and the small text and VT foundations they genuinely share
 
 | Repository | Responsibility | Release unit |
 | --- | --- | --- |
-| [`nagi-rs`](nagi-rs/README.md) | All Rust Text, VT, Surface, TUI, Widget, and TUI Test crates | One coordinated Cargo workspace version |
+| [`nagi-rs`](nagi-rs/README.md) | All Rust Text, VT, Surface, TUI, CLI, Widget, and test-support crates | One coordinated Cargo workspace version |
 | [`nagi-go`](nagi-go/README.md) | Shared Go `text` and `vt` packages | `github.com/mayahiro/nagi-go` |
 | [`nagitui-go`](nagitui-go/README.md) | Go Surface, TUI runtime, Widgets, and TUI Test | `github.com/mayahiro/nagitui-go` |
-| [`nagicli-go`](nagicli-go/README.md) | Go Nagi CLI, currently a specification-only Phase F0 scaffold | `github.com/mayahiro/nagicli-go` |
+| [`nagicli-go`](nagicli-go/README.md) | Go Command Graph, parser, runtime, and CLI Test | `github.com/mayahiro/nagicli-go` |
 
 This repository coordinates the four implementation repositories as
 submodules and owns the language-neutral specifications and conformance
@@ -40,13 +40,16 @@ The existing Nagi TUI implementation provides native Rust and Go runtimes,
 Unicode-aware text, typed VT codecs, cell surfaces, deterministic test
 harnesses, and 21 standard widgets
 
-Nagi CLI implementation has not started. Its Phase F0 repository and detailed
-specification scaffold establish boundaries without committing to an API
+Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
+deterministic help and diagnostics, injected runtimes, cooperative SIGINT
+cancellation, process-free test drivers, and matching basic and subcommand
+examples. These additions define the planned v0.2.0 release
 
 ## Specifications and guides
 
-- [Nagi TUI semantic specifications](spec/README.md)
+- [Nagi semantic specifications](spec/README.md), including [CLI commands](spec/cli.md)
 - [Public TUI API guide](docs/API.md) and [Japanese version](docs/API_ja.md)
+- [Public CLI API guide](docs/CLI_API.md) and [Japanese version](docs/CLI_API_ja.md)
 - [Rust and Go API mapping](docs/API_MAPPING.md) and [Japanese version](docs/API_MAPPING_ja.md)
 - [Compatibility and migration guide](docs/MIGRATION.md) and [Japanese version](docs/MIGRATION_ja.md)
 

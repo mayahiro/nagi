@@ -10,10 +10,10 @@ NagiはRustとGoにネイティブ実装を持つ端末application基盤のfamil
 
 | Repository | 責務 | Release単位 |
 | --- | --- | --- |
-| [`nagi-rs`](nagi-rs/README_ja.md) | RustのText、VT、Surface、TUI、Widget、TUI Testの全crate | 1個のCargo workspaceで協調versioning |
+| [`nagi-rs`](nagi-rs/README_ja.md) | RustのText、VT、Surface、TUI、CLI、Widget、test supportの全crate | 1個のCargo workspaceで協調versioning |
 | [`nagi-go`](nagi-go/README_ja.md) | Goの共有`text`と`vt` package | `github.com/mayahiro/nagi-go` |
 | [`nagitui-go`](nagitui-go/README_ja.md) | GoのSurface、TUI runtime、Widget、TUI Test | `github.com/mayahiro/nagitui-go` |
-| [`nagicli-go`](nagicli-go/README_ja.md) | GoのNagi CLIで、現在はPhase F0の仕様骨格のみ | `github.com/mayahiro/nagicli-go` |
+| [`nagicli-go`](nagicli-go/README_ja.md) | GoのCommand Graph、parser、runtime、CLI Test | `github.com/mayahiro/nagicli-go` |
 
 このrepositoryは4個の実装repositoryをsubmoduleとして調整し、言語非依存の仕様とconformance fixtureを所有します
 
@@ -29,12 +29,15 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 
 既存のNagi TUI実装はRustとGoのnative runtime、Unicode対応Text、typed VT codec、Cell Surface、決定的test harness、21個の標準Widgetを提供します
 
-Nagi CLI実装には未着手です。Phase F0ではrepositoryと詳細仕様の骨格だけを用意し、公開APIを確定しません
+Nagi CLIはRustとGoのnative Command Graph、typed value parsing、決定的HelpとDiagnostic、注入可能runtime、協調的SIGINT cancellation、processなしのtest driver、対応するbasicとsubcommand exampleを提供します
+
+これらの追加を予定する`v0.2.0` releaseとします
 
 ## 仕様とguide
 
-- [Nagi TUI semantic specification](spec/README.md)
+- [Nagi semantic specification](spec/README.md)と[CLI command仕様](spec/cli.md)
 - [Public TUI API guide](docs/API_ja.md)
+- [Public CLI API guide](docs/CLI_API_ja.md)
 - [RustとGoのAPI対応表](docs/API_MAPPING_ja.md)
 - [互換性とmigration guide](docs/MIGRATION_ja.md)
 

@@ -2,10 +2,10 @@
 
 [日本語](API_MAPPING_ja.md)
 
-Nagi TUI keeps observable behavior aligned while using each language's normal
-naming and ownership conventions. This mapping covers the main public entry
-points; generated API documentation remains authoritative for complete method
-signatures
+Nagi keeps observable TUI and CLI behavior aligned while using each language's
+normal naming and ownership conventions. This mapping covers the main public
+entry points; generated API documentation remains authoritative for complete
+method signatures
 
 ## Packages
 
@@ -17,6 +17,8 @@ signatures
 | Geometry and Surface | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
 | Standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
+| CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
+| CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 The Rust `nagi-tui` facade and Go `tui` package re-export the canonical
 Geometry and Style types for application-facing APIs
@@ -129,5 +131,33 @@ the same names. Rust test support uses `Harness::scroll_state` and
 `Harness::exit_requested`; Go uses `Harness.ScrollState` and
 `Harness.ExitRequested`
 
+## CLI command applications
+
+| Purpose | Rust | Go |
+| --- | --- | --- |
+| Command definition | `Command::new` | `cli.NewCommand` |
+| Flag, count, value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
+| Positional argument | `Argument::new` | `cli.Positional` |
+| Raw, string, integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
+| Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
+| Custom parser | `value_parser` | `cli.CustomParser` |
+| Parsed command | `Invocation` | `cli.Invocation` |
+| Value source | `ValueSource` | `cli.ValueSource` |
+| Runtime services | `Context` | `cli.Context` |
+| Handler result | `Outcome` | `cli.Outcome` |
+| Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
+| Process execution | `Command::run_process` | `Command.RunProcess` |
+| Manual cancellation | `cancellation_pair` | `context.WithCancel` with `NewContextWithCancellation` |
+| Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
+
+Rust stores raw platform values as `OsString` and typed parser results behind
+`Any`. Go preserves raw bytes in strings and exposes parser results through
+`any` plus the generic `ValueAs` helper. Rust cancellation is an atomic token;
+Go cancellation is a `context.Context`
+
+These representation differences do not change parsing, help, diagnostics, or
+Exit Status. See the [public CLI API guide](CLI_API.md) and
+[command application semantics](../spec/cli.md) for the complete contract
+
 See the [public API guide](API.md) and matching Rust and Go examples for
-complete application composition
+complete TUI application composition
