@@ -32,6 +32,8 @@ Applicationは4個のoperationを実装します
 
 Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
 
+Production terminal applicationにおけるprocess output、timer、wake-up、renderの所有関係は[event-driven application architecture](EVENT_DRIVEN_APPLICATIONS_ja.md)を参照してください
+
 Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します
 
 Production terminal runnerはterminal input、非同期EffectまたはStreamの通知、resize、最も近いclock-driven deadlineを待機し、idle中の周期的pollingを行いません
@@ -110,7 +112,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
-| Log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
+| Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
 | Extended widget gallery | `cargo run -p nagi-tui-widgets --example extended_widget_gallery` | `go run ./examples/extended-widget-gallery` |

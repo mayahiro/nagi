@@ -53,6 +53,7 @@ examples
 - [Runnable Go CLI examples](nagicli-go/README.md#examples)
 - [Nagi semantic specifications](spec/README.md), including [CLI commands](spec/cli.md)
 - [Public TUI API guide](docs/API.md) and [Japanese version](docs/API_ja.md)
+- [Event-driven TUI application architecture](docs/EVENT_DRIVEN_APPLICATIONS.md) and [Japanese version](docs/EVENT_DRIVEN_APPLICATIONS_ja.md)
 - [Public CLI API guide](docs/CLI_API.md) and [Japanese version](docs/CLI_API_ja.md)
 - [Rust and Go API mapping](docs/API_MAPPING.md) and [Japanese version](docs/API_MAPPING_ja.md)
 - [Reproducible performance baselines](BENCHMARKS.md)

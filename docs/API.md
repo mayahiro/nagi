@@ -43,6 +43,10 @@ Rust uses the `App` trait and an associated `Message` type. Go uses the generic
 [Go counter](../nagitui-go/examples/counter/main.go) for complete minimal
 applications
 
+See the [event-driven application architecture](EVENT_DRIVEN_APPLICATIONS.md)
+for ownership of process output, timers, wake-up, and rendering in a production
+terminal application
+
 An application can return `Effect::exit()` or `ExitEffect` after updating its
 state. The terminal runner renders the final dirty view before restoration. Go
 also provides `RunTerminalContext` for external `context.Context` cancellation;
@@ -165,7 +169,7 @@ terminal
 | Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
-| Log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
+| Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
 | Extended widget gallery | `cargo run -p nagi-tui-widgets --example extended_widget_gallery` | `go run ./examples/extended-widget-gallery` |

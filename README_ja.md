@@ -39,6 +39,7 @@ Nagi CLIはRustとGoのnative Command Graph、typed value parsing、決定的Hel
 - [実行可能なGo CLI example](nagicli-go/README_ja.md#example)
 - [Nagi semantic specification](spec/README.md)と[CLI command仕様](spec/cli.md)
 - [Public TUI API guide](docs/API_ja.md)
+- [Event-driven TUI application architecture](docs/EVENT_DRIVEN_APPLICATIONS_ja.md)
 - [Public CLI API guide](docs/CLI_API_ja.md)
 - [RustとGoのAPI対応表](docs/API_MAPPING_ja.md)
 - [再現可能なperformance baseline](BENCHMARKS.md)
