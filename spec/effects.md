@@ -27,6 +27,12 @@ starts every child independently and completes after all children finish.
 `Sequence` starts one child at a time and starts the next after delivery,
 cancellation, or failure completes the current child
 
+An Effect returned directly from `update` MAY declare that the update did not
+change state observed by `view`. The runtime MUST still schedule that Effect
+and reconcile subscriptions, but MUST NOT dirty an otherwise clean view solely
+for that update. An already-dirty runtime stays dirty. Synchronous `Exit`,
+`Focus`, and `ScrollTo` commands still request their required frame
+
 Concurrent task execution is bounded by runtime configuration. Cancellation
 does not free a worker slot until a running task returns. Task panics are caught
 at the task boundary, suppress their result, and advance enclosing Batch or

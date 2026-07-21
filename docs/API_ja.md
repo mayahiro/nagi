@@ -36,6 +36,8 @@ Production terminal applicationにおけるprocess output、timer、wake-up、re
 
 Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します
 
+Messageを処理しても`view`が参照する内容が変わらない場合、Rustでは`Effect::none().without_redraw()`、Goでは`tui.NoneEffect[Message]().WithoutRedraw()`を返せます。後続Effectの処理とSubscriptionの再調整は継続します。Modifierは`update`が返す最外側のEffectへ適用し、既存のdirty stateと同期UI commandは必要なframeを生成します
+
 Production terminal runnerはterminal input、非同期EffectまたはStreamの通知、resize、最も近いclock-driven deadlineを待機し、idle中の周期的pollingを行いません
 Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変更しません
 既定のterminal optionはnon-urgent描画を最大120 FPSへ制限し、minimum frame intervalをzeroにすると制限を無効化できます
@@ -60,6 +62,7 @@ Effectはone-shot workを表します
 - `Cancel`とscope cancelは協調的な終了を要求する
 - `After`はruntime clockを使用する
 - `Batch`はchildを並行実行し、`Sequence`は順番に実行する
+- `without_redraw`と`WithoutRedraw`は、現在のupdateだけでotherwise-cleanなruntimeへ要求されるframeを抑止する
 
 Subscriptionは安定key付きの長期sourceを表します
 

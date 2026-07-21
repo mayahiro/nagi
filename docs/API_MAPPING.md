@@ -125,10 +125,15 @@ contract; Rust uses unsigned indices
 | Global ignore action | `EventAction::Ignore` | `IgnoreAction[M]()` |
 | Global exit action | `EventAction::Exit` | `ExitAction[M]()` |
 | No Effect | `Effect::none()` | `NoneEffect[M]()` |
+| Effect without a view change | `effect.without_redraw()` | `effect.WithoutRedraw()` |
 | Application exit Effect | `Effect::exit()` | `ExitEffect[M]()` |
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | No Subscription | `Subscription::none()` | `NoneSubscription[M]()` |
+
+The allocation-sensitive VT append APIs are `nagi_vt::append_encoded` and
+`vt.AppendEncoded`. They append exactly the bytes produced by `encode` and
+`Encode` into caller-owned buffers
 
 `ScrollAxis`, `ScrollOffset`, and `ScrollState` map directly to the Go types of
 the same names. Rust test support uses `Harness::scroll_state` and

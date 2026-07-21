@@ -19,6 +19,9 @@
 - Stream values and completed asynchronous Effects MUST notify a waiting
   terminal runner. Notifications MAY be coalesced, but message values and
   required state transitions MUST follow their Delivery and queue semantics
+- Batch Stream notifications MAY coalesce between the first buffered value and
+  the configured count or delay boundary. The first value MUST establish a
+  waitable deadline, and reaching the count MUST wake a waiting runner
 
 At one scheduling boundary, already queued input is followed by ready effect
 results and then ready subscription values. Subscription values are ordered by

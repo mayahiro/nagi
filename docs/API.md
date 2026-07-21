@@ -52,6 +52,13 @@ state. The terminal runner renders the final dirty view before restoration. Go
 also provides `RunTerminalContext` for external `context.Context` cancellation;
 that path returns `ctx.Err()` after restoring the terminal
 
+When an update handles a Message without changing anything read by `view`, it
+can return `Effect::none().without_redraw()` in Rust or
+`tui.NoneEffect[Message]().WithoutRedraw()` in Go. Follow-up Effect work and
+subscription reconciliation still occur. Apply the modifier to the outer
+Effect returned by `update`; pending dirty state and synchronous UI commands
+still produce their required frame
+
 Production terminal runners wait for terminal input, asynchronous Effect or
 Stream notifications, resize, and the nearest clock-driven deadline. They do
 not poll periodically while idle. Wake-up notifications may coalesce without
@@ -100,6 +107,8 @@ Effects represent one-shot work
 - `Cancel` and scoped cancellation request cooperative termination
 - `After` uses the runtime clock
 - `Batch` runs children concurrently and `Sequence` runs them in order
+- `without_redraw` and `WithoutRedraw` suppress only the frame that an
+  otherwise-clean runtime would request for the current update
 
 Subscriptions represent long-lived stable-key sources
 

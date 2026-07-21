@@ -79,6 +79,9 @@ For high-rate sources
 - Format records when they enter update instead of rescanning the complete log
 - Use a VirtualScrollViewport so view construction follows visible rows
 - Do not call `RequestFrame` or `request_frame` for ordinary source data
+- Return `Effect::none().without_redraw()` or
+  `NoneEffect[Message]().WithoutRedraw()` when a Message changes no state read
+  by the current view, such as output retained for an unselected process
 
 ## Avoid a second UI loop
 

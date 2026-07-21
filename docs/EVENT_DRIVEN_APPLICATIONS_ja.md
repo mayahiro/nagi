@@ -70,6 +70,7 @@ Frameworkが扱うkeyboard scroll、focus、resizeはurgentのままです
 - 全logを再走査せず、recordがupdateへ入った時点でformatする
 - View構築量をvisible rowへ制限するためVirtualScrollViewportを使う
 - 通常のsource dataごとに`RequestFrame`または`request_frame`を呼ばない
+- 未選択process用に保持するoutputなど、現在のviewが読むstateを変更しないMessageでは`Effect::none().without_redraw()`または`NoneEffect[Message]().WithoutRedraw()`を返す
 
 ## 第2のUI loopを避ける
 

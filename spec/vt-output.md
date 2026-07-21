@@ -8,11 +8,14 @@ and synchronized updates
 
 - Widgets and views MUST NOT emit ANSI or VT byte strings directly
 - The renderer converts surface differences into terminal operations
+- Equal cell content and cursor state produce an empty operation sequence
 - A surface MUST NOT be passed directly to the encoder
 - Capability-dependent unsupported operations are omitted or reduced to a safe
   baseline
 - Encoding the same operation sequence and capability set MUST produce identical
   bytes in Rust and Go
+- Encoding MAY append into caller-owned storage; the appended bytes MUST equal
+  standalone encoding for the same operations and capabilities
 
 Absolute positions are zero-based at the API and encoded as one-based CUP
 coordinates. Relative motion emits vertical movement before horizontal

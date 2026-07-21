@@ -110,10 +110,13 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Global ignore action | `EventAction::Ignore` | `IgnoreAction[M]()` |
 | Global exit action | `EventAction::Exit` | `ExitAction[M]()` |
 | Effectなし | `Effect::none()` | `NoneEffect[M]()` |
+| View変更なしのEffect | `effect.without_redraw()` | `effect.WithoutRedraw()` |
 | Application終了Effect | `Effect::exit()` | `ExitEffect[M]()` |
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | Subscriptionなし | `Subscription::none()` | `NoneSubscription[M]()` |
+
+Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendEncoded`です。Caller所有bufferへ`encode`と`Encode`が生成するbyteと同一の内容を追記します
 
 `ScrollAxis`、`ScrollOffset`、`ScrollState`はGoの同名typeへ直接対応します。Rust test supportは`Harness::scroll_state`と`Harness::exit_requested`、Goは`Harness.ScrollState`と`Harness.ExitRequested`を使用します
 

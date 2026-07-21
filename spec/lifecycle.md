@@ -20,6 +20,8 @@ view(ViewContext)  -> Node<Message>
 - `view` MUST NOT perform I/O or mutate runtime state
 - Rendering MAY be coalesced across multiple processed messages without changing
   update order
+- An update MAY explicitly declare that it did not change state observed by
+  `view`, allowing an otherwise clean runtime to skip that update's frame
 
 An application MAY request normal exit from an Effect returned by `init` or
 `update`. If that state transition dirties the view, the terminal loop MUST
