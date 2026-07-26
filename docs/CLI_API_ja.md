@@ -34,6 +34,7 @@ Command、option、positionalは各言語に自然なbuilderで定義します
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
 | Typed validator | `.validator(validator)` | `.Validator(validator)` |
+| Help Usage Variant | `.usage_variant(id, syntax)` | `.UsageVariant(id, syntax)` |
 | Help example | `.example(name, invocation)` | `.Example(name, invocation)` |
 | Help note | `.note(text)` | `.Note(text)` |
 | Help link | `.link(label, url)` | `.Link(label, url)` |
@@ -88,9 +89,21 @@ Goは最初のvalueに`cli.ValueAs[T]`を使い、repeated valueの走査では`
 
 `Command::help_document`と`Command.HelpDocument`はrendererに依存しないHelp Documentを返します
 
-Help Documentはcanonical command path、生成されたusage、command、argument、option、option relationとoption-group constraint、名前付きexample、note、link、application定義のstructured sectionを保持します
+Help Documentはcanonical command path、structured Usage Variantとrendered usage line、command、argument、option、option relationとoption-group constraint、名前付きexample、note、link、application定義のstructured sectionを保持します
 
-標準entry、option relation、option-group memberはstable IDをdisplay labelとは分離して保持します
+標準entry、Usage Variant、option relation、option-group memberはstable IDをdisplay labelとは分離して保持します
+
+`Command::usage_variant`と`Command.UsageVariant`は定義順を持つHelp-only invocation formを追加します
+
+Syntaxには`<NODE> [OPTIONS]`のようなcommand pathを除いたsuffixを指定し、frameworkがcanonical command pathを付与します
+
+明示variantは自動生成されるdirect-invocation usageを置き換え、Command Graphから得られる任意subcommand向けusageは引き続き自動生成されます
+
+`HelpUsageVariant`はstable ID、syntax suffix、完全なcommand lineを公開します
+
+Usage Variantはargv parsing、typed validation、Diagnostic usage、Invocationを変更しません
+
+これによりtyped validatorで実装した複数formを、portable graphがform選択を行うと主張せずに記述できます
 
 既定のplain rendererは定義順を維持し、labelをterminal Cell幅で整列します
 
@@ -159,7 +172,11 @@ Coreは設定file読み込み、shell completion生成、interactive prompt、TU
 
 Portable graphは任意のinvocation grammarやparser-generator productionを表現しません
 
-範囲を限定できるapplication ruleにはoption groupとtyped validatorを使用し、それでも不足するcommand固有parsingはportable specificationの外側へ置きます
+範囲を限定できるapplication ruleにはoption groupとtyped validatorを使用します
+
+Help-only Usage Variantは受理するformを記述できますが、runtime variant IDは返しません
+
+それでも不足するcommand固有parsingはportable specificationの外側へ置きます
 
 Process統合はx86-64とARM64のLinuxおよびmacOSを対象とします
 

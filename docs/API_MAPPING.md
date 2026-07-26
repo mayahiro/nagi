@@ -155,6 +155,8 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
 | Typed invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
+| Help Usage Variant definition | `Command::usage_variant` | `Command.UsageVariant` |
+| Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime services | `Context` | `cli.Context` |

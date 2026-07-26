@@ -135,6 +135,8 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
 | Typed Invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
+| Help Usage Variant定義 | `Command::usage_variant` | `Command.UsageVariant` |
+| Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime service | `Context` | `cli.Context` |

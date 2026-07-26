@@ -37,6 +37,7 @@ Commands, options, and positionals use language-native builders
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
 | Typed validator | `.validator(validator)` | `.Validator(validator)` |
+| Help Usage Variant | `.usage_variant(id, syntax)` | `.UsageVariant(id, syntax)` |
 | Help example | `.example(name, invocation)` | `.Example(name, invocation)` |
 | Help note | `.note(text)` | `.Note(text)` |
 | Help link | `.link(label, url)` | `.Link(label, url)` |
@@ -87,11 +88,24 @@ typed ID returns absence rather than coercion
 ## Structured Help
 
 `Command::help_document` and `Command.HelpDocument` return a renderer-independent
-Help Document. It contains the canonical command path, generated usage,
-commands, arguments, options, option-relation and option-group constraints,
-named examples, notes, links, and application-defined structured sections.
-Standard entries and relation and group members retain stable IDs separately
-from display labels
+Help Document. It contains the canonical command path, structured Usage
+Variants and rendered usage lines, commands, arguments, options,
+option-relation and option-group constraints, named examples, notes, links,
+and application-defined structured sections. Standard entries, Usage
+Variants, and relation and group members retain stable IDs separately from
+display labels
+
+`Command::usage_variant` and `Command.UsageVariant` add ordered Help-only
+invocation forms. Their syntax is a suffix such as `<NODE> [OPTIONS]`; the
+framework prefixes the canonical command path. Explicit variants replace the
+generated direct-invocation usage while the Command Graph continues to
+generate optional-subcommand usage. `HelpUsageVariant` exposes the stable ID,
+syntax suffix, and complete command line
+
+Usage Variants do not change argv parsing, typed validation, Diagnostic usage,
+or Invocation. This lets an application document several forms implemented by
+a typed validator without claiming that the portable graph selects those
+forms
 
 The default plain renderer preserves definition order and aligns labels by
 terminal Cell width. Applications can install a custom Help Renderer through
@@ -163,8 +177,9 @@ injected cancellation source and stop cooperatively
 
 The portable graph does not model arbitrary invocation grammars or
 parser-generator productions. Use option groups and typed validators for
-bounded application rules; keep command-specific parsing outside the portable
-specification when those mechanisms are insufficient
+bounded application rules. Help-only Usage Variants can describe the accepted
+forms, but do not return a runtime variant ID. Keep command-specific parsing
+outside the portable specification when those mechanisms are insufficient
 
 Process integration targets Linux and macOS on x86-64 and ARM64. Parsing and
 injected execution do not require a terminal

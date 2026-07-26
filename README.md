@@ -42,8 +42,9 @@ harnesses, 21 standard widgets, and virtual ScrollViewports for large content
 
 Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
 portable option groups and validators, structured deterministic Help,
-semantic Diagnostics with configurable runtime policies, cooperative SIGINT
-cancellation, process-free test drivers, and matching examples
+stable Help-only Usage Variants, semantic Diagnostics with configurable
+runtime policies, cooperative SIGINT cancellation, process-free test drivers,
+and matching examples
 
 ## Usage and contracts
 

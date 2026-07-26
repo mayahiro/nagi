@@ -23,7 +23,8 @@ ASCII, but option values and positionals are not required to be UTF-8.
 
 A Command has a stable identifier, canonical name, optional aliases,
 description, options, positional arguments, option groups, subcommands,
-structured help additions, invocation validators, and an optional handler.
+structured help additions including usage variants, invocation validators, and
+an optional handler.
 
 Definitions MUST be rejected before argument parsing when any of the following
 is true:
@@ -41,6 +42,9 @@ is true:
 - a relation names an option outside its command;
 - an option group has an invalid or duplicate ID, contains fewer than two
   distinct options, or names an option outside its command; or
+- a usage variant has an invalid or duplicate ID, has an invalid syntax
+  suffix, conflicts with a generated usage variant, or is attached to a
+  command that requires a subcommand; or
 - an application definition uses the reserved `help`, `version`, `h`, or `V`
   option spelling.
 
@@ -202,10 +206,27 @@ diagnostic cannot inject terminal controls.
 ## Help and version
 
 Help is first represented as a structured Help Document containing the
-canonical command path, description, usage lines, command entries, argument
-entries, option entries, pairwise option-relation metadata, option-group
-metadata, examples, notes, links, and custom sections. Custom sections have a
-stable ID, heading, and ordered paragraph or labeled-entry blocks.
+canonical command path, description, usage variants and rendered usage lines,
+command entries, argument entries, option entries, pairwise option-relation
+metadata, option-group metadata, examples, notes, links, and custom sections.
+Custom sections have a stable ID, heading, and ordered paragraph or
+labeled-entry blocks.
+
+Each Help Usage Variant contains a stable ID, a syntax suffix, and the complete
+command line formed by prefixing the canonical command path. Applications MAY
+declare one or more ordered usage variants on a command. The syntax suffix
+MUST be non-empty valid UTF-8, MUST NOT start or end with an ASCII space, and
+MUST NOT contain C0 controls or DEL. It does not include the command path.
+Usage variants are Help metadata only: they do not change parsing, Diagnostic
+usage, portable or application Invocation validation, or Invocation values.
+
+When a command has no declared usage variants, the Help Document contains a
+generated `default` variant based on its options, positionals, and required
+subcommand. Declared variants replace that generated direct-invocation
+variant. A command with optional subcommands also receives a generated
+`subcommand` variant after its declared or default variants. A declared
+`subcommand` ID conflicts with that generated variant. A command that requires
+a subcommand cannot declare usage variants.
 
 Standard command, argument, and option entries retain their stable definition
 IDs independently of rendered labels. Option-group metadata retains stable
