@@ -5,7 +5,8 @@
 Nagi CLI provides native Rust and Go APIs with the same observable command
 semantics. Both implementations validate a Command Graph, parse platform
 argument values into a typed Invocation, execute a Handler through an injected
-Context, and return an explicit Exit Status
+Context, build structured Help and Diagnostics, and return an explicit Exit
+Status through a configurable Runtime Policy
 
 The language-neutral [command application specification](../spec/cli.md) is
 the public behavioral contract. Shared fixtures under `fixtures/cli` verify
@@ -33,16 +34,29 @@ Commands, options, and positionals use language-native builders
 | Count | `OptionSpec::count("id")` | `cli.Count("id")` |
 | Value option | `OptionSpec::value("id")` | `cli.ValueOption("id")` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
+| Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
+| Typed validator | `.validator(validator)` | `.Validator(validator)` |
+| Help example | `.example(name, invocation)` | `.Example(name, invocation)` |
+| Help note | `.note(text)` | `.Note(text)` |
+| Help link | `.link(label, url)` | `.Link(label, url)` |
+| Custom Help section | `HelpSection::new(...)` | `cli.NewHelpSection(...)` |
 | Handler | `.handler(handler)` | `.Handle(handler)` |
 
 Long and short names are explicit. Value options can be required, repeatable,
-environment-backed, defaulted, or related through `requires` and `conflicts`
+environment-backed, defaulted, or related through `requires` and `conflicts`.
+Relations can inspect resolved presence or command-line presence
+
+Portable option groups express `at-most-one`, `exactly-one`, `at-least-one`,
+and `all-or-none` cardinality over options on one command. Groups inspect
+command-line presence by default so a defaulted option does not appear to have
+been explicitly supplied. Application-specific typed validators run after
+parsing, fallback resolution, and portable validation
 
 The complete graph is validated before argv is consumed. Invalid names,
 reserved built-in spellings, path-wide value ID collisions, sibling alias
-collisions, invalid positional order, and cross-command option relations return
-an `invalid-specification` Diagnostic
+collisions, invalid positional order, malformed groups, and cross-command
+option relations return an `invalid-specification` Diagnostic
 
 ## Parsing and typed values
 
@@ -61,12 +75,31 @@ parser when invalid UTF-8 must remain accepted
 An Invocation contains the canonical command path and all values from commands
 on that path. Each parsed value records whether it came from the command line,
 environment, or default. Command-line values take precedence over both
-fallback sources
+fallback sources. `Invocation::contains` and `Invocation.Contains` report
+resolved presence, while `Invocation::supplied` and `Invocation.Supplied`
+report whether argv supplied the ID
 
 Rust retrieves typed values through `Invocation::value` and
 `Invocation::values`. Go uses `cli.ValueAs[T]` for the first value or accesses
 `ParsedValue.Typed()` when iterating repeated values. A missing or differently
 typed ID returns absence rather than coercion
+
+## Structured Help
+
+`Command::help_document` and `Command.HelpDocument` return a renderer-independent
+Help Document. It contains the canonical command path, generated usage,
+commands, arguments, options, option-relation and option-group constraints,
+named examples, notes, links, and application-defined structured sections.
+Standard entries and relation and group members retain stable IDs separately
+from display labels
+
+The default plain renderer preserves definition order and aligns labels by
+terminal Cell width. Applications can install a custom Help Renderer through
+the Runtime Policy without replacing parsing or validation
+
+In addition to `-h` and `--help`, roots with subcommands provide
+`help [COMMAND...]`. Nested aliases are accepted and the selected command is
+reported by its canonical path
 
 ## Runtime
 
@@ -74,17 +107,25 @@ A Handler receives mutable access to injected stdin, stdout, stderr,
 environment, current directory, and cooperative cancellation. It returns an
 Outcome or a Diagnostic and must not terminate the process
 
-`Command::run` and `Command.Run` execute with a caller-supplied Context. The
-process helpers use platform argv, environment, current directory, and standard
-I/O, then convert SIGINT into cancellation
+`Command::run` and `Command.Run` execute with the default Runtime Policy.
+`Command::run_with_policy` and `Command.RunWithPolicy` execute with a
+caller-supplied policy. The process helpers use platform argv, environment,
+current directory, and standard I/O, then convert SIGINT into cancellation
 
 - Rust `Command::run_process` temporarily installs and restores its SIGINT handler
 - Go `Command.RunProcess` uses `signal.NotifyContext` and always stops notification
 - Both helpers return an Exit Status instead of terminating the process
 
-Status 0 means success, 1 general failure, 2 a usage error, and 130 SIGINT
-cancellation. Custom statuses are restricted to one byte. Framework I/O
-failures are returned to the caller
+Diagnostics carry a semantic category independently of process status:
+`specification`, `usage`, `execution`, `cancellation`, or `io`. The default
+Exit Code Policy maps specification and usage to 2, execution and I/O to 1,
+and cancellation to 130. Applications can remap categories, for example usage
+to status 1, without changing Diagnostic meaning
+
+The Runtime Policy also selects the Help Renderer and Diagnostic Renderer. The
+plain Diagnostic Renderer can change its prefix and whether usage is included.
+Custom statuses are restricted to one byte. Framework I/O failures are
+returned to the caller
 
 Help and version go to stdout. Diagnostics go to stderr. User-originated C0,
 DEL, and invalid UTF-8 bytes are rendered as uppercase `\xHH` escapes to prevent
@@ -105,6 +146,7 @@ handler
 | Environment | `.environment(...)` | `.Environment(...)` |
 | Current directory | `.current_directory(...)` | `.CurrentDirectory(...)` |
 | Pre-cancel | `.cancelled(true)` | `.Cancelled(true)` |
+| Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | Run | `.run()` | `.Run()` |
 
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
@@ -118,6 +160,11 @@ entry points
 The core does not load configuration files, generate shell completions, run
 interactive prompts, or integrate a TUI. Long-running handlers must poll their
 injected cancellation source and stop cooperatively
+
+The portable graph does not model arbitrary invocation grammars or
+parser-generator productions. Use option groups and typed validators for
+bounded application rules; keep command-specific parsing outside the portable
+specification when those mechanisms are insufficient
 
 Process integration targets Linux and macOS on x86-64 and ARM64. Parsing and
 injected execution do not require a terminal

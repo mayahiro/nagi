@@ -41,9 +41,9 @@ Unicode-aware text, typed VT codecs, cell surfaces, deterministic test
 harnesses, 21 standard widgets, and virtual ScrollViewports for large content
 
 Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
-deterministic help and diagnostics, injected runtimes, cooperative SIGINT
-cancellation, process-free test drivers, and matching basic and subcommand
-examples
+portable option groups and validators, structured deterministic Help,
+semantic Diagnostics with configurable runtime policies, cooperative SIGINT
+cancellation, process-free test drivers, and matching examples
 
 ## Usage and contracts
 

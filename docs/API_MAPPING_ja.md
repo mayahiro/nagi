@@ -127,14 +127,21 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Command定義 | `Command::new` | `cli.NewCommand` |
 | Flag、count、value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
 | Positional argument | `Argument::new` | `cli.Positional` |
+| Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
 | Raw、string、integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
+| Typed Invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
+| Structured Help | `HelpDocument` | `cli.HelpDocument` |
+| Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime service | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
+| Diagnosticの意味 | `DiagnosticCategory` | `cli.DiagnosticCategory` |
+| Runtime互換性 | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
 | Process実行 | `Command::run_process` | `Command.RunProcess` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel`と`NewContextWithCancellation` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
@@ -145,7 +152,9 @@ Goはraw byteをstringへ保持し、parser resultを`any`とgenericな`ValueAs`
 
 Rust cancellationはatomic token、Go cancellationは`context.Context`を使用します
 
-これらの表現差はparsing、Help、Diagnostic、Exit Statusを変更しません
+これらの表現差はparsing、structured Help、Diagnostic semanticsを変更しません
+
+両実装は同じ既定Runtime Policyを適用し、applicationはrendererまたはcategoryからstatusへのmappingを明示的に変更できます
 
 完全な契約は[public CLI API guide](CLI_API_ja.md)と[command application semantics](../spec/cli.md)を参照してください
 

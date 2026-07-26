@@ -147,14 +147,21 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Command definition | `Command::new` | `cli.NewCommand` |
 | Flag, count, value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
 | Positional argument | `Argument::new` | `cli.Positional` |
+| Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
 | Raw, string, integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
+| Typed invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
+| Structured Help | `HelpDocument` | `cli.HelpDocument` |
+| Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime services | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
+| Diagnostic meaning | `DiagnosticCategory` | `cli.DiagnosticCategory` |
+| Runtime compatibility | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
 | Process execution | `Command::run_process` | `Command.RunProcess` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel` with `NewContextWithCancellation` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
@@ -164,8 +171,10 @@ Rust stores raw platform values as `OsString` and typed parser results behind
 `any` plus the generic `ValueAs` helper. Rust cancellation is an atomic token;
 Go cancellation is a `context.Context`
 
-These representation differences do not change parsing, help, diagnostics, or
-Exit Status. See the [public CLI API guide](CLI_API.md) and
+These representation differences do not change parsing, structured Help, or
+Diagnostic semantics. Each implementation applies the same default Runtime
+Policy, while applications may deliberately select a different renderer or
+category-to-status mapping. See the [public CLI API guide](CLI_API.md) and
 [command application semantics](../spec/cli.md) for the complete contract
 
 See the [public API guide](API.md) and matching Rust and Go examples for

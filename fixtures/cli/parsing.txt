@@ -12,5 +12,7 @@ subcommand	argv=--verbose|serve|--mode|http|localhost	env=	expected=ok;command=n
 subcommand-alias	argv=s|-mhttps|example	env=	expected=ok;command=nagi/serve;values=color=value:default:6175746F,host=value:cli:6578616D706C65,mode=value:cli:6874747073,port=value:default:38303830
 root-help	argv=--help	env=	expected=action;kind=help;command=nagi
 child-help	argv=serve|--help	env=	expected=action;kind=help;command=nagi/serve
+root-help-command	argv=help	env=	expected=action;kind=help;command=nagi
+child-help-command	argv=help|s	env=	expected=action;kind=help;command=nagi/serve
 version	argv=--version	env=	expected=action;kind=version;value=1.2.3
 invalid-utf8-positional	argv=\xFF	env=	expected=ok;command=nagi;values=color=value:default:6175746F,input=value:cli:FF
