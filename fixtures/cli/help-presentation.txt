@@ -1,0 +1,5 @@
+nagi-fixture-v1	cli-help-presentation
+auto	mode=auto	required=false	expected=root-id:direct=<ROOT>|root-id:subcommand=[OPTIONS] <COMMAND>
+hidden	mode=hidden	required=false	expected=root-id:direct=<ROOT>
+expanded	mode=expanded	required=false	expected=root-id:direct=<ROOT>|root-id/compare-id:file=compare --file <FILE>|root-id/compare-id:stdin=compare --stdin|root-id/status-id:default=status [OPTIONS]
+required-expanded	mode=expanded	required=true	expected=root-id/compare-id:file=compare --file <FILE>|root-id/compare-id:stdin=compare --stdin|root-id/status-id:default=status [OPTIONS]

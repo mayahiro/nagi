@@ -52,12 +52,17 @@ Portable option groups express `at-most-one`, `exactly-one`, `at-least-one`,
 and `all-or-none` cardinality over options on one command. Groups inspect
 command-line presence by default so a defaulted option does not appear to have
 been explicitly supplied. Application-specific typed validators run after
-parsing, fallback resolution, and portable validation
+parsing, fallback resolution, and portable validation. Rust validators return
+`Result<(), Diagnostic>`. Go validators return `*Diagnostic`, where `nil`
+accepts the Invocation. Returning a structured Diagnostic preserves the
+application code, semantic category, targets, and hints without
+renderer-specific conversion
 
 The complete graph is validated before argv is consumed. Invalid names,
-reserved built-in spellings, path-wide value ID collisions, sibling alias
-collisions, invalid positional order, malformed groups, and cross-command
-option relations return an `invalid-specification` Diagnostic
+reserved built-in spellings, local option and positional ID collisions, sibling
+alias collisions, invalid positional order, malformed groups, and
+cross-command option relations return an `invalid-specification` Diagnostic.
+Parent and child commands may reuse the same value ID and option spelling
 
 ## Parsing and typed values
 
@@ -73,17 +78,35 @@ parser when invalid UTF-8 must remain accepted
 | Finite values | `possible_values_parser(...)` | `cli.PossibleValuesParser(...)` |
 | Custom typed value | `value_parser(...)` | `cli.CustomParser(...)` |
 
-An Invocation contains the canonical command path and all values from commands
-on that path. Each parsed value records whether it came from the command line,
-environment, or default. Command-line values take precedence over both
-fallback sources. `Invocation::contains` and `Invocation.Contains` report
-resolved presence, while `Invocation::supplied` and `Invocation.Supplied`
-report whether argv supplied the ID
+An Invocation contains a canonical command-name path, a stable command-ID path,
+and one value scope for every selected command. The complete identity of a
+value is its stable command-ID path plus its command-local value ID. This lets
+a large command tree use local IDs such as `session` or `output` consistently
+without encoding command names into every ID
 
-Rust retrieves typed values through `Invocation::value` and
+Unqualified lookup starts at the current scope and searches toward the root.
+The nearest declaration shadows an ancestor declaration even when the nearer
+declaration has no resolved value. A validator's current scope is the command
+that declared it. A handler's current scope is the selected leaf command.
+Use `Invocation::scope` or `Invocation.Scope` with a stable command-ID path for
+exact access to a parent or another selected scope. `Invocation::scopes` and
+`Invocation.Scopes` enumerate all selected scopes in root-to-leaf order
+
+Each parsed value records whether it came from the command line, environment,
+or default. Command-line values take precedence over both fallback sources.
+`Invocation::contains` and `Invocation.Contains` report resolved presence,
+while `Invocation::supplied` and `Invocation.Supplied` report whether argv
+supplied the nearest visible declaration. Exact scopes provide the same
+operations without ancestor lookup
+
+Rust retrieves optional typed values through `Invocation::value` and
 `Invocation::values`. Go uses `cli.ValueAs[T]` for the first value or accesses
-`ParsedValue.Typed()` when iterating repeated values. A missing or differently
-typed ID returns absence rather than coercion
+`ParsedValue.Typed()` when iterating repeated values. For schema-required
+mapping, use `Invocation::require_value` in Rust or
+`cli.RequireValueAs[T]` with either an Invocation or Invocation Scope in Go.
+`ValueAccessError` distinguishes a missing value from a parser-result type
+mismatch and includes the stable lookup scope and local value ID. No accessor
+coerces dynamic types
 
 ## Structured Help
 
@@ -98,9 +121,17 @@ display labels
 `Command::usage_variant` and `Command.UsageVariant` add ordered Help-only
 invocation forms. Their syntax is a suffix such as `<NODE> [OPTIONS]`; the
 framework prefixes the canonical command path. Explicit variants replace the
-generated direct-invocation usage while the Command Graph continues to
-generate optional-subcommand usage. `HelpUsageVariant` exposes the stable ID,
-syntax suffix, and complete command line
+generated direct-invocation usage. `HelpUsageVariant` exposes the source stable
+command-ID path, source-local variant ID, syntax suffix, and complete command
+line
+
+`Command::subcommand_usage` and `Command.SubcommandUsage` control parent Help
+presentation without changing parsing. `Auto` emits the generic optional
+`<COMMAND>` form, `Hidden` omits it, and `Expanded` emits each immediate
+child's direct Usage Variants in definition order. Expansion is shallow and
+retains each child's stable command-ID path, so child-local variant IDs may be
+reused. On a command that requires a subcommand, `Expanded` emits only the
+child forms
 
 Usage Variants do not change argv parsing, typed validation, Diagnostic usage,
 or Invocation. This lets an application document several forms implemented by
@@ -114,6 +145,27 @@ the Runtime Policy without replacing parsing or validation
 In addition to `-h` and `--help`, roots with subcommands provide
 `help [COMMAND...]`. Nested aliases are accepted and the selected command is
 reported by its canonical path
+
+## Structured Diagnostics
+
+A Diagnostic has a stable machine-readable code, semantic category,
+human-readable message, canonical command path, optional usage, ordered value
+targets, and ordered remediation hints. A target identifies an option or
+argument by stable command-ID path and command-local value ID. Targets remain
+available to custom renderers even though the default renderer does not expose
+internal IDs
+
+Framework codes retain their specified categories. Applications may create a
+stable application code and override its category, for example a
+command-specific validation code in the `usage` category. Rust uses
+`DiagnosticCode::application`, while Go uses a typed
+`cli.DiagnosticCode("application-code")` value. Validator and handler targets
+without an explicit command-ID path receive the validator or handler current
+scope. Use `with_command_id_path` or `WithCommandIDPath` when targeting another
+selected scope
+
+The plain renderer writes one `hint:` line per hint before optional usage.
+Custom Diagnostic Renderers receive the complete structured Diagnostic
 
 ## Runtime
 
@@ -141,6 +193,19 @@ plain Diagnostic Renderer can change its prefix and whether usage is included.
 Custom statuses are restricted to one byte. Framework I/O failures are
 returned to the caller
 
+For staged adoption, parse first and inspect `ParseResult::command_id_path` or
+`ParseResult.CommandIDPath`. `run_parsed_with_policy` and
+`RunParsedWithPolicy` execute Help, version, or a registered handler from an
+existing Parse Result. `run_invocation_with_policy` and
+`RunInvocationWithPolicy` bridge an already validated Invocation to one
+registered handler. Both reject results whose canonical or stable command path
+does not identify the same Command Graph
+
+Parser-only integrations can call the Runtime Policy's pure Help rendering,
+Diagnostic rendering, and Diagnostic-to-status helpers. This preserves one
+renderer and exit-code policy while an existing CLI continues to own process
+dispatch and output routing
+
 Help and version go to stdout. Diagnostics go to stderr. User-originated C0,
 DEL, and invalid UTF-8 bytes are rendered as uppercase `\xHH` escapes to prevent
 terminal-control injection
@@ -165,8 +230,10 @@ handler
 
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs),
-[Go basic example](../nagicli-go/examples/basic/main.go), and
-[Go subcommand example](../nagicli-go/examples/subcommands/main.go) as complete
+[Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
+[Go basic example](../nagicli-go/examples/basic/main.go),
+[Go subcommand example](../nagicli-go/examples/subcommands/main.go), and
+[Go staged-adoption example](../nagicli-go/examples/staged/main.go) as complete
 entry points
 
 ## Limitations

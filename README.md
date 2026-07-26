@@ -40,11 +40,11 @@ The existing Nagi TUI implementation provides native Rust and Go runtimes,
 Unicode-aware text, typed VT codecs, cell surfaces, deterministic test
 harnesses, 21 standard widgets, and virtual ScrollViewports for large content
 
-Nagi CLI provides native Rust and Go Command Graphs, typed value parsing,
-portable option groups and validators, structured deterministic Help,
-stable Help-only Usage Variants, semantic Diagnostics with configurable
-runtime policies, cooperative SIGINT cancellation, process-free test drivers,
-and matching examples
+Nagi CLI provides native Rust and Go Command Graphs, command-local typed value
+scopes, portable option groups and validators, structured deterministic Help
+with controllable Help-only Usage Variants, targeted semantic Diagnostics,
+staged runtime policies, cooperative SIGINT cancellation, process-free test
+drivers, and matching examples
 
 ## Usage and contracts
 

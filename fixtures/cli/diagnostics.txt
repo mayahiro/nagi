@@ -1,0 +1,5 @@
+nagi-fixture-v1	cli-diagnostics
+custom-validation	argv=blocked	expected=code=validation;category=usage;targets=argument@nagi:input;hints=choose another input
+missing-child-option	argv=serve|localhost	expected=code=missing-required;category=usage;targets=option@nagi/serve:mode;hints=
+missing-child-positional	argv=serve|--mode|http	expected=code=missing-required;category=usage;targets=argument@nagi/serve:host;hints=
+invalid-child-option	argv=serve|--mode|http|--port|many|host	expected=code=invalid-value;category=usage;targets=option@nagi/serve:port;hints=

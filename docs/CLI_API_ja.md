@@ -53,9 +53,15 @@ Groupはdefault付きoptionを明示指定と誤認しないようcommand-line p
 
 Application固有のtyped validatorはparse、fallback解決、portable validationの後に実行されます
 
+Rust validatorは`Result<(), Diagnostic>`、Go validatorはacceptを`nil`で表す`*Diagnostic`を返します
+
+Structured Diagnosticを直接返すため、application code、semantic category、target、hintをrenderer固有の変換なしで維持できます
+
 Argvを読む前にgraph全体を検証します
 
-不正な名前、予約済みbuilt-in spelling、active path上のvalue ID衝突、sibling alias衝突、不正なpositional順序、不正なgroup、Commandをまたぐoption relationは`invalid-specification` Diagnosticになります
+不正な名前、予約済みbuilt-in spelling、同一Command内のoptionとpositional ID衝突、sibling alias衝突、不正なpositional順序、不正なgroup、Commandをまたぐoption relationは`invalid-specification` Diagnosticになります
+
+ParentとchildのCommandは同じvalue IDとoption spellingを再利用できます
 
 ## Parsingとtyped value
 
@@ -73,17 +79,37 @@ Rustはraw valueを`OsString`、Goはbyte列を保持するstringとして保存
 | Finite value | `possible_values_parser(...)` | `cli.PossibleValuesParser(...)` |
 | Custom typed value | `value_parser(...)` | `cli.CustomParser(...)` |
 
-Invocationはcanonical command pathと、そのpath上の全Commandから得たvalueを保持します
+Invocationはcanonical command name path、stable command-ID path、選択したCommandごとのvalue scopeを保持します
+
+Valueの完全なidentityはstable command-ID pathとcommand-local value IDの組です
+
+このscopeにより、大規模なcommand treeでもCommand名を全IDへ埋め込まず、`session`や`output`のようなlocal IDを一貫して使用できます
+
+Unqualified lookupはcurrent scopeからrootへ向かって検索します
+
+近いCommandの宣言はvalueが未解決でもancestorの同名宣言をshadowします
+
+Validatorのcurrent scopeはvalidatorを定義したCommand、Handlerのcurrent scopeは選択されたleaf Commandです
+
+Parentなどのexact scopeを参照する場合はstable command-ID pathを指定して`Invocation::scope`または`Invocation.Scope`を使用します
+
+`Invocation::scopes`と`Invocation.Scopes`は選択されたscopeをrootからleafの順に列挙します
 
 各parsed valueはcommand line、environment、defaultのどこから得たかを記録し、command-line valueが両fallbackより優先されます
 
-`Invocation::contains`と`Invocation.Contains`はresolved presence、`Invocation::supplied`と`Invocation.Supplied`はargvからIDが指定されたかを返します
+`Invocation::contains`と`Invocation.Contains`はresolved presence、`Invocation::supplied`と`Invocation.Supplied`はnearest visible declarationがargvから指定されたかを返します
 
-Rustは`Invocation::value`と`Invocation::values`でtyped valueを取得します
+Exact scopeにもancestor lookupを行わない同じ操作があります
+
+Rustはoptionalなtyped valueを`Invocation::value`と`Invocation::values`で取得します
 
 Goは最初のvalueに`cli.ValueAs[T]`を使い、repeated valueの走査では`ParsedValue.Typed()`を使用します
 
-存在しないIDやtypeが異なるIDはcoerceせずabsenceを返します
+Schema上必要なvalueのmappingには、Rustの`Invocation::require_value`またはGoの`cli.RequireValueAs[T]`をInvocationかInvocation Scopeと組み合わせて使用します
+
+`ValueAccessError`はmissing valueとparser-result type mismatchを区別し、stable lookup scopeとlocal value IDを保持します
+
+どのaccessorもdynamic typeをcoerceしません
 
 ## Structured Help
 
@@ -97,9 +123,17 @@ Help Documentはcanonical command path、structured Usage Variantとrendered usa
 
 Syntaxには`<NODE> [OPTIONS]`のようなcommand pathを除いたsuffixを指定し、frameworkがcanonical command pathを付与します
 
-明示variantは自動生成されるdirect-invocation usageを置き換え、Command Graphから得られる任意subcommand向けusageは引き続き自動生成されます
+明示variantは自動生成されるdirect-invocation usageを置き換えます
 
-`HelpUsageVariant`はstable ID、syntax suffix、完全なcommand lineを公開します
+`HelpUsageVariant`はsource stable command-ID path、source-local variant ID、syntax suffix、完全なcommand lineを公開します
+
+`Command::subcommand_usage`と`Command.SubcommandUsage`はparsingを変えずにparent Helpのpresentationを制御します
+
+`Auto`は任意subcommand向けの汎用`<COMMAND>` formを追加し、`Hidden`は省略し、`Expanded`は各immediate childのdirect Usage Variantを定義順に展開します
+
+展開はshallowでchildのstable command-ID pathを維持するため、child-local variant IDを再利用できます
+
+Subcommand必須Commandで`Expanded`を選ぶとchild formだけを出力します
 
 Usage Variantはargv parsing、typed validation、Diagnostic usage、Invocationを変更しません
 
@@ -112,6 +146,28 @@ Applicationはparsingやvalidationを置き換えずにRuntime Policyから独�
 Rootにsubcommandがある場合は`-h`と`--help`に加えて`help [COMMAND...]`を提供します
 
 Nested aliasを受理し、選択結果はcanonical pathで表します
+
+## Structured Diagnostic
+
+Diagnosticはstableなmachine-readable code、semantic category、human-readable message、canonical command path、任意usage、定義順のvalue targetとremediation hintを持ちます
+
+Targetはstable command-ID pathとcommand-local value IDの組でoptionまたはargumentを識別します
+
+既定rendererはinternal IDを表示しませんが、custom rendererはstructured targetを利用できます
+
+Framework codeは仕様で定義したcategoryを維持します
+
+Applicationはstableなapplication codeを作成し、command固有validation codeを`usage`にする場合などにcategoryを上書きできます
+
+Rustは`DiagnosticCode::application`、Goはtyped valueの`cli.DiagnosticCode("application-code")`を使用します
+
+明示的なcommand-ID pathを持たないvalidatorまたはhandler targetには、そのvalidatorまたはhandlerのcurrent scopeが設定されます
+
+別のselected scopeをtargetにする場合は`with_command_id_path`または`WithCommandIDPath`を使用します
+
+Plain rendererは任意usageの前にhintごとの`hint:`行を出力します
+
+Custom Diagnostic Rendererは完全なstructured Diagnosticを受け取ります
 
 ## Runtime
 
@@ -141,6 +197,18 @@ Plain Diagnostic Rendererはprefixとusage表示の有無を変更できます
 
 Custom statusは1 byteへ制限され、frameworkのI/O failureはcallerへ返されます
 
+段階導入では先にparseし、`ParseResult::command_id_path`または`ParseResult.CommandIDPath`で選択結果を確認します
+
+`run_parsed_with_policy`と`RunParsedWithPolicy`は既存Parse ResultからHelp、version、登録済みhandlerを実行します
+
+`run_invocation_with_policy`と`RunInvocationWithPolicy`はvalidation済みInvocationを登録済みhandlerへ橋渡しします
+
+Canonical pathまたはstable command pathが同じCommand Graphを示さないresultは両APIとも拒否します
+
+Parser-only統合ではRuntime Policyのpure Help rendering、Diagnostic rendering、Diagnostic-to-status helperを使用できます
+
+これにより既存CLIがprocess dispatchとoutput routingを所有したまま、rendererとexit-code policyを共有できます
+
 Helpとversionはstdout、Diagnosticはstderrへ出力します
 
 User由来のC0、DEL、不正UTF-8 byteはuppercaseの`\xHH`へ変換し、terminal control injectionを防ぎます
@@ -162,7 +230,7 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)を参照してください
 
 ## 制約
 

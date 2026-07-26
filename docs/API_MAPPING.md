@@ -152,26 +152,36 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Stable selected command path | `Invocation::command_id_path` | `Invocation.CommandIDPath` |
+| Exact command-local scope | `Invocation::scope` / `InvocationScope` | `Invocation.Scope` / `cli.InvocationScope` |
 | Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
+| Required typed value | `Invocation::require_value` | `cli.RequireValueAs` |
+| Typed access failure | `ValueAccessError` | `cli.ValueAccessError` |
 | Typed invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
 | Help Usage Variant definition | `Command::usage_variant` | `Command.UsageVariant` |
+| Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime services | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
+| Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
 | Diagnostic meaning | `DiagnosticCategory` | `cli.DiagnosticCategory` |
 | Runtime compatibility | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
+| Execute a Parse Result | `Command::run_parsed_with_policy` | `Command.RunParsedWithPolicy` |
+| Execute an Invocation | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
+| Parser-only rendering and status | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process execution | `Command::run_process` | `Command.RunProcess` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel` with `NewContextWithCancellation` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rust stores raw platform values as `OsString` and typed parser results behind
 `Any`. Go preserves raw bytes in strings and exposes parser results through
-`any` plus the generic `ValueAs` helper. Rust cancellation is an atomic token;
-Go cancellation is a `context.Context`
+`any` plus generic `ValueAs` and `RequireValueAs` helpers. Both use stable
+command-ID paths to disambiguate reused local IDs. Rust cancellation is an
+atomic token; Go cancellation is a `context.Context`
 
 These representation differences do not change parsing, structured Help, or
 Diagnostic semantics. Each implementation applies the same default Runtime

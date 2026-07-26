@@ -37,7 +37,7 @@ is true:
 - a short option is not one ASCII alphanumeric byte;
 - sibling command stable IDs, names, or aliases overlap;
 - option IDs, long names, or short names overlap within a command;
-- value IDs overlap along one active command path;
+- option and positional value IDs overlap within one command;
 - a repeated positional is not the final positional;
 - a relation names an option outside its command;
 - an option group has an invalid or duplicate ID, contains fewer than two
@@ -58,9 +58,11 @@ Options and positionals MAY be interspersed until `--`. The `--` argument ends
 option and subcommand recognition and is not stored. A lone `-` is positional.
 
 Before a positional is consumed, a non-option matching a child name or alias
-selects that child. After child selection, only child options are recognized;
-already parsed parent values remain in the Invocation. After any positional is
-consumed, later tokens are positional even if they match a child name.
+selects that child. After child selection, only child options are recognized.
+Parent and child commands MAY declare the same option spelling and local value
+ID; token position selects the command scope. Already parsed parent values
+remain in the Invocation. After any positional is consumed, later tokens are
+positional even if they match a child name.
 
 If a command has children but no positionals, an unrecognized non-option is an
 `unknown-command` error. If a command requires a child and none is selected,
@@ -141,24 +143,38 @@ Unexpected positionals fail rather than being discarded.
 Relationship and option-group validation runs after defaults and environment
 values have been resolved. Language-native invocation validators run after
 portable validation, in root-to-leaf command order. A validator receives the
-immutable typed Invocation and returns success or a structured Diagnostic.
-Validators do not run for help or version actions. Validator predicates are
-application-defined and are not portable; their execution phase and returned
-Diagnostic remain part of the shared runtime contract.
+immutable typed Invocation with the defining command as its current scope and
+returns success or a structured Diagnostic. Validators do not run for help or
+version actions. Validator predicates are application-defined and are not
+portable; their execution phase and returned Diagnostic remain part of the
+shared runtime contract.
 
 ## Invocation
 
-Invocation contains the canonical command path and values for every command on
-that path. Access is typed by option kind and Value Parser result. Looking up a
-missing or differently typed value returns absence rather than coercing it.
+Invocation contains the canonical command-name path, stable command-ID path,
+and one value scope for every command on that path. A value identity is the
+pair of a stable command-ID path and a command-local value ID. Option and
+positional IDs share one local namespace but MAY be reused by parent and child
+commands.
+
+Unqualified lookup starts at the current scope and searches toward the root.
+The nearest declaration shadows an ancestor declaration even when the nearer
+value was not resolved. A validator uses its defining command as the current
+scope. A handler uses the selected leaf command as the current scope.
+Applications MAY select an exact scope by stable command-ID path.
+
+Access is typed by option kind and Value Parser result. Looking up a missing or
+differently typed value returns absence rather than coercing it.
 
 Definition order MUST NOT affect value lookup. Repeated values preserve command
-line order.
+line order. Implementations also provide a fallible required typed lookup that
+distinguishes a missing value from a parser-result type mismatch.
 
 ## Diagnostics
 
 A Diagnostic contains a stable code, message, canonical command path, optional
-usage text, and semantic category. The codes are:
+usage text, semantic category, zero or more value targets, and zero or more
+ordered hints. Framework codes are:
 
 ```text
 invalid-specification
@@ -181,6 +197,15 @@ cancelled
 io-error
 ```
 
+Applications MAY use another stable code matching the identifier grammar.
+A code outside the framework set has the `execution` category until the
+application explicitly assigns another category.
+
+A Diagnostic target identifies an option or positional by stable command-ID
+path and command-local value ID. Targets are machine-readable metadata and do
+not require the default renderer to expose internal IDs. Hints are
+human-readable remediation text.
+
 A Diagnostic also has one semantic category:
 
 ```text
@@ -196,12 +221,14 @@ uses this form:
 
 ```text
 error[CODE]: MESSAGE
+hint: HINT
 usage: USAGE
 ```
 
-The usage line is omitted when unavailable. C0 controls, DEL, and invalid UTF-8
-bytes originating in user input MUST render as uppercase `\xHH` escapes so a
-diagnostic cannot inject terminal controls.
+One `hint:` line is rendered for each hint in insertion order. Hint lines and
+the usage line are omitted when unavailable. C0 controls, DEL, and invalid
+UTF-8 bytes originating in user input MUST render as uppercase `\xHH` escapes
+so a diagnostic cannot inject terminal controls.
 
 ## Help and version
 
@@ -212,21 +239,31 @@ metadata, option-group metadata, examples, notes, links, and custom sections.
 Custom sections have a stable ID, heading, and ordered paragraph or
 labeled-entry blocks.
 
-Each Help Usage Variant contains a stable ID, a syntax suffix, and the complete
-command line formed by prefixing the canonical command path. Applications MAY
-declare one or more ordered usage variants on a command. The syntax suffix
-MUST be non-empty valid UTF-8, MUST NOT start or end with an ASCII space, and
-MUST NOT contain C0 controls or DEL. It does not include the command path.
-Usage variants are Help metadata only: they do not change parsing, Diagnostic
-usage, portable or application Invocation validation, or Invocation values.
+Each Help Usage Variant contains its source stable command-ID path, a
+source-local stable ID, a syntax suffix relative to the Help Document command,
+and the complete command line. Applications MAY declare one or more ordered
+usage variants on a command. The syntax suffix MUST be non-empty valid UTF-8,
+MUST NOT start or end with an ASCII space, and MUST NOT contain C0 controls or
+DEL. It does not include the Help Document command path. Usage variants are
+Help metadata only: they do not change parsing, Diagnostic usage, portable or
+application Invocation validation, or Invocation values.
 
 When a command has no declared usage variants, the Help Document contains a
 generated `default` variant based on its options, positionals, and required
 subcommand. Declared variants replace that generated direct-invocation
-variant. A command with optional subcommands also receives a generated
-`subcommand` variant after its declared or default variants. A declared
-`subcommand` ID conflicts with that generated variant. A command that requires
-a subcommand cannot declare usage variants.
+variant. A command chooses one subcommand-usage presentation:
+
+- `auto` adds a generated parent-local `subcommand` variant after direct
+  variants when subcommands are optional;
+- `hidden` does not add an optional-subcommand variant; and
+- `expanded` replaces generic subcommand syntax with each immediate child's
+  direct variants in child and variant definition order.
+
+For a command requiring a subcommand, `expanded` omits the generic generated
+parent form and emits only immediate child forms. Child expansion is shallow;
+a child's direct generated form may itself contain `<COMMAND>`. A declared
+parent-local `subcommand` ID conflicts with the generated `auto` variant. A
+command that requires a subcommand cannot declare parent-local usage variants.
 
 Standard command, argument, and option entries retain their stable definition
 IDs independently of rendered labels. Option-group metadata retains stable
@@ -268,9 +305,19 @@ policy maps semantic outcomes as follows:
 - SIGINT cancellation to 130.
 
 Applications MAY provide another category-to-status mapping, Help renderer, or
-Diagnostic renderer through runtime policy. Policy does not change parsing,
-validation, Diagnostic codes, categories, or the typed Invocation. The
-existing runtime entry point uses the default policy.
+Diagnostic renderer through runtime policy. Policy exposes pure Help
+rendering, Diagnostic rendering, and Diagnostic-to-status mapping so
+applications can reuse it without adopting process execution. Policy does not
+change parsing, validation, Diagnostic codes, categories, or the typed
+Invocation. The existing runtime entry point uses the default policy.
+
+Applications MAY execute an already parsed Parse Result or validated
+Invocation through the registered handler. This separates dispatch from I/O
+and enables command-by-command adoption inside an existing CLI. The combined
+runtime entry point remains a convenience over parsing and parsed execution.
+Parsed execution MUST reject a Parse Result or Invocation whose canonical
+command path and stable command-ID path do not identify the receiving Command
+Graph.
 
 Library execution returns I/O failures to its caller. Process helpers convert
 SIGINT into cancellation, restore signal handling when execution ends, and

@@ -1,0 +1,4 @@
+nagi-fixture-v1	cli-scopes
+both	argv=--session|parent|run|--session|child	expected=command=root/run;ids=root-id/run-id;current=child;root=parent;current-supplied=true;root-supplied=true
+child-shadows-parent	argv=--session|parent|run	expected=command=root/run;ids=root-id/run-id;current=none;root=parent;current-supplied=false;root-supplied=true
+root-default	argv=run	expected=command=root/run;ids=root-id/run-id;current=none;root=root;current-supplied=false;root-supplied=false

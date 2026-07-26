@@ -132,25 +132,36 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Stable selected command path | `Invocation::command_id_path` | `Invocation.CommandIDPath` |
+| Exact command-local scope | `Invocation::scope` / `InvocationScope` | `Invocation.Scope` / `cli.InvocationScope` |
 | Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
+| Required typed value | `Invocation::require_value` | `cli.RequireValueAs` |
+| Typed access failure | `ValueAccessError` | `cli.ValueAccessError` |
 | Typed Invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
 | Help Usage Variant定義 | `Command::usage_variant` | `Command.UsageVariant` |
+| Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime service | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
+| Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
 | Diagnosticの意味 | `DiagnosticCategory` | `cli.DiagnosticCategory` |
 | Runtime互換性 | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
+| Parse Result実行 | `Command::run_parsed_with_policy` | `Command.RunParsedWithPolicy` |
+| Invocation実行 | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
+| Parser-only renderingとstatus | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process実行 | `Command::run_process` | `Command.RunProcess` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel`と`NewContextWithCancellation` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
 
-Goはraw byteをstringへ保持し、parser resultを`any`とgenericな`ValueAs` helperで公開します
+Goはraw byteをstringへ保持し、parser resultを`any`とgenericな`ValueAs`および`RequireValueAs` helperで公開します
+
+両実装は再利用されたlocal IDをstable command-ID pathで区別します
 
 Rust cancellationはatomic token、Go cancellationは`context.Context`を使用します
 
