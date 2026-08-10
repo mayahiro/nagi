@@ -12,6 +12,7 @@ The harnesses provide equivalent observable behavior for
 - Manual Subscription delivery and lifecycle inspection
 - Interaction State inspection and focus control
 - Resolved ScrollViewport state and application exit-request inspection
+- Active target-to-root resolved action-group inspection
 - Message history, frame history, and canonical Surface snapshots
 - Active-task, stale-result, and backpressure diagnostics
 

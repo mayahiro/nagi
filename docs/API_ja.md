@@ -52,6 +52,56 @@ Event handlerはMessage送信、event consume、focus変更、pointer captureと
 
 ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。両方のviewport形式がaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、解決済み`ScrollState`の通知に対応します。ScrollViewportはeagerなchild treeを受け取ります。VirtualScrollViewportは代わりにcontent全体のCell extentを受け取り、解決済みのvisible `VirtualViewport`に対応する`VirtualFragment`だけを構築してsemantic traversalへ入れます。標準ListとTableのviewportはsemantic rowにこのvirtual pathを使用しますが、既存collection APIは全itemまたはrow metadataをmaterializeし、Listのfilterは全件を走査します。Collection access自体もlazyにする場合はCore virtual viewportを直接使用します。標準ListとTableのvirtual viewport内では各rowを1 Cell高とし、折り返しまたは複数行のcontentをclipします
 
+## Scoped KeyMap基盤
+
+Rustの`ActionId`とGoの`ActionID`はterminal keyと独立して操作を識別します
+
+`KeyStroke`はKeyと単一scalar Text inputを正規化し、`KeyBinding`はrepeatとcapability metadataを加え、immutableな`KeyMap` layerはactionのbinding list全体を置き換えます
+
+`resolve_actions`と`ResolveActions`はactiveな`KeyScope`をrootからtargetの順で一つのsemantic ownerへ適用します
+
+結果はaction、binding、scope順序を維持し、key文字列を重複させずにHelp-visible actionを抽出し、duplicateまたはambiguous bindingをstructured conflictとして返します
+
+`Action`はdescriptorとNode-localなsemantic handlerを組み合わせます
+
+Rustの`Node::on_actions`とGoの`Node.OnActions`は順序付きowner groupをattachし、Rustの`Node::with_key_scope`とGoの`Node.WithKeyScope`はoverrideとpropagation scopeをattachします
+
+Runtimeはactiveなtarget-to-root routeをaction、local Core handling、raw handler、ancestorの順で評価します
+
+ignored action resultはroutingを継続し、disabled-consume bindingはhandlerを呼ばずにconsumeします
+
+`stop-at-scope`はouter ancestorのaction groupだけを除外し、raw event routingとroot-to-targetのKeyMap継承は止めません
+
+Runtimeはhandler実行前にgroup内conflictをstructured errorとして拒否し、`active_action_groups`と`ActiveActionGroups`からactiveなresolved groupを公開します
+
+test harnessも同じprojectionを公開します
+
+Rustの`Help::from_resolved_actions`とGoの`NewHelpFromResolvedActions`は同じprojectionをeffective keyごとに一つのHelp bindingへ変換します
+
+actionとbinding順序を維持し、Help-hidden actionを除外して、unavailableまたはunsupportedなbindingをdisabledにします
+
+既存の手書き`HelpBinding`も引き続き利用できます
+
+標準Widget packageは`nagi.activate`、4個の`nagi.selection.*` operation、`nagi.collapse`、`nagi.expand`を表すconstantを公開します
+
+Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Treeはunmodified EnterとSpaceをdefaultに持つactivationを宣言します
+
+Selectは単一ownerで4個のselection actionを宣言し、Tabs rootはLeft、Right、Home、End、List、Table、Tree rootはUp、Down、Home、Endをdefaultに持つ同じactionを宣言します
+
+ListとTableはeagerとvirtualized contentで同じ単一root action groupを使用します
+
+TreeはLeftとRightをdefaultに持つcollapseとexpandを追加し、fullとviewport layoutで同じ単一root action groupを使用します
+
+Action IDを共有する場合もdefault bindingは各Widgetが所有し、active scopeから各binding list全体を置換または削除できます
+
+左button pressはraw pointer handlingに残り、keyboard rebindの影響を受けません
+
+actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
+
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree以外の標準Widgetはまだ移行していません
+
+完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
+
 ## EffectとSubscription
 
 Effectはone-shot workを表します
@@ -78,20 +128,21 @@ Subscriptionは安定key付きの長期sourceを表します
 
 標準Widgetはpublic Core composition APIとpublic Unicode text APIで実装されています
 
-- Listは1個のcomposite Tab stopとして動作し、application所有のselection、安定したitem pointer target、filter、window、pagination、`Length` viewportを使用する
-- ButtonはEnter、Space、左button pressでactivateする
+- Listはroot所有のactivationとvertical selection actionを持つ1個のcomposite Tab stopとして動作し、raw item pointer target、filter、window、pagination、`Length` viewportを使用する
+- Buttonはunmodified EnterとSpaceをdefaultに持つ`nagi.activate`と、別routeの左button pressでactivateする
 - Modalはborder付きのfocusとrouting scopeを中央配置し、任意でEscape dismissを扱う
 - Progressはinteger overflowなしで上限付きdeterminate progressを描画する
 - Spinnerはapplication clockで進める安定したframe cycleを描画する
 - Scrollbarはoverflowを避けてverticalまたはhorizontalのviewport geometryを描画する
-- CheckboxとRadioはcontrolled Boolean入力とgroup choiceを提供する
-- TabsとSelectはhorizontalまたはcompactなcontrolled selectionを提供する
-- Tableは1個のcomposite Tab stopとして動作し、columnと任意のbody viewportを`Length`でsizeし、headerを固定してkeyboard selectionへ追従する
-- Treeは1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
+- CheckboxとRadioは同じ`nagi.activate` bindingを公開しながら、controlled Boolean入力と重複Messageを出さずにconsumeするgroup choiceを提供する
+- Tabsはitemごとのactivationとroot所有のhorizontal selection actionを公開し、application selectionとitem focusを独立させる
+- Selectは共有Action IDを通じてWidget所有のactivationとselection defaultを公開し、wrapするactivationとboundary consumeを維持する
+- Tableはeagerとvirtualized bodyで同じroot action setを持つ1個のcomposite Tab stopとして動作し、columnと任意のbody viewportを`Length`でsizeし、headerを固定してkeyboard selectionへ追従する
+- Treeはroot所有のactivation、vertical selection、collapse、expand actionを持つ1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
 - TextAreaはselection、horizontal scroll、application所有のundoとredo historyを使い、extended grapheme境界でmultiline textを編集する
 - Command Paletteは安定したcommand IDに対するcontrolled query、filter、navigation、activationを組み合わせる
 - Sparkline、BarChart、Chartは上限付きで決定的なCell graphicsを提供する
-- Helpはcompactまたはaligned形式でkey bindingを表示する
+- Helpは手書きまたはresolved action由来のkey bindingをcompactまたはaligned形式で表示する
 - Paginatorはdotまたはnumeric形式のcontrolled page navigationを提供する
 - FilePickerはfilesystem I/Oを行わずapplication suppliedの不活性entry metadataをnavigateする
 - Calendarはcontrolledなproleptic Gregorian month gridを提供する
@@ -102,7 +153,7 @@ Widget galleryでは標準library全体を一覧できます。Dashboard、filte
 
 ## Testing
 
-Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisor diagnostic、解決済みScrollState、application終了要求の検査を提供します
+Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisor diagnostic、解決済みScrollState、activeなresolved action group、application終了要求の検査を提供します
 
 Application testではreal sleepやterminal timingへ依存しないようにvirtual timeとcontrolled async sourceを使用してください
 

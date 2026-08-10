@@ -17,6 +17,11 @@ the modal root. Routing still continues from a target inside the modal through
 the modal's ancestors to the screen or root handler unless a handler consumes
 the event
 
+Within each target-to-root Node, semantic key actions run before local Core
+input handling and the raw handler. Action propagation boundaries affect only
+ancestor action groups. The complete order and conflict rules are defined by
+the [scoped key-map specification](keymap.md)
+
 ## Pointer
 
 - Hit testing proceeds from the frontmost stack or overlay entry

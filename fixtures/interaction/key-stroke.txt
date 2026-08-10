@@ -1,0 +1,16 @@
+nagi-fixture-v1	key-stroke
+# event and stroke use test-only canonical encodings
+text-character	event=text/U+0061	stroke=char-U+0061:-	repeat=initial	matches=true	notation=a
+text-uppercase	event=text/U+0041	stroke=char-U+0041:-	repeat=initial	matches=true	notation=A
+text-space	event=text/U+0020	stroke=char-U+0020:-	repeat=initial	matches=true	notation=Space
+key-space	event=key/char-U+0020/-/press	stroke=char-U+0020:-	repeat=initial	matches=true	notation=Space
+named-enter	event=key/enter/-/unknown	stroke=enter:-	repeat=initial	matches=true	notation=Enter
+function-key	event=key/f-5/shift/press	stroke=f-5:shift	repeat=initial	matches=true	notation=Shift+F5
+all-modifiers	event=key/char-U+0041/shift+alt+control+meta/press	stroke=char-U+0041:shift+alt+control+meta	repeat=initial	matches=true	notation=Ctrl+Alt+Shift+Meta+A
+exact-modifiers	event=key/char-U+0061/alt+control/press	stroke=char-U+0061:control	repeat=initial	matches=false	notation=Ctrl+a
+repeat-initial	event=key/down/-/repeat	stroke=down:-	repeat=initial	matches=false	notation=Down
+repeat-allowed	event=key/down/-/repeat	stroke=down:-	repeat=allow	matches=true	notation=Down
+release	event=key/enter/-/release	stroke=enter:-	repeat=allow	matches=false	notation=Enter
+multi-text	event=text/U+0061+U+0062	stroke=char-U+0061:-	repeat=initial	matches=false	notation=a
+paste	event=paste/U+0061	stroke=char-U+0061:-	repeat=initial	matches=false	notation=a
+focus	event=focus-in	stroke=enter:-	repeat=initial	matches=false	notation=Enter

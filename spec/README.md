@@ -23,6 +23,7 @@ strength
 - [Unix terminal session](terminal-session.md)
 - [Focus](focus.md)
 - [Event routing](event-routing.md)
+- [Scoped key maps](keymap.md)
 - [Effects and subscriptions](effects.md)
 - [Scheduling](scheduling.md)
 - [Standard widgets](widgets.md)

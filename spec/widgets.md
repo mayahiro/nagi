@@ -18,12 +18,24 @@ spinner ticks, and modal visibility
   independently focusable
 - A non-empty List clamps an out-of-range selected index to its final item. An
   empty List has no selection
+- An enabled non-empty List root declares, in order, `nagi.activate`,
+  `nagi.selection.previous`, `nagi.selection.next`, `nagi.selection.first`, and
+  `nagi.selection.last`
+- Activate defaults to unmodified Enter and Space. Previous defaults to Up,
+  Next to Down, First to Home, and Last to End. Initial and explicit repeat
+  events are accepted; release and modified keys are not
+- An active KeyMap scope replaces each action's complete keyboard binding list,
+  including an empty replacement that unbinds that action
 - Up and Down move by one without wrapping. Home and End select the first and
-  final item
-- Enter, Space, and a left-button press select the current or pointed item
+  final item. Activation emits the normalized current original item index
+- A left-button press selects the pointed item and remains a raw pointer path
+  independent from keyboard rebinding
 - Navigation that changes selection emits exactly one selection message and
   keeps focus on the List root. Navigation at a boundary is consumed and emits
   no message
+- A disabled List or a List with no item after filtering and windowing declares
+  every action as `disabled-pass-through` and does not respond to keyboard or
+  pointer input
 - The selected marker is `> ` and the unselected marker is two spaces. Selected
   and focused styles are independent overlays
 - Optional filtering performs ASCII-only case folding and substring matching.
@@ -43,12 +55,18 @@ spinner ticks, and modal visibility
 
 ## Button
 
-- An enabled Button is focusable and emits exactly one activation message for
-  Enter, Space, or a left-button press
-- Key releases, modified Space, other keys, other mouse buttons, and pointer
-  release do not activate it
+- An enabled Button is focusable and declares the standard `nagi.activate`
+  semantic action with the label `Activate`
+- The ordered default bindings are unmodified Enter and Space. Initial and
+  explicit repeat events emit exactly one activation message. Key release and
+  modified Enter or Space do not activate it
+- An active KeyMap scope replaces the complete keyboard binding list for
+  `nagi.activate`, including an empty replacement that unbinds it
+- Left-button press remains a raw pointer activation path, emits exactly one
+  activation message, and is independent from keyboard rebinding. Other mouse
+  buttons and pointer release do not activate it
 - A disabled Button is neither focusable nor interactive and uses its disabled
-  style
+  style. Its activation descriptor is `disabled-pass-through`
 - The rendered default label is `[ LABEL ]`
 
 ## Modal
@@ -102,8 +120,18 @@ spinner ticks, and modal visibility
 - Radio renders `(o) LABEL` or `( ) LABEL`. Activating an unselected Radio emits
   one selection message; activating the selected Radio is consumed without a
   duplicate message
-- Both widgets use Enter, Space, and left-button press activation. Disabled
-  instances are not focusable and do not emit messages
+- An enabled Checkbox or Radio is focusable and declares the standard
+  `nagi.activate` semantic action with the label `Activate`
+- The ordered default bindings are unmodified Enter and Space. Initial and
+  explicit repeat events activate the widget. Key release and modified Enter
+  or Space do not activate it
+- An active KeyMap scope replaces the complete keyboard binding list for
+  `nagi.activate`, including an empty replacement that unbinds it
+- Left-button press remains a raw pointer activation path and is independent
+  from keyboard rebinding. Other mouse buttons and pointer release do not
+  activate either widget
+- A disabled Checkbox or Radio is neither focusable nor interactive and
+  declares its activation descriptor as `disabled-pass-through`
 - Radio grouping and mutual exclusion remain application state
 
 ## Tabs
@@ -112,10 +140,28 @@ spinner ticks, and modal visibility
   remains application state and is normalized like List selection
 - Tabs renders horizontally. The selected label is `[LABEL]`; other labels have
   one surrounding ASCII space
-- Left and Right move by one without wrapping. Home and End choose the first and
-  final tab. Activation selects the focused or pointed tab
-- Boundary navigation is consumed without emitting a duplicate selection
+- Every item in enabled non-empty Tabs is independently focusable and owns one
+  `nagi.activate` action. Its ordered defaults are unmodified Enter and Space
+- The Tabs root owns, in order, `nagi.selection.previous`,
+  `nagi.selection.next`, `nagi.selection.first`, and `nagi.selection.last`.
+  Their defaults are Left, Right, Home, and End
+- Initial and explicit repeat events are accepted. Release and modified keys do
+  not match the default bindings
+- An active KeyMap scope replaces each action's complete keyboard binding list,
+  including an empty replacement that unbinds that action. Item and root groups
+  may resolve the same stroke; the focused item has route precedence
+- Root navigation starts from application selection rather than the focused
+  item. Left and Right move by one without wrapping, while Home and End choose
+  the first and final tab. It moves focus to the resulting tab
+- Activation selects the focused item. A left-button press selects and focuses
+  the pointed item through a raw pointer path independent from keyboard
+  rebinding
+- Selecting a different tab emits exactly one message. Activation of the
+  selected tab and boundary navigation are consumed without a duplicate
   message
+- Disabled or empty Tabs expose both item and root descriptors as
+  `disabled-pass-through` and do not respond to keyboard or pointer input.
+  Disabled items are not focusable
 
 ## Select
 
@@ -123,11 +169,22 @@ spinner ticks, and modal visibility
   strings and selection state
 - It renders `< LABEL >`; an empty selector renders its configured placeholder,
   is not focusable, and uses the disabled style
-- Left and Up move backward, Right and Down move forward, and Home and End choose
-  the first and final option without wrapping
-- Enter, Space, and left-button press advance to the next option with wrapping
+- An enabled non-empty Select declares, in order, `nagi.activate`,
+  `nagi.selection.previous`, `nagi.selection.next`, `nagi.selection.first`, and
+  `nagi.selection.last`
+- Activate defaults to unmodified Enter and Space. Previous defaults to Left and
+  Up, Next to Right and Down, First to Home, and Last to End. Initial and
+  explicit repeat events are accepted; release and modified keys are not
+- An active KeyMap scope replaces each action's complete keyboard binding list,
+  including an empty replacement that unbinds that action
+- Previous and Next move without wrapping. First and Last choose the boundary
+  option. Activate advances to the next option with wrapping
+- Left-button press remains a raw activation path, advances with wrapping, and
+  is independent from keyboard rebinding
 - Navigation that leaves the selection unchanged is consumed without emitting
   a duplicate message
+- A disabled or empty Select declares every action as
+  `disabled-pass-through` and does not respond to keyboard or pointer input
 
 ## Table
 
@@ -135,9 +192,13 @@ spinner ticks, and modal visibility
 - Cell text is clipped by public Core layout. Missing cells render empty and
   cells beyond the declared columns are ignored
 - The Table root is one Tab stop. The heading and data rows are not independent
-  Tab stops. Rows use application-owned selection, the same Up, Down, Home,
-  End, activation, and boundary behavior as List, and emit original row indices
+  Tab stops. An enabled non-empty root declares the same ordered activation and
+  vertical selection action set as List with the same defaults, repeat,
+  modifier, override, unbind, and boundary behavior. Activation emits the
+  normalized current row index
 - A left-button press selects the pointed row and focuses the Table root
+- A disabled or empty Table declares every action as
+  `disabled-pass-through` and does not respond to keyboard or pointer input
 - Column separators are ` │ `, the selected row marker is `> `, and other rows
   use two leading spaces
 - Each column independently supports start, center, or end alignment without
@@ -145,9 +206,11 @@ spinner ticks, and modal visibility
 - An optional body ScrollViewport keeps the header outside the viewport and
   therefore fixed. Its height uses `Length`, its stable ID and offset remain
   Core Runtime state, keyboard selection is kept visible, and semantic row
-  construction is bounded by the visible body height. The existing Table API
-  still materializes the complete row metadata collection. A virtualized body
-  row is exactly one Cell high and clips multiline content
+  construction is bounded by the visible body height. Eager and virtualized
+  bodies expose the same single root action group; off-screen rows do not own
+  duplicate action descriptors. The existing Table API still materializes the
+  complete row metadata collection. A virtualized body row is exactly one Cell
+  high and clips multiline content
 
 ## Tree
 
@@ -158,19 +221,36 @@ spinner ticks, and modal visibility
   preorder indices, not visible positions
 - If the selected item becomes hidden, selection normalizes to the nearest
   preceding visible item, normally the collapsed ancestor
-- Up, Down, Home, and End navigate visible items. Left collapses an expanded
-  branch or selects its nearest visible ancestor. Right expands a collapsed
-  branch or selects its first visible child
-- Activation selects an item and toggles a branch. It may emit selection and
+- An enabled non-empty Tree root declares, in order, `nagi.activate`,
+  `nagi.selection.previous`, `nagi.selection.next`, `nagi.selection.first`,
+  `nagi.selection.last`, `nagi.collapse`, and `nagi.expand`
+- Activate defaults to unmodified Enter and Space. Previous, Next, First, Last,
+  Collapse, and Expand default to Up, Down, Home, End, Left, and Right.
+  Initial and explicit repeat events are accepted; release and modified keys
+  are not
+- An active KeyMap scope replaces each action's complete keyboard binding list,
+  including an empty replacement that unbinds that action
+- Up, Down, Home, and End navigate visible items. Collapse closes an expanded
+  branch or selects its nearest visible ancestor. Expand opens a collapsed
+  branch or selects its first visible child. Boundary operations are consumed
+  without a duplicate message
+- Keyboard activation toggles the normalized current branch and consumes leaf
+  activation without a message. A missing expansion callback also consumes
+  activation, collapse, or expand without a message
+- A left-button press remains a raw path independent from keyboard rebinding.
+  It selects the pointed item and toggles a branch, emitting selection and
   expansion messages in that order
 - The Tree root is one Tab stop. Visible rows remain pointer targets without
   becoming independent Tab stops, and selection navigation keeps root focus
+- A disabled or empty Tree declares every action as `disabled-pass-through`
+  and does not respond to keyboard or pointer input
 - Expanded, collapsed, and leaf markers are `▼ `, `▶ `, and two spaces after
   two spaces per depth level
 - An optional positive-height viewport deterministically centers the normalized
   selection where possible and clamps at the first and final visible items.
   The Tree root ID becomes the stable keyboard focus target as rows enter and
-  leave the rendered window
+  leave the rendered window. Full and viewport layouts expose the same single
+  root action group, and non-rendered rows do not duplicate action descriptors
 - The optional TreeState utility stores expansion by stable item ID rather than
   preorder position, so expansion survives item reordering. Applying state
   returns independent items and never mutates the source collection

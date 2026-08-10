@@ -63,6 +63,66 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 `TextSpan::new` maps to `tui.NewTextSpan`, and
 `ParagraphOptions::default` maps to `tui.DefaultParagraphOptions`
 
+## Scoped key maps
+
+| Purpose | Rust | Go |
+| --- | --- | --- |
+| Action identity | `ActionId` | `ActionID` |
+| Key stroke | `KeyStroke::new` / `character` / `function` | `NewKeyStroke` / `NewCharacterKeyStroke` / `NewFunctionKeyStroke` |
+| Event normalization | `KeyStroke::from_event` | `KeyStrokeFromEvent` |
+| Key binding | `KeyBinding::new` | `NewKeyBinding` |
+| Repeat policy | `RepeatPolicy` | `RepeatPolicy` |
+| Binding support | `BindingSupport` | `BindingSupport` |
+| Action descriptor | `ActionDescriptor::new` | `NewActionDescriptor` |
+| Action and semantic handler | `Action::new` | `NewAction` |
+| Semantic invocation | `ActionEvent` | `ActionEvent` |
+| Availability | `ActionAvailability` | `ActionAvailability` |
+| Immutable override layer | `KeyMap::new().rebind(...)` | `NewKeyMap().Rebind(...)` |
+| Duplicate override error | `KeyMapError::DuplicateActionOverride` | `DuplicateActionOverrideError` |
+| Active scope | `KeyScope::new` | `NewKeyScope` |
+| Scope propagation | `KeyScopePropagation` | `KeyScopePropagation` |
+| Attach owner actions | `Node::on_actions` | `Node.OnActions` |
+| Attach Key scope | `Node::with_key_scope` | `Node.WithKeyScope` |
+| Pure resolution | `resolve_actions` | `ResolveActions` |
+| Resolved projection | `ResolvedActions` / `ResolvedAction` | `ResolvedActions` / `ResolvedAction` |
+| Structured conflict | `BindingConflictKind` / `BindingConflict` | `BindingConflictKind` / `BindingConflictError` |
+| Runtime conflict | `RuntimeError::BindingConflict` | returned `*BindingConflictError` |
+| Active Runtime projection | `Runtime::active_action_groups` | `Runtime.ActiveActionGroups` |
+| Test-harness projection | `Harness::active_action_groups` | `Harness.ActiveActionGroups` |
+| Standard activate Action ID | `ACTIVATE_ACTION_ID` | `widget.ActivateActionID` |
+| Selection previous Action ID | `SELECTION_PREVIOUS_ACTION_ID` | `widget.SelectionPreviousActionID` |
+| Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |
+| Selection first Action ID | `SELECTION_FIRST_ACTION_ID` | `widget.SelectionFirstActionID` |
+| Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
+| Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
+| Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
+| Standard activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
+| Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
+| Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
+| Radio action descriptor | `Radio::action_descriptor` | `Radio.ActionDescriptor` |
+| Select action descriptors | `Select::action_descriptors` | `Select.ActionDescriptors` |
+| Tabs item action descriptor | `Tabs::item_action_descriptor` | `Tabs.ItemActionDescriptor` |
+| Tabs root action descriptors | `Tabs::navigation_action_descriptors` | `Tabs.NavigationActionDescriptors` |
+| List action descriptors | `List::action_descriptors` | `List.ActionDescriptors` |
+| Table action descriptors | `Table::action_descriptors` | `Table.ActionDescriptors` |
+| Tree action descriptors | `Tree::action_descriptors` | `Tree.ActionDescriptors` |
+| Resolved-action Help | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
+
+Rust carries Character and Function values inside `KeyCode`. Go uses the
+matching private fields exposed through the `KeyStroke.Character` and
+`KeyStroke.Function` methods. This representation difference does not change
+stroke equality, event matching, notation, scope replacement, or conflict
+semantics
+
+The pure resolver remains available independently. Both Runtime implementations
+also attach owner groups and scopes to semantic Nodes, resolve the active route,
+and expose that exact projection to Help and test consumers. Button, Checkbox,
+Radio, Select, each Tabs item, List, Table, and Tree declare the shared
+`nagi.activate` action. Select, the Tabs root, List, Table, and Tree declare the
+four shared selection Action IDs with widget-owned default bindings. Tree also
+declares the shared collapse and expand Action IDs. Rust wraps route conflicts
+in `RuntimeError`; Go returns the structured conflict directly
+
 ## Standard widgets
 
 | Widget | Rust constructor | Go constructor |

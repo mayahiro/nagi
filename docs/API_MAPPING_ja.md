@@ -55,6 +55,69 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 
 `TextSpan::new`は`tui.NewTextSpan`、`ParagraphOptions::default`は`tui.DefaultParagraphOptions`に対応します
 
+## Scoped KeyMap
+
+| 用途 | Rust | Go |
+| --- | --- | --- |
+| Action identity | `ActionId` | `ActionID` |
+| Key stroke | `KeyStroke::new` / `character` / `function` | `NewKeyStroke` / `NewCharacterKeyStroke` / `NewFunctionKeyStroke` |
+| Event normalization | `KeyStroke::from_event` | `KeyStrokeFromEvent` |
+| Key binding | `KeyBinding::new` | `NewKeyBinding` |
+| Repeat policy | `RepeatPolicy` | `RepeatPolicy` |
+| Binding support | `BindingSupport` | `BindingSupport` |
+| Action descriptor | `ActionDescriptor::new` | `NewActionDescriptor` |
+| Actionとsemantic handler | `Action::new` | `NewAction` |
+| Semantic invocation | `ActionEvent` | `ActionEvent` |
+| Availability | `ActionAvailability` | `ActionAvailability` |
+| Immutable override layer | `KeyMap::new().rebind(...)` | `NewKeyMap().Rebind(...)` |
+| Duplicate override error | `KeyMapError::DuplicateActionOverride` | `DuplicateActionOverrideError` |
+| Active scope | `KeyScope::new` | `NewKeyScope` |
+| Scope propagation | `KeyScopePropagation` | `KeyScopePropagation` |
+| Owner actionのattach | `Node::on_actions` | `Node.OnActions` |
+| Key scopeのattach | `Node::with_key_scope` | `Node.WithKeyScope` |
+| Pure resolution | `resolve_actions` | `ResolveActions` |
+| Resolved projection | `ResolvedActions` / `ResolvedAction` | `ResolvedActions` / `ResolvedAction` |
+| Structured conflict | `BindingConflictKind` / `BindingConflict` | `BindingConflictKind` / `BindingConflictError` |
+| Runtime conflict | `RuntimeError::BindingConflict` | 返却される`*BindingConflictError` |
+| Active Runtime projection | `Runtime::active_action_groups` | `Runtime.ActiveActionGroups` |
+| Test harness projection | `Harness::active_action_groups` | `Harness.ActiveActionGroups` |
+| 標準activate Action ID | `ACTIVATE_ACTION_ID` | `widget.ActivateActionID` |
+| Selection previous Action ID | `SELECTION_PREVIOUS_ACTION_ID` | `widget.SelectionPreviousActionID` |
+| Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |
+| Selection first Action ID | `SELECTION_FIRST_ACTION_ID` | `widget.SelectionFirstActionID` |
+| Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
+| Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
+| Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
+| 標準activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
+| Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
+| Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
+| Radio action descriptor | `Radio::action_descriptor` | `Radio.ActionDescriptor` |
+| Select action descriptors | `Select::action_descriptors` | `Select.ActionDescriptors` |
+| Tabs item action descriptor | `Tabs::item_action_descriptor` | `Tabs.ItemActionDescriptor` |
+| Tabs root action descriptors | `Tabs::navigation_action_descriptors` | `Tabs.NavigationActionDescriptors` |
+| List action descriptors | `List::action_descriptors` | `List.ActionDescriptors` |
+| Table action descriptors | `Table::action_descriptors` | `Table.ActionDescriptors` |
+| Tree action descriptors | `Tree::action_descriptors` | `Tree.ActionDescriptors` |
+| Resolved actionからのHelp | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
+
+RustはCharacterとFunctionの値を`KeyCode`内に保持します
+
+Goは対応するprivate fieldを`KeyStroke.Character`と`KeyStroke.Function`のmethodとして公開します
+
+この表現差はstroke equality、event matching、notation、scope replacement、conflict semanticsを変えません
+
+pure resolverは独立したAPIとして引き続き利用できます
+
+両Runtime実装はowner groupとscopeをsemantic Nodeへattachし、active routeをresolveして、そのprojectionをHelpとtest consumerへ公開します
+
+Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Treeは共有`nagi.activate` actionを宣言します
+
+Select、Tabs root、List、Table、TreeはWidget所有のdefault bindingを持つ4個の共有selection Action IDも宣言します
+
+Treeは共有collapseとexpand Action IDも宣言します
+
+Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを直接返します
+
 ## 標準Widget
 
 | Widget | Rust constructor | Go constructor |

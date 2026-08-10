@@ -96,6 +96,57 @@ that also need lazy collection access should use the Core virtual viewport
 directly. Standard List and Table rows inside their virtual viewports are one
 Cell high and clip wrapped or multiline content
 
+## Scoped key-map foundation
+
+`ActionId` in Rust and `ActionID` in Go identify operations independently from
+terminal keys. `KeyStroke` normalizes Key and single-scalar Text input,
+`KeyBinding` adds repeat and capability metadata, and an immutable `KeyMap`
+layer replaces the complete binding list for an action
+
+`resolve_actions` and `ResolveActions` apply active `KeyScope` values in
+root-to-target order to one semantic owner. The result preserves action,
+binding, and scope order, filters Help-visible actions without duplicating key
+strings, and reports structured duplicate or ambiguous binding conflicts
+
+`Action` pairs a descriptor with a Node-local semantic handler.
+`Node::on_actions` and Go `Node.OnActions` attach an ordered owner group;
+`Node::with_key_scope` and Go `Node.WithKeyScope` attach an override and
+propagation scope. Runtime evaluates the active target-to-root route in
+action, local Core handling, raw handler, then ancestor order. Ignored action
+results continue routing, while disabled-consume bindings consume without
+calling a handler
+
+`stop-at-scope` omits outer ancestor action groups without stopping raw event
+routing or root-to-target KeyMap inheritance. Runtime rejects structured
+within-group conflicts before handlers run and exposes active resolved groups
+through `active_action_groups` and `ActiveActionGroups`. The test harnesses
+forward the same projection
+
+`Help::from_resolved_actions` and `NewHelpFromResolvedActions` convert the same
+projection into one Help binding per effective key. They preserve action and
+binding order, omit Help-hidden actions, and mark unavailable or unsupported
+bindings disabled. Existing manual `HelpBinding` construction remains
+available
+
+The standard widget packages expose constants for `nagi.activate`, the four
+`nagi.selection.*` operations, `nagi.collapse`, and `nagi.expand`. Button,
+Checkbox, Radio, Select, each Tabs item, List, Table, and Tree declare activation
+with unmodified Enter and Space defaults. Select declares all four selection
+actions under its single owner. The Tabs root declares them with Left, Right,
+Home, and End defaults. List, Table, and Tree roots declare them with Up, Down,
+Home, and End defaults. Tree adds collapse and expand with Left and Right and
+uses the same single root action group in full and viewport layouts. Defaults
+belong to each widget even when the Action ID is shared. An active scope may
+replace or remove each complete binding list. Left-button press remains raw
+pointer handling and is independent from keyboard rebinding
+
+Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
+terminal `mapEvent` behavior. Tab traversal is still handled before action
+routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
+List, Table, and Tree have not yet migrated. See the
+[scoped key-map specification](../spec/keymap.md) for the complete dispatch,
+matching, override, conflict, and notation contract
+
 ## Effects and subscriptions
 
 Effects represent one-shot work
@@ -125,18 +176,26 @@ application tests
 
 Standard widgets use public Core composition and the public Unicode text API
 
-- List is one composite Tab stop with application-owned selection, stable item
-  pointer targets, filtering, windows, pagination, and a `Length` viewport
-- Button activates from Enter, Space, or a left-button press
+- List is one composite Tab stop with root-owned activation and vertical
+  selection actions, stable raw pointer targets, filtering, windows,
+  pagination, and a `Length` viewport
+- Button exposes `nagi.activate` with unmodified Enter and Space defaults and a
+  separately routed left-button press
 - Modal centers a bordered focus and routing scope with optional Escape dismiss
 - Progress renders bounded determinate completion without integer overflow
 - Spinner renders an application-clock-driven stable frame cycle
 - Scrollbar renders overflow-safe vertical or horizontal viewport geometry
-- Checkbox and Radio expose controlled Boolean and group-choice inputs
-- Tabs and Select provide horizontal and compact controlled selection
-- Table is one composite Tab stop, sizes columns and its optional body viewport
-  with `Length`, keeps its header fixed, and follows keyboard selection
-- Tree is one composite Tab stop over a flat preorder model with
+- Checkbox and Radio expose the same `nagi.activate` bindings while preserving
+  controlled Boolean and consume-without-duplicate group-choice behavior
+- Tabs exposes per-item activation and root-owned horizontal selection actions,
+  keeping application selection independent from item focus
+- Select exposes widget-owned activation and selection defaults through shared
+  Action IDs while preserving wrapping activation and boundary consumption
+- Table is one composite Tab stop with the same root action set for eager and
+  virtualized bodies, sizes columns and its optional body viewport with
+  `Length`, keeps its header fixed, and follows keyboard selection
+- Tree is one composite Tab stop with root-owned activation, vertical
+  selection, collapse, and expand actions over a flat preorder model,
   application-owned expansion state, reusable `TreeState`, and
   selection-following viewports
 - TextArea edits multiline text at extended grapheme boundaries with selection,
@@ -144,7 +203,7 @@ Standard widgets use public Core composition and the public Unicode text API
 - Command Palette combines controlled query input, filtering, navigation, and
   activation over stable command IDs
 - Sparkline, BarChart, and Chart provide bounded, deterministic cell graphics
-- Help renders compact or aligned discoverable key bindings
+- Help renders compact or aligned manual or resolved-action key bindings
 - Paginator provides controlled dot or numeric page navigation
 - FilePicker navigates inert application-supplied entry metadata without
   performing filesystem I/O
@@ -163,7 +222,7 @@ implementations
 Rust `nagi-tui-test` and Go `tuitest` provide virtual input, size, time, frame
 history, message history, Interaction State inspection, controlled effects,
 manual subscriptions, supervisor diagnostics, resolved ScrollState, and
-application exit-request inspection
+active resolved action groups, and application exit-request inspection
 
 Use virtual time and controlled asynchronous sources in application tests so
 they do not depend on real sleeps or terminal timing

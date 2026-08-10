@@ -1,0 +1,8 @@
+nagi-fixture-v1	key-conflict
+# actions are id@availability@stroke-list entries separated by semicolon
+no-conflict	actions=submit@enabled@enter:-;newline@enabled@enter:alt	scopes=root,modal	expected-kind=none	expected-actions=-	expected-stroke=-
+duplicate-action	actions=submit@enabled@enter:-;submit@enabled@enter:alt	scopes=root,modal	expected-kind=duplicate-action	expected-actions=submit	expected-stroke=-
+duplicate-binding	actions=submit@enabled@enter:-/enter:-	scopes=root,modal	expected-kind=duplicate-binding	expected-actions=submit	expected-stroke=enter:-
+ambiguous-binding	actions=submit@enabled@enter:-;newline@enabled@enter:-	scopes=root,modal	expected-kind=ambiguous-binding	expected-actions=submit,newline	expected-stroke=enter:-
+pass-through	actions=history@disabled-pass-through@up:-;cursor@enabled@up:-	scopes=root,modal	expected-kind=none	expected-actions=-	expected-stroke=-
+disabled-consume	actions=confirm@disabled-consume@enter:-;newline@enabled@enter:-	scopes=root,modal	expected-kind=ambiguous-binding	expected-actions=confirm,newline	expected-stroke=enter:-

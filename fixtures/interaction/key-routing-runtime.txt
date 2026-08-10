@@ -1,0 +1,10 @@
+nagi-fixture-v1	key-routing-runtime
+# event uses a test-only event-kind/scalar encoding
+child-precedence	event=key/x	expected=child-action	consumed=true	groups=child,root
+ignored-action-routing	event=key/x	expected=child-action,child-raw,root-action	consumed=true	groups=child,root
+stop-action-propagation	event=key/x	expected=scope-raw,root-raw	consumed=true	groups=child
+scope-rebind	event=key/y	expected=child-action	consumed=true	groups=child
+disabled-consume	event=key/x	expected=-	consumed=true	groups=child
+paste-bypasses-actions	event=paste/x	expected=child-raw	consumed=true	groups=child
+text-input-local-action	event=text/x	expected=input-action	consumed=true	groups=input
+text-input-core-before-ancestor	event=text/x	expected=input-change	consumed=true	groups=root
