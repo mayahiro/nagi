@@ -17,10 +17,11 @@ the modal root. Routing still continues from a target inside the modal through
 the modal's ancestors to the screen or root handler unless a handler consumes
 the event
 
-Within each target-to-root Node, semantic key actions run before local Core
-input handling and the raw handler. Action propagation boundaries affect only
-ancestor action groups. The complete order and conflict rules are defined by
-the [scoped key-map specification](keymap.md)
+Within each target-to-root Node, Node-declared semantic key actions run before
+Runtime-owned Core semantic actions, non-key Core input handling, and the raw
+handler. Action propagation boundaries affect Node-declared and Core semantic
+ancestor groups, but not raw routing. The complete order and conflict rules are
+defined by the [scoped key-map specification](keymap.md)
 
 ## Pointer
 
@@ -43,7 +44,10 @@ boundary before an edit
 Interaction State for TextInput cursor and ScrollViewport offset is keyed by a
 stable Node ID and is retired with that node
 
-Default keyboard and wheel scrolling uses the nearest ScrollViewport on the
-target-to-root route. A focused descendant therefore scrolls its containing
-viewport even when the descendant handles no scrolling itself. PageUp and
-PageDown move by that viewport's visible height rather than the terminal height
+Default keyboard and wheel scrolling uses the nearest applicable
+ScrollViewport on the target-to-root route. A focused descendant therefore
+scrolls its containing viewport even when the descendant handles no scrolling
+itself. PageUp and PageDown move by that viewport's visible height rather than
+the terminal height. Keyboard scrolling is exposed through the Core semantic
+actions in the [scoped key-map specification](keymap.md); wheel input remains
+non-key Core handling

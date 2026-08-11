@@ -17,6 +17,9 @@
   first focusable node before the initial frame through terminal options
 - Forward and backward traversal wrap; traversal from no focus selects the
   first and last focusable node respectively
+- Forward and backward traversal are the Core semantic actions
+  `nagi.focus.next` and `nagi.focus.previous`; active KeyMap scopes may replace
+  or remove their exact Tab and Shift-Tab defaults
 - Interaction State for a removed Node ID is retired at the end of the frame in
   which the node disappears
 - Composite selection widgets use their root ID as one Tab stop. Their internal

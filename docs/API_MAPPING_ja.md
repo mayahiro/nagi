@@ -81,6 +81,9 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Runtime conflict | `RuntimeError::BindingConflict` | 返却される`*BindingConflictError` |
 | Active Runtime projection | `Runtime::active_action_groups` | `Runtime.ActiveActionGroups` |
 | Test harness projection | `Harness::active_action_groups` | `Harness.ActiveActionGroups` |
+| Focus traversal Action ID | `FOCUS_NEXT_ACTION_ID` / `FOCUS_PREVIOUS_ACTION_ID` | `tui.FocusNextActionID` / `tui.FocusPreviousActionID` |
+| Scroll page Action ID | `SCROLL_PAGE_UP_ACTION_ID` / `SCROLL_PAGE_DOWN_ACTION_ID` | `tui.ScrollPageUpActionID` / `tui.ScrollPageDownActionID` |
+| Scroll境界Action ID | `SCROLL_START_ACTION_ID` / `SCROLL_END_ACTION_ID` | `tui.ScrollStartActionID` / `tui.ScrollEndActionID` |
 | 標準activate Action ID | `ACTIVATE_ACTION_ID` | `widget.ActivateActionID` |
 | Selection previous Action ID | `SELECTION_PREVIOUS_ACTION_ID` | `widget.SelectionPreviousActionID` |
 | Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |

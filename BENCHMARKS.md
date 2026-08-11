@@ -31,9 +31,9 @@ Rust additionally instruments allocation count, total allocated bytes, peak
 additional live bytes, and retained bytes with a benchmark-only allocator. Go
 uses the standard `testing` allocation metrics. Rust reports the median of 12
 measured frames. The Go table uses the median of three reports, each measured
-over five frames. Reusable tree-index buffers and, where ownership permits,
-reusable frame storage are populated by two unmeasured warm-up frames before
-sampling
+over five frames. Reusable tree-index and resolved-action-route buffers and,
+where ownership permits, reusable frame storage are populated by two unmeasured
+warm-up frames before sampling
 
 ## Reference environment
 
@@ -50,22 +50,22 @@ make bench
 
 ## Reference results
 
-Results recorded on 2026-07-21
+Results recorded on 2026-08-11
 
 | Implementation | Path | Median time per frame | Allocations per frame | Allocated bytes per frame | Peak additional live bytes | Retained bytes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Rust | eager | 244.093 ms | 100,080 | 25,502,224 | 25,500,224 | 0 |
-| Rust | virtual | 0.072 ms | 102 | 7,768 | 5,952 | 0 |
-| Rust | virtual stick-to-end growth | 0.072 ms | 102 | 7,768 | 5,952 | 0 |
-| Rust | virtual-identified | 0.074 ms | 103 | 7,784 | 5,968 | 0 |
-| Go | eager | 256.719 ms | 10 | 45,655,264 | not measured | not measured |
-| Go | virtual | 0.088 ms | 7 | 60,704 | not measured | not measured |
-| Go | virtual stick-to-end growth | 0.091 ms | 7 | 60,704 | not measured | not measured |
-| Go | virtual-identified | 0.085 ms | 8 | 60,720 | not measured | not measured |
+| Rust | eager | 248.620 ms | 100,080 | 26,302,232 | 26,300,256 | 0 |
+| Rust | virtual | 0.075 ms | 102 | 7,968 | 6,176 | 0 |
+| Rust | virtual stick-to-end growth | 0.076 ms | 102 | 7,968 | 6,176 | 0 |
+| Rust | virtual-identified | 0.079 ms | 103 | 7,984 | 6,192 | 0 |
+| Go | eager | 262.652 ms | 10 | 46,458,080 | not measured | not measured |
+| Go | virtual | 0.093 ms | 7 | 61,344 | not measured | not measured |
+| Go | virtual stick-to-end growth | 0.089 ms | 7 | 61,344 | not measured | not measured |
+| Go | virtual-identified | 0.093 ms | 8 | 61,360 | not measured | not measured |
 
-On this workload, virtual median frame time is about 1/3,390 of eager time in
-Rust and 1/2,920 in Go. Allocated bytes are about 1/3,280 of eager allocation
-in Rust and 1/750 in Go. Adding stable IDs to all 24 visible rows adds one
+On this workload, virtual median frame time is about 1/3,315 of eager time in
+Rust and 1/2,838 in Go. Allocated bytes are about 1/3,301 of eager allocation
+in Rust and 1/757 in Go. Adding stable IDs to all 24 visible rows adds one
 allocation and 16 allocated bytes in both implementations. The timing
 difference is within run-to-run noise. The identified path does not make
 tree-index work proportional to the declared 100,000 rows
@@ -75,18 +75,21 @@ commit, so initial rendering and content growth construct only the final
 visible fragment. Its allocation results match the fixed-content virtual path
 in both implementations, and its timing difference is within run-to-run noise
 
-Compared with the preceding 2026-07-20 baseline on the same reference
-environment, Rust reduced virtual median frame time from 0.079 ms to 0.072 ms,
-allocations from 105 to 102, and allocated bytes from 99,264 to 7,768. Go
-reduced virtual median frame time from 0.103 ms to 0.088 ms, allocations from 9
-to 7, and allocated bytes from 110,448 to 60,704
+Compared with the 2026-07-21 reference on the same environment, steady-state
+allocation counts remain 102 in Rust and 7 in Go after adding per-Node scoped
+key-map metadata and Core semantic actions. The optional Node metadata increases
+allocated bytes in proportion to constructed Nodes: about 0.8 MB in the eager
+100,000-row path and 200 bytes in Rust or 640 bytes in Go on the virtual path.
+Timing differences are within the run-to-run variation observed in the three
+Go reports and repeated Rust frames
 
 The current path reuses unretained Rust frame storage, stores Go Surface cells
 in a compact internal representation, uses inline diff scratch for common
-terminal widths, and omits a second semantic tree-index build when interaction
-preparation did not change layout. Go's public frame snapshot contract retains
-its rendered Surface; the production terminal path releases and reuses that
-storage after encoding
+terminal widths, omits a second semantic tree-index build when interaction
+preparation did not change layout, and shares immutable default Core actions
+while double-buffering their resolved route storage. Go's public frame snapshot
+contract retains its rendered Surface; the production terminal path releases
+and reuses that storage after encoding
 
 These values are directional baselines, not performance guarantees. Machine
 load, allocator behavior, compiler versions, and application content affect the

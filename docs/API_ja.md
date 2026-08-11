@@ -66,15 +66,37 @@ Rustの`ActionId`とGoの`ActionID`はterminal keyと独立して操作を識別
 
 Rustの`Node::on_actions`とGoの`Node.OnActions`は順序付きowner groupをattachし、Rustの`Node::with_key_scope`とGoの`Node.WithKeyScope`はoverrideとpropagation scopeをattachします
 
-Runtimeはactiveなtarget-to-root routeをaction、local Core handling、raw handler、ancestorの順で評価します
+Runtimeはactiveなtarget-to-root routeをNodeDeclared action、CoreSemantic action、non-key Core handling、raw handler、ancestorの順で評価します
 
-ignored action resultはroutingを継続し、disabled-consume bindingはhandlerを呼ばずにconsumeします
+同じownerの等しいbindingではNodeDeclaredを別precedenceのCoreSemanticより先に評価します
 
-`stop-at-scope`はouter ancestorのaction groupだけを除外し、raw event routingとroot-to-targetのKeyMap継承は止めません
+ignored action resultとdisabled-pass-through bindingはroutingを継続し、disabled-consume bindingはhandlerを呼ばずにconsumeします
 
-Runtimeはhandler実行前にgroup内conflictをstructured errorとして拒否し、`active_action_groups`と`ActiveActionGroups`からactiveなresolved groupを公開します
+`stop-at-scope`はouter ancestorのNodeDeclaredとCoreSemantic action groupを除外し、raw event routing、wheel scroll、root-to-targetのKeyMap継承は止めません
+
+Runtimeはhandler実行前に同じprecedence group内のconflictをstructured errorとして拒否し、`active_action_groups`と`ActiveActionGroups`からactiveなresolved groupを公開します
+
+同じNodeではNodeDeclared projectionの次にCoreSemantic projectionを返すため、同じownerが2回現れる場合があります
 
 test harnessも同じprojectionを公開します
+
+CoreはexactなTabとShift-Tabをdefaultに持つ`nagi.focus.next`と`nagi.focus.previous`のAction ID constantを公開します
+
+focused targetがこれらを所有し、focusがない場合はactive modalまたはidentified rootが所有します
+
+KeyMap scopeから両方のdefaultをrebindまたは削除できます
+
+stable ownerがないtreeではprojectまたはrebindできないcompatibility fallbackとしてdefault Tab traversalを維持します
+
+Coreは`nagi.scroll.page-up`、`nagi.scroll.page-down`、`nagi.scroll.start`、`nagi.scroll.end`のAction ID constantも公開します
+
+各ScrollViewportがexactなPageUp、PageDown、Home、Endのdefaultを所有します
+
+nearest applicable viewportがmatchをconsumeし、horizontal-only viewportではpage actionがpass-throughし、Both axisのHomeとEndはvertical axisを使用します
+
+mouse wheel scrollはrebindされないnon-key Core handlingとして残ります
+
+modifier付きPageUp、PageDown、Home、Endには明示的なbindingが必要です
 
 Rustの`Help::from_resolved_actions`とGoの`NewHelpFromResolvedActions`は同じprojectionをeffective keyごとに一つのHelp bindingへ変換します
 

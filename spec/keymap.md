@@ -148,12 +148,21 @@ Text input use the focused target. Pointer input uses capture or hit testing,
 although pointer events do not currently normalize into Key strokes. Modal
 routing selects the same target route used by raw event delivery
 
-For each event, route precedence is target to root. At each Node the order is
+For each event, route precedence is target to root. Node-declared actions and
+Runtime-owned Core semantic actions are separate precedence groups. At each
+Node the order is
 
-1. The Node-local resolved action group
-2. Core semantic handling such as TextInput editing or ScrollViewport input
-3. The Node-local raw event handler
-4. The next ancestor Node
+1. The Node-declared resolved action group
+2. The Core semantic resolved action group
+3. Non-key Core handling such as TextInput editing or ScrollViewport wheel input
+4. The Node-local raw event handler
+5. The next ancestor Node
+
+A Node-declared group is more specific than a Core semantic group on the same
+owner. Equal strokes across those two groups use deterministic precedence and
+are not a conflict. If the Node-declared handler ignores the event or its
+binding is disabled-pass-through, matching continues into the Core semantic
+group
 
 An enabled action invokes its handler. If the result is ignored, Core handling,
 the raw handler, and ancestor routing continue. A disabled-pass-through match
@@ -164,28 +173,54 @@ that is not consumed locally enters TextInput editing before an ancestor
 Character action. Paste never matches an action and continues through Core and
 raw routing
 
-The nearest target-to-root `stop-at-scope` boundary includes actions declared
-on that scope Node and descendants but omits action groups on outer ancestors.
-It does not stop raw event routing. KeyMap inheritance is independent: every
-scope on the complete root-to-target route still participates in override
-resolution, including scopes outside the propagation boundary
+The nearest target-to-root `stop-at-scope` boundary includes Node-declared and
+Core semantic actions on that scope Node and descendants but omits both groups
+on outer ancestors. It does not stop raw event routing or ScrollViewport wheel
+handling. KeyMap inheritance is independent: every scope on the complete
+root-to-target route still participates in override resolution, including
+scopes outside the propagation boundary
 
 Child and ancestor groups may use the same Key stroke; the child group has
 deterministic route precedence. Conflicts are rejected only within one resolved
-owner group. Before publishing a semantic frame, Runtime validates every
-declared owner against its owner route and the current active route. A newly
-selected focus or pointer route is resolved before any action, Core, or raw
-handler runs. Runtime errors preserve the structured binding conflict
+owner and precedence group. Before publishing a semantic frame, Runtime
+validates every declared owner against its owner route and validates Core
+semantic groups on the current active route. A newly selected focus or pointer
+route is resolved before any subsequent action, Core, or raw handler runs.
+Runtime errors preserve the structured binding conflict
 
-Runtime exposes resolved groups for the active target-to-root route. The test
-harness forwards this projection for deterministic semantic assertions. Help
-and other presentation code can consume the same `ResolvedActions` values used
-for dispatch
+Runtime exposes resolved groups for the active target-to-root route. At one
+Node, the Node-declared group precedes the Core semantic group; the same owner
+may therefore occur twice. The test harness forwards this projection for
+deterministic semantic assertions. Help and other presentation code can consume
+the same `ResolvedActions` values used for dispatch
 
-Action resolution is cached for the current semantic tree and route. Semantic
-tree rebuilding replaces the action index and cache as one frame transition.
-Trees that declare no actions bypass action resolution and keep existing Core,
-raw `OnEvent`, widget, and terminal `mapEvent` behavior
+Action resolution is cached for the current semantic tree, route, and focus
+action owner. Semantic tree rebuilding replaces the action index and cache as
+one frame transition. Routes with neither Node-declared nor Core semantic
+actions bypass action resolution and keep existing raw `OnEvent`, widget, and
+terminal `mapEvent` behavior
+
+Core reserves `nagi.focus.next` and `nagi.focus.previous`, labeled `Focus next`
+and `Focus previous`. Their exact defaults are unmodified Tab and Shift-Tab,
+and both accept explicit repeat events. The focused target owns both actions.
+Without focus, the active modal root or otherwise the identified tree root owns
+them. Forward and backward traversal retain the wrapping and modal focus-scope
+rules in the focus specification. If no stable owner exists, the same defaults
+remain as a compatibility fallback but cannot be overridden or projected
+
+Core also reserves `nagi.scroll.page-up`, `nagi.scroll.page-down`,
+`nagi.scroll.start`, and `nagi.scroll.end`, labeled `Scroll page up`, `Scroll
+page down`, `Scroll to start`, and `Scroll to end`. Their exact unmodified
+defaults are PageUp, PageDown, Home, and End, and all accept explicit repeat
+events. Each eager or virtual ScrollViewport owns these actions. Page actions
+are enabled only when the vertical axis is enabled and otherwise use
+disabled-pass-through; start and end use the vertical axis first and the
+horizontal axis for a horizontal-only viewport. The nearest matching viewport
+consumes even at a boundary. Mouse wheel input remains non-key Core handling
+and is not affected by KeyMap overrides
+
+Rust exports `FOCUS_*_ACTION_ID` and `SCROLL_*_ACTION_ID` constants. Go exports
+the corresponding `Focus*ActionID` and `Scroll*ActionID` constants
 
 Core reserves generic `nagi.text.*` Action IDs for cursor movement left,
 right, up, down, to line start, and to line end; selection extension in the
@@ -303,8 +338,8 @@ command expose both root and command descriptors as `disabled-pass-through`.
 Left-button press remains raw pointer handling and is not changed by a keyboard
 rebind. Each widget retains its own controlled Message behavior
 
-Tab focus traversal remains a Runtime Core shortcut before action routing in
-this migration. A Tab binding cannot override traversal yet. Standard widgets
-other than Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, TextArea,
-and Command Palette have not been migrated and retain their existing raw key
-handling
+Focus traversal and ScrollViewport keyboard scrolling use the Core semantic
+actions above. Their complete binding lists may be replaced or removed through
+the same active KeyMap scopes as Node-declared actions. Exact stroke matching
+means modified PageUp, PageDown, Home, or End does not invoke the unmodified
+Core default unless the application explicitly binds that stroke

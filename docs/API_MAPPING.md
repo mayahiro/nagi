@@ -89,6 +89,9 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Runtime conflict | `RuntimeError::BindingConflict` | returned `*BindingConflictError` |
 | Active Runtime projection | `Runtime::active_action_groups` | `Runtime.ActiveActionGroups` |
 | Test-harness projection | `Harness::active_action_groups` | `Harness.ActiveActionGroups` |
+| Focus traversal Action IDs | `FOCUS_NEXT_ACTION_ID` / `FOCUS_PREVIOUS_ACTION_ID` | `tui.FocusNextActionID` / `tui.FocusPreviousActionID` |
+| Scroll page Action IDs | `SCROLL_PAGE_UP_ACTION_ID` / `SCROLL_PAGE_DOWN_ACTION_ID` | `tui.ScrollPageUpActionID` / `tui.ScrollPageDownActionID` |
+| Scroll boundary Action IDs | `SCROLL_START_ACTION_ID` / `SCROLL_END_ACTION_ID` | `tui.ScrollStartActionID` / `tui.ScrollEndActionID` |
 | Standard activate Action ID | `ACTIVATE_ACTION_ID` | `widget.ActivateActionID` |
 | Selection previous Action ID | `SELECTION_PREVIOUS_ACTION_ID` | `widget.SelectionPreviousActionID` |
 | Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |

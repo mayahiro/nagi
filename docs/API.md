@@ -112,15 +112,33 @@ strings, and reports structured duplicate or ambiguous binding conflicts
 `Node::on_actions` and Go `Node.OnActions` attach an ordered owner group;
 `Node::with_key_scope` and Go `Node.WithKeyScope` attach an override and
 propagation scope. Runtime evaluates the active target-to-root route in
-action, local Core handling, raw handler, then ancestor order. Ignored action
-results continue routing, while disabled-consume bindings consume without
-calling a handler
+Node-declared action, Core semantic action, non-key Core handling, raw handler,
+then ancestor order. An equal Node-declared binding is evaluated before the
+separate Core semantic group at the same owner. Ignored action results and
+disabled-pass-through bindings continue routing, while disabled-consume
+bindings consume without calling a handler
 
-`stop-at-scope` omits outer ancestor action groups without stopping raw event
-routing or root-to-target KeyMap inheritance. Runtime rejects structured
-within-group conflicts before handlers run and exposes active resolved groups
-through `active_action_groups` and `ActiveActionGroups`. The test harnesses
-forward the same projection
+`stop-at-scope` omits outer ancestor Node-declared and Core semantic action
+groups without stopping raw event routing, wheel scrolling, or root-to-target
+KeyMap inheritance. Runtime rejects structured within-precedence-group
+conflicts before handlers run and exposes active resolved groups through
+`active_action_groups` and `ActiveActionGroups`. At one Node the Node-declared
+projection precedes the Core projection, so one owner may occur twice. The test
+harnesses forward the same projection
+
+Core exposes `nagi.focus.next` and `nagi.focus.previous` Action ID constants
+with exact Tab and Shift-Tab defaults. The focused target owns these actions;
+without focus the active modal or identified root owns them. KeyMap scopes can
+rebind or remove both defaults. A tree without a stable owner keeps default Tab
+traversal as a compatibility fallback that cannot be projected or rebound
+
+Core also exposes `nagi.scroll.page-up`, `nagi.scroll.page-down`,
+`nagi.scroll.start`, and `nagi.scroll.end` Action ID constants. Each
+ScrollViewport owns exact PageUp, PageDown, Home, and End defaults. The nearest
+applicable viewport consumes a match, page actions pass through a
+horizontal-only viewport, and Both-axis Home or End uses the vertical axis.
+Mouse wheel scrolling remains non-key Core handling and is not rebound.
+Modified PageUp, PageDown, Home, and End require explicit bindings
 
 `Help::from_resolved_actions` and `NewHelpFromResolvedActions` convert the same
 projection into one Help binding per effective key. They preserve action and
