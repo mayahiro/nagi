@@ -53,6 +53,13 @@ Geometry and Style types for application-facing APIs
 | Configured virtual viewport | `Node::virtual_scroll_viewport_with_options(...)` | `tui.VirtualScrollViewportWithOptions[M](...)` |
 | Visible virtual request | `VirtualViewport` | `tui.VirtualViewport` |
 | Virtual fragment | `VirtualFragment::new(...)` | `tui.NewVirtualFragment[M](...)` |
+| Variable-height flow | `Node::virtual_flow(...)` | `tui.VirtualFlow[M](...)` |
+| Configured variable-height flow | `Node::virtual_flow_with_options(...)` | `tui.VirtualFlowWithOptions[M](...)` |
+| Stable flow item | `VirtualFlowItem::new(...)` | `tui.NewVirtualFlowItem(...)` |
+| Immutable flow order | `VirtualFlowItems::new(...)` | `tui.NewVirtualFlowItems(...)` |
+| Flow content source | `VirtualFlowSource::new(...)` | `tui.NewVirtualFlowSource[M](...)` |
+| Flow invalidation | `VirtualFlowUpdate::reset` / `changed` | `tui.ResetVirtualFlowUpdate` / `ChangedVirtualFlowUpdate` |
+| Resolved flow state | `InteractionState::virtual_flow_state(...)` | `InteractionState.VirtualFlowState(...)` |
 | Modal scope | `Node::modal(...)` | `tui.Modal[M](...)` |
 | Configured modal focus | `Node::modal_with_focus(...)` | `tui.ModalWithFocus[M](...)` |
 | Modal focus options | `ModalFocusOptions` | `tui.ModalFocusOptions` |
@@ -69,7 +76,8 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Explicit viewport reveal target | `Node::reveal_descendant(...)` | `Node.RevealDescendant(...)` |
 | Disappearing-subtree focus fallback | `Node::focus_fallback(...)` | `Node.FocusFallback(...)` |
 
-`TextSpan::new` maps to `tui.NewTextSpan`, and
+`TextSpan::new` and `TextSpan::with_style` map to `tui.NewTextSpan` and
+`TextSpan.WithStyle`, while
 `ParagraphOptions::default` maps to `tui.DefaultParagraphOptions`
 
 ## Scoped key maps
@@ -124,6 +132,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
 | Text deletion Action IDs | `TEXT_DELETE_*_ACTION_ID` | `tui.TextDelete*ActionID` |
 | Text line-break, undo, and redo Action IDs | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
+| Text copy Action IDs | `TEXT_COPY_SELECTION_ACTION_ID` / `TEXT_COPY_DOCUMENT_ACTION_ID` | `tui.TextCopySelectionActionID` / `tui.TextCopyDocumentActionID` |
 | Standard activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
 | Standard dismiss descriptor | `dismiss_action_descriptor` | `widget.DismissActionDescriptor` |
 | Standard confirm descriptor | `confirm_action_descriptor` | `widget.ConfirmActionDescriptor` |
@@ -143,6 +152,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Composer action descriptors | `Composer::action_descriptors` | `Composer.ActionDescriptors` |
 | Composer row bounds | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
 | Composer length limits | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
+| SelectableText action descriptors | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -175,7 +185,8 @@ widget-owned default bindings. Tree also declares the shared collapse and
 expand Action IDs. TextArea declares the 18 Core `nagi.text.*` operations under
 its root while retaining Text and Paste as raw editing input. Composer declares
 submit and both history operations before those inherited text actions under
-the same root. Command Palette retains query TextInput handling before its
+the same root. SelectableText declares its 19 Core text selection and copy
+operations at one focusable root. Command Palette retains query TextInput handling before its
 ancestor root actions. Modal declares the shared `nagi.dismiss` action at its
 root and leaves an outer-action propagation boundary opt-in. Dialog declares
 `nagi.confirm` followed by `nagi.dismiss`, maps both roles to explicit action
@@ -203,6 +214,7 @@ structured conflict directly
 | Scrollbar | `Scrollbar::new` | `widget.NewScrollbar` |
 | TextArea | `TextArea::new` | `widget.NewTextArea` |
 | Composer | `Composer::new` | `widget.NewComposer` |
+| SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -217,11 +229,13 @@ structured conflict directly
 | Paginator | `Paginator::new` | `widget.NewPaginator` |
 | FilePicker | `FilePicker::new` | `widget.NewFilePicker` |
 | Calendar | `Calendar::new` | `widget.NewCalendar` |
+| VirtualFeed | `VirtualFeed::new` | `widget.NewVirtualFeed` |
 
 Rust widget builders use snake case and finish with `into_node`, while Go
 builders use exported mixed case and finish with `Node`. Examples include
 `List::filter` and `List.Filter`, `Table::column_alignment` and
-`Table.ColumnAlignment`, and `FilePicker::show_hidden` and
+`Table.ColumnAlignment`, `VirtualFeed::unread_indicator` and
+`VirtualFeed.UnreadIndicator`, and `FilePicker::show_hidden` and
 `FilePicker.ShowHidden`
 
 ## Controlled state and item values
@@ -233,6 +247,9 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Undo and redo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
+| Selectable text content | `SelectableTextContent::plain` / `styled` | `widget.NewPlainSelectableTextContent` / `NewSelectableTextContent` |
+| Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
+| Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

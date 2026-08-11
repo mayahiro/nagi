@@ -38,7 +38,8 @@ workspace because Cargo crates remain separately selectable dependencies
 
 The existing Nagi TUI implementation provides native Rust and Go runtimes,
 Unicode-aware text, typed VT codecs, cell surfaces, deterministic test
-harnesses, 25 standard widgets, and virtual ScrollViewports for large content
+harnesses, 27 standard widgets, virtual ScrollViewports, and stable
+variable-height VirtualFeeds for large content
 
 Nagi CLI provides native Rust and Go Command Graphs, command-local typed value
 scopes, portable option groups and validators, structured deterministic Help

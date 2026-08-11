@@ -12,7 +12,7 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 | Unicode graphemeと端末幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input／output、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry、Cell、Surface、composition、snapshot | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| 25個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| 27個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual timeと決定的application操作 | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindingはprivateな実装詳細として維持します
@@ -44,7 +44,7 @@ Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変
 
 ## Semantic viewとInteraction
 
-Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportは大規模content向けのvariantです
+Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
 
 Stateful、focusable、event受信Nodeにはapplication定義の安定した`NodeId`が必要です。IDはview再構築後も維持し、collection内の位置だけから導出してはいけません。Duplicate IDはruntime errorです
 
@@ -53,6 +53,8 @@ Event handlerはMessage送信、event consume、focus変更、pointer captureと
 Rustの`Node::modal_with_focus`とGoの`ModalWithFocus`はdeclarativeなModal entryとreturn policyを追加します。Entryは最初のfocusable descendant、stable target、focusなしから選び、closeは以前のfocus、stable target、focusなしから選びます。既存Modal constructorのdefaultはFirstとPreviousです。Application stateによる消滅、nested Modal、重ねたsibling Modalも同じLIFO lifecycleを使用します。Rustの`Node::focus_fallback`とGoの`Node.FocusFallback`はfocused subtreeが消える場合に通常のdeterministic reconciliationより先にavailableなstable targetを選べます
 
 ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。両方のviewport形式がaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、focusを持たないidentified descendantのdeclarativeなreveal、解決済み`ScrollState`の通知に対応します。同じviewportではexplicit revealがfocus追従より優先し、nested viewportは内側から外側へ調整され、automatic revealはuser scroll messageを発行しません。Rustでは`Node::reveal_descendant`、Goでは`Node.RevealDescendant`を使用します。ScrollViewportはeagerなchild treeを受け取ります。VirtualScrollViewportは代わりにcontent全体のCell extentを受け取り、解決済みのvisible `VirtualViewport`に対応する`VirtualFragment`だけを構築してsemantic traversalへ入れます。標準ListとTableのviewportはsemantic rowにこのvirtual pathを使用しますが、既存collection APIは全itemまたはrow metadataをmaterializeし、Listのfilterは全件を走査します。Collection access自体もlazyにする場合はCore virtual viewportを直接使用します。標準ListとTableのvirtual viewport内では各rowを1 Cell高とし、折り返しまたは複数行のcontentをclipします
+
+VirtualFlowは一意なstable item IDのimmutable order、revision付きinvalidation hint、幅を考慮したheight estimate、item Node builderを受け取ります。Interaction Stateへ実測height、prefix-height index、vertical ScrollState、安定したsemantic anchorを保持します。末尾にいる間だけappendとtail growthへ追従し、末尾から離れている場合はprepend、削除、並べ替え、streaming height変更、terminal幅変更後も最初のvisible itemとitem内Cell offsetを維持します。Visible itemとCell単位の上限付きoverscanだけを構築します。Intrinsic高は0のため、親がlayout lengthまたはrectangleを割り当てる必要があります。Item content、未読policy、paging、永続化はApplicationが所有します
 
 ## Scoped KeyMap基盤
 
@@ -124,13 +126,17 @@ Action IDを共有する場合もdefault bindingは各Widgetが所有し、activ
 
 左button pressはraw pointer handlingに残り、keyboard rebindの影響を受けません
 
-Coreはcursor移動、selection extension、select all、削除、改行挿入、undo、redoに対応する18個の`nagi.text.*` Action ID constantも公開します
+Coreはcursor移動10個、対応するselection extension 10個、select all、前後削除、改行挿入、undo、redo、copy selection、copy documentに対応する28個の`nagi.text.*` Action ID constantも公開します
 
-TextAreaは既存のdefault keyとexplicit Repeat挙動を持つこれらのactionをfocus所有rootで宣言します
+TextAreaは既存の18 operationのediting subsetを、従来のdefault keyとexplicit Repeat挙動を持つfocus所有rootで宣言します
 
 boundaryでの移動と削除はdefaultではEnabledのままMessageなしでconsumeします。Bubble navigationでは最初または最後のvisual lineにおけるUpとDownをDisabledPassThroughにできます。Opt-inのsoft wrapではUpとDownがpreferred visual columnを保持し、HomeとEndはlogical line操作のままです。TextArea viewportはTab stopを増やさずidentified caretへ追従します。undoとredoは対応callbackがない場合にDisabledPassThroughになります
 
 TextとPasteはlocal action解決後のraw editing inputとして残り、Pasteはactionを起動しません
+
+SelectableTextはgrapheme、word、logical line、documentの移動、対応するselection extension、select all、copy selection、copy documentからなる19 operationのdocument subsetを宣言します
+
+Contentとselection stateはcontrolledかつgrapheme境界へ揃えられます。Copy actionはsource ID、semantic text、kind、元document上のUTF-8 byte rangeを持つownedなApplication Messageを発行し、Nagiはclipboard backendを選びません。Hidden spanがある場合は両copy actionを無効にします
 
 ComposerはTextAreaへcontrolled history recall、submit validity、1行から6行までの自動高さ、任意のvalidation content、UTF-8 byte数またはgrapheme数による挿入制限を加え、messageの意味や永続化は所有しません
 
@@ -176,7 +182,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SelectableText、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -219,6 +225,8 @@ Subscriptionは安定key付きの長期sourceを表します
 - Treeはroot所有のactivation、vertical selection、collapse、expand actionを持つ1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
 - TextAreaはselection、no-wrapまたはopt-in soft-wrap visual line、preferred-column navigation、任意のcaret追従viewport、application所有のundoとredo history、binding list全体をrebindできるroot所有semantic action setを使い、extended grapheme境界でmultiline textを編集する
 - Composerはmessageの意味や永続化を所有せず、TextAreaへcontrolled submit、history recall、挿入制限、自動row境界、application提供のvalidation contentを加える
+- SelectableTextはimmutableなstyled contentとApplication所有のgrapheme境界に揃えたkeyboard selectionを表示し、clipboard I/Oを行わずsemanticなselectionまたはdocument copy requestを発行する
+- VirtualFeedはdefaultで末尾追従するflexibleなVirtualFlowへ、Application制御のcentered empty、pinned loading-beforeとloading-after、bottom-end unread-indicator slotを構成する
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
 - ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する
 - Command Paletteはfilterされた安定したcommand IDに対するcontrolled query、root所有vertical action、row所有activationを組み合わせる
@@ -228,13 +236,13 @@ Subscriptionは安定key付きの長期sourceを表します
 - FilePickerはfilesystem I/Oを行わずroot所有のactivation、entryとpage selection、back actionを通じてapplication suppliedの不活性entry metadataをnavigateする
 - Calendarはactive dateが所有する個別にrebind可能なday、week、month、表示月境界selection actionを持つcontrolledなproleptic Gregorian month gridを提供する
 
-Widget galleryでは標準library全体を一覧できます。Dashboard、filter付きList、file browser、multi-pane log viewer、form validationのexampleでは、同じpublic NodeとWidgetをapplication形式のlayoutへ構成する方法を確認できます
+Widget galleryでは標準library全体を一覧できます。Variable-height feed、Dashboard、filter付きList、file browser、multi-pane log viewer、form validationのexampleでは、同じpublic NodeとWidgetをapplication形式のlayoutへ構成する方法を確認できます
 
 実装間の移植は[RustとGoのAPI対応表](API_MAPPING_ja.md)を参照してください
 
 ## Testing
 
-Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisor diagnostic、解決済みScrollState、activeなresolved action group、application終了要求の検査を提供します
+Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisor diagnostic、解決済みScrollStateとVirtualFlowState、activeなresolved action group、application終了要求の検査を提供します
 
 Application testではreal sleepやterminal timingへ依存しないようにvirtual timeとcontrolled async sourceを使用してください
 
@@ -249,6 +257,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
+| Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
 | Extended widget gallery | `cargo run -p nagi-tui-widgets --example extended_widget_gallery` | `go run ./examples/extended-widget-gallery` |
 | Dashboard | `cargo run -p nagi-tui-widgets --example dashboard` | `go run ./examples/dashboard` |

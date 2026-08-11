@@ -8,8 +8,8 @@ highest-priority metrics. I/O and wake-ups remain performance metrics
 
 ## ScrollViewport purpose
 
-This benchmark compares four warmed 80 by 24 Cell frame paths over 100,000
-one-Cell rows
+This benchmark compares five warmed 80 by 24 Cell frame paths over 100,000
+items
 
 - The eager case constructs the complete child tree on every application view
 - The virtual case declares the complete extent and constructs the 24-row
@@ -18,6 +18,10 @@ one-Cell rows
   the content end and constructs the final 24-row visible fragment
 - The virtual-identified case additionally assigns a stable precomputed ID to
   every visible row, exercising the ID-bearing tree index path
+- The variable-height VirtualFlow case retains a stable 100,000-item order and
+  alternates one- and two-Cell item heights. Its initial order reconciliation
+  and height-index allocation occur during warm-up; measured frames construct
+  only the resolved visible range and one Cell of default overscan
 - All cases perform semantic tree preparation, layout, rendering, and Surface
   diffing
 - The workload has no terminal I/O, timers, Effects, or Subscriptions, so it
@@ -39,7 +43,7 @@ warm-up frames before sampling
 
 - Apple M1 Max, arm64
 - macOS 15.7.7
-- Rust 1.96.0
+- Rust 1.97.1
 - Go 1.26.5
 
 Run both implementations from the superproject root
@@ -54,17 +58,19 @@ Results recorded on 2026-08-11
 
 | Implementation | Path | Median time per frame | Allocations per frame | Allocated bytes per frame | Peak additional live bytes | Retained bytes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Rust | eager | 248.620 ms | 100,080 | 26,302,232 | 26,300,256 | 0 |
-| Rust | virtual | 0.075 ms | 102 | 7,968 | 6,176 | 0 |
-| Rust | virtual stick-to-end growth | 0.076 ms | 102 | 7,968 | 6,176 | 0 |
-| Rust | virtual-identified | 0.079 ms | 103 | 7,984 | 6,192 | 0 |
-| Go | eager | 262.652 ms | 10 | 46,458,080 | not measured | not measured |
-| Go | virtual | 0.093 ms | 7 | 61,344 | not measured | not measured |
-| Go | virtual stick-to-end growth | 0.089 ms | 7 | 61,344 | not measured | not measured |
-| Go | virtual-identified | 0.093 ms | 8 | 61,360 | not measured | not measured |
+| Rust | eager | 285.809 ms | 100,080 | 26,302,232 | 26,300,256 | 0 |
+| Rust | virtual | 0.086 ms | 102 | 7,968 | 6,176 | 0 |
+| Rust | virtual stick-to-end growth | 0.085 ms | 102 | 7,968 | 6,176 | 0 |
+| Rust | virtual-identified | 0.086 ms | 103 | 7,984 | 6,192 | 0 |
+| Rust | variable-height VirtualFlow | 0.059 ms | 129 | 38,610 | 18,094 | 0 |
+| Go | eager | 297.122 ms | 10 | 46,458,080 | not measured | not measured |
+| Go | virtual | 0.103 ms | 7 | 61,344 | not measured | not measured |
+| Go | virtual stick-to-end growth | 0.101 ms | 7 | 61,344 | not measured | not measured |
+| Go | virtual-identified | 0.099 ms | 8 | 61,360 | not measured | not measured |
+| Go | variable-height VirtualFlow | 0.101 ms | 73 | 94,304 | not measured | not measured |
 
-On this workload, virtual median frame time is about 1/3,315 of eager time in
-Rust and 1/2,838 in Go. Allocated bytes are about 1/3,301 of eager allocation
+On this workload, virtual median frame time is about 1/3,323 of eager time in
+Rust and 1/2,891 in Go. Allocated bytes are about 1/3,301 of eager allocation
 in Rust and 1/757 in Go. Adding stable IDs to all 24 visible rows adds one
 allocation and 16 allocated bytes in both implementations. The timing
 difference is within run-to-run noise. The identified path does not make
@@ -74,6 +80,14 @@ The stick-to-end path previews the offset that interaction preparation will
 commit, so initial rendering and content growth construct only the final
 visible fragment. Its allocation results match the fixed-content virtual path
 in both implementations, and its timing difference is within run-to-run noise
+
+The variable-height path demonstrates that an unchanged stable order does not
+make warmed frame CPU or allocation proportional to the declared 100,000
+items. It is not directly comparable to the one-Cell VirtualScrollViewport
+path: it builds fewer logical items at alternating heights, while retaining
+per-item measurement and semantic-anchor state and composing two-line Nodes
+for half of the built items. Initial construction, order changes, and terminal
+width changes intentionally remain linear in item count
 
 Compared with the 2026-07-21 reference on the same environment, steady-state
 allocation counts remain 102 in Rust and 7 in Go after adding per-Node scoped
@@ -101,6 +115,12 @@ Deterministic tests in both implementations scroll through 256 frames and
 verify that only visible rows are constructed and the semantic tree remains
 bounded. The Go implementation also compares retained heap after two 512-frame
 windows with garbage collection between them, allowing 1 MiB for runtime noise
+
+VirtualFlow tests share 15 append, prepend, removal, height-change,
+width-change, revision-mismatch, follow-end, and Cell-overscan transitions.
+Runtime tests verify one builder call per required item in a semantic frame and
+stable prepend and streaming-tail anchors. Go additionally compares retained
+heap after two 256-frame variable-height windows with the same 1 MiB tolerance
 
 Both implementations also verify that initial stick-to-end rendering and
 content growth invoke the fragment builder once per frame, construct only the

@@ -14,7 +14,7 @@ nodes from `view`, and receive messages sequentially through `update`
 | Unicode graphemes and terminal width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input/output, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry, Cells, surfaces, composition, snapshots | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| Twenty-five standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| Twenty-seven standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual time and deterministic application driving | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindings remain private implementation details
@@ -71,7 +71,8 @@ frame interval to zero disables that render limit
 Core nodes include Text, RichText, Paragraph, safe ANSI Text, SurfaceNode,
 TextInput, Spacer, Gap, Row, Column, Stack, Padding, Border, Panel, Align, Clip,
 ScrollViewport, and Modal. Layout uses integer terminal cells and stable
-rounding rules. VirtualScrollViewport is the large-content variant
+rounding rules. VirtualScrollViewport and VirtualFlow are the large-content
+variants
 
 Every stateful, focusable, or event-receiving node needs an application-defined
 stable `NodeId`. IDs must survive rebuilding and must not be derived only from a
@@ -109,6 +110,17 @@ materialize all item or row metadata, and List filtering scans it. Applications
 that also need lazy collection access should use the Core virtual viewport
 directly. Standard List and Table rows inside their virtual viewports are one
 Cell high and clip wrapped or multiline content
+
+VirtualFlow accepts an immutable order of unique stable item IDs, a revisioned
+invalidation hint, width-aware height estimates, and an item Node builder. It
+retains measured heights, a prefix-height index, vertical ScrollState, and a
+stable semantic anchor in Interaction State. Appends and tail growth follow the
+end only while the viewport remains there. Prepend, removal, reordering,
+streaming height changes, and terminal-width changes preserve the first visible
+item and intra-item Cell offset while away from the end. Only visible items and
+Cell-bounded overscan are built. The viewport has zero intrinsic height, so a
+parent must assign a layout length or rectangle. Item content, unread policy,
+paging, and persistence remain application-owned
 
 ## Scoped key-map foundation
 
@@ -178,17 +190,26 @@ to each widget even when the Action ID is shared. An active scope may replace
 or remove each complete binding list. Left-button press remains raw pointer
 handling and is independent from keyboard rebinding
 
-Core also exposes 18 `nagi.text.*` Action ID constants for cursor movement,
-selection extension, select all, deletion, line-break insertion, undo, and
-redo. TextArea declares them under its focus-owning root with its existing
-keyboard defaults and explicit-repeat behavior. Boundary movement and deletion
-remain enabled and consume without a message by default. Bubble navigation can
-instead pass Up and Down through at the first or last visual line. Opt-in soft
-wrap makes those actions preserve a preferred visual column, while Home and End
-remain logical-line operations. A TextArea viewport follows an identified caret
-without adding a Tab stop. Undo and redo are disabled-pass-through when their
-callbacks are absent. Text and Paste remain raw editing input after local action
-resolution, and Paste never invokes an action
+Core also exposes 28 `nagi.text.*` Action ID constants: ten cursor movements,
+the corresponding ten selection extensions, select all, backward and forward
+deletion, line-break insertion, undo, redo, copy selection, and copy document.
+TextArea declares its existing 18-operation editing subset under its
+focus-owning root with existing keyboard defaults and explicit-repeat behavior.
+Boundary movement and deletion remain enabled and consume without a message by
+default. Bubble navigation can instead pass Up and Down through at the first or
+last visual line. Opt-in soft wrap makes those actions preserve a preferred
+visual column, while Home and End remain logical-line operations. A TextArea
+viewport follows an identified caret without adding a Tab stop. Undo and redo
+are disabled-pass-through when their callbacks are absent. Text and Paste
+remain raw editing input after local action resolution, and Paste never invokes
+an action
+
+SelectableText declares the 19-operation document subset for grapheme, word,
+logical-line, and document movement, matching selection extension, select all,
+copy selection, and copy document. Content and selection state are controlled
+and grapheme-aligned. Copy actions emit an owned application message containing
+source ID, semantic text, kind, and original UTF-8 byte range; Nagi does not
+choose a clipboard backend. Hidden spans disable both copy actions
 
 Composer layers controlled history recall, submit validity, automatic one-to-six
 row height, optional validation content, and UTF-8-byte or grapheme insertion
@@ -244,7 +265,7 @@ from keyboard rebinding
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
-List, Table, Tree, Disclosure, TextArea, Composer, Command Palette, Modal,
+List, Table, Tree, Disclosure, TextArea, Composer, SelectableText, Command Palette, Modal,
 Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
 migrated. See the
 [scoped key-map specification](../spec/keymap.md) for the complete dispatch,
@@ -310,6 +331,12 @@ Standard widgets use public Core composition and the public Unicode text API
 - Composer adds controlled submit, history recall, insertion limits, automatic
   row bounds, and application-provided validation content over TextArea without
   owning message meaning or persistence
+- SelectableText displays immutable styled content with application-owned,
+  grapheme-aligned keyboard selection and emits semantic selection or document
+  copy requests without performing clipboard I/O
+- VirtualFeed composes a flexible VirtualFlow that follows the end by default,
+  with application-controlled centered empty, pinned loading-before and
+  loading-after, and bottom-end unread-indicator slots
 - Disclosure provides a controlled, focusable summary with rebindable toggle,
   collapse, and expand actions, raw pointer toggling, a body builder that is not
   called while collapsed, and nested focus fallback
@@ -331,10 +358,10 @@ Standard widgets use public Core composition and the public Unicode text API
   independently rebindable day, week, month, and displayed-month-boundary
   selection actions owned by the active date
 
-The widget galleries survey the complete standard library. The dashboard,
-filtered list, file browser, multi-pane log viewer, and form validation examples
-show how the same public nodes and widgets compose into application-shaped
-layouts
+The widget galleries survey the complete standard library. The variable-height
+feed, dashboard, filtered list, file browser, multi-pane log viewer, and form
+validation examples show how the same public nodes and widgets compose into
+application-shaped layouts
 
 See the [Rust and Go API mapping](API_MAPPING.md) when translating between
 implementations
@@ -343,8 +370,9 @@ implementations
 
 Rust `nagi-tui-test` and Go `tuitest` provide virtual input, size, time, frame
 history, message history, Interaction State inspection, controlled effects,
-manual subscriptions, supervisor diagnostics, resolved ScrollState, and
-active resolved action groups, and application exit-request inspection
+manual subscriptions, supervisor diagnostics, resolved ScrollState and
+VirtualFlowState, active resolved action groups, and application exit-request
+inspection
 
 Use virtual time and controlled asynchronous sources in application tests so
 they do not depend on real sleeps or terminal timing
@@ -361,6 +389,7 @@ terminal
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
+| Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
 | Extended widget gallery | `cargo run -p nagi-tui-widgets --example extended_widget_gallery` | `go run ./examples/extended-widget-gallery` |
 | Dashboard | `cargo run -p nagi-tui-widgets --example dashboard` | `go run ./examples/dashboard` |

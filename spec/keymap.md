@@ -223,9 +223,10 @@ Rust exports `FOCUS_*_ACTION_ID` and `SCROLL_*_ACTION_ID` constants. Go exports
 the corresponding `Focus*ActionID` and `Scroll*ActionID` constants
 
 Core reserves generic `nagi.text.*` Action IDs for cursor movement left,
-right, up, down, to line start, and to line end; selection extension in the
-same six directions; select all; backward and forward deletion; line-break
-insertion; undo; and redo. Rust exports `TEXT_*_ACTION_ID` constants and Go
+right, up, down, to word left and right, to line start and end, and to document
+start and end; selection extension in the same ten directions; select all;
+backward and forward deletion; line-break insertion; undo; redo; copy
+selection; and copy document. Rust exports `TEXT_*_ACTION_ID` constants and Go
 exports the corresponding `Text*ActionID` constants
 
 The standard widget package reserves `nagi.activate` for activation with the
@@ -271,6 +272,11 @@ Enter with `initial-only` repeat policy
 the English labels `Submit`, `Previous history entry`, and `Next history entry`,
 identify message submission and controlled recall independently from an
 application's history storage or message meaning
+
+SelectableText declares the applicable 19 Core text actions at one focusable
+root: eight cursor movements, the corresponding eight selection extensions,
+select all, copy selection, and copy document. Its word, document, and copy
+Action IDs are shared vocabulary rather than clipboard or document-model policy
 
 Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, Disclosure, Dialog
 action Buttons, Command Palette, FilePicker, and Calendar declare

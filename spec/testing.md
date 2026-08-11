@@ -12,11 +12,19 @@ The harnesses provide equivalent observable behavior for
 - Manual Subscription delivery and lifecycle inspection
 - Interaction State inspection and focus control
 - Resolved ScrollViewport state and application exit-request inspection
+- VirtualFlow stable-anchor transitions for append, prepend, removal, changed
+  heights, width changes, revision mismatch, end following, and Cell overscan
+- Variable-height runtime construction bounded to the resolved fragment,
+  per-frame single item builds, pinned VirtualFeed slots, and retained-memory
+  stabilization under sustained scrolling
 - Explicit reveal-target scrolling without terminal timing
 - TextArea visual wrapping, preferred-column movement, boundary availability,
   and caret-viewport following
 - Composer submission, line-break rebinding, controlled history recall, length
   limits, automatic height, validation placement, and viewport following
+- SelectableText grapheme, word, logical-line, and document movement,
+  controlled selection, copy-request availability and payloads, rebinding,
+  repeat policy, and style overlays
 - Modal first, target, none, nested, replacement, and return-focus lifecycle
   across application-driven view changes
 - Disclosure state-dependent actions, rebinding, pointer toggling, collapsed

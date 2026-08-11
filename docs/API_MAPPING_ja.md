@@ -49,6 +49,13 @@ Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonical
 | 設定付きvirtual viewport | `Node::virtual_scroll_viewport_with_options(...)` | `tui.VirtualScrollViewportWithOptions[M](...)` |
 | Visible virtual request | `VirtualViewport` | `tui.VirtualViewport` |
 | Virtual fragment | `VirtualFragment::new(...)` | `tui.NewVirtualFragment[M](...)` |
+| 可変高flow | `Node::virtual_flow(...)` | `tui.VirtualFlow[M](...)` |
+| 設定付き可変高flow | `Node::virtual_flow_with_options(...)` | `tui.VirtualFlowWithOptions[M](...)` |
+| 安定flow item | `VirtualFlowItem::new(...)` | `tui.NewVirtualFlowItem(...)` |
+| Immutable flow order | `VirtualFlowItems::new(...)` | `tui.NewVirtualFlowItems(...)` |
+| Flow content source | `VirtualFlowSource::new(...)` | `tui.NewVirtualFlowSource[M](...)` |
+| Flow invalidation | `VirtualFlowUpdate::reset` / `changed` | `tui.ResetVirtualFlowUpdate` / `ChangedVirtualFlowUpdate` |
+| 解決済みflow state | `InteractionState::virtual_flow_state(...)` | `InteractionState.VirtualFlowState(...)` |
 | Modal scope | `Node::modal(...)` | `tui.Modal[M](...)` |
 | Focus設定付きModal | `Node::modal_with_focus(...)` | `tui.ModalWithFocus[M](...)` |
 | Modal focus option | `ModalFocusOptions` | `tui.ModalFocusOptions` |
@@ -62,7 +69,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | 明示的なviewport内target表示 | `Node::reveal_descendant(...)` | `Node.RevealDescendant(...)` |
 | 消えるsubtreeのfocus fallback | `Node::focus_fallback(...)` | `Node.FocusFallback(...)` |
 
-`TextSpan::new`は`tui.NewTextSpan`、`ParagraphOptions::default`は`tui.DefaultParagraphOptions`に対応します
+`TextSpan::new`と`TextSpan::with_style`は`tui.NewTextSpan`と`TextSpan.WithStyle`、`ParagraphOptions::default`は`tui.DefaultParagraphOptions`に対応します
 
 ## Scoped KeyMap
 
@@ -116,6 +123,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
 | Text deletion Action ID | `TEXT_DELETE_*_ACTION_ID` | `tui.TextDelete*ActionID` |
 | Text line break、undo、redo Action ID | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
+| Text copy Action ID | `TEXT_COPY_SELECTION_ACTION_ID` / `TEXT_COPY_DOCUMENT_ACTION_ID` | `tui.TextCopySelectionActionID` / `tui.TextCopyDocumentActionID` |
 | 標準activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
 | 標準dismiss descriptor | `dismiss_action_descriptor` | `widget.DismissActionDescriptor` |
 | 標準confirm descriptor | `confirm_action_descriptor` | `widget.ConfirmActionDescriptor` |
@@ -135,6 +143,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Composer action descriptor | `Composer::action_descriptors` | `Composer.ActionDescriptors` |
 | Composer row境界 | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
 | Composer長さ制限 | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
+| SelectableText action descriptor | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -171,6 +180,8 @@ TextAreaは18個のCore `nagi.text.*` operationをrootで宣言し、TextとPast
 
 Composerは同じrootで継承したtext actionより先にsubmitと2個のhistory operationを宣言します
 
+SelectableTextは1個のfocusable rootで19個のCore text selectionとcopy operationを宣言します
+
 Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
 
 Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします。Dialogは`nagi.confirm`の後に`nagi.dismiss`を宣言し、両roleを明示的なaction IDへmapして各actionで既存Button activationを使用します
@@ -198,6 +209,7 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | Scrollbar | `Scrollbar::new` | `widget.NewScrollbar` |
 | TextArea | `TextArea::new` | `widget.NewTextArea` |
 | Composer | `Composer::new` | `widget.NewComposer` |
+| SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -212,8 +224,9 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | Paginator | `Paginator::new` | `widget.NewPaginator` |
 | FilePicker | `FilePicker::new` | `widget.NewFilePicker` |
 | Calendar | `Calendar::new` | `widget.NewCalendar` |
+| VirtualFeed | `VirtualFeed::new` | `widget.NewVirtualFeed` |
 
-RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goはexported mixed caseを使用して`Node`で終わります。例として`List::filter`と`List.Filter`、`Table::column_alignment`と`Table.ColumnAlignment`、`FilePicker::show_hidden`と`FilePicker.ShowHidden`が対応します
+RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goはexported mixed caseを使用して`Node`で終わります。例として`List::filter`と`List.Filter`、`Table::column_alignment`と`Table.ColumnAlignment`、`VirtualFeed::unread_indicator`と`VirtualFeed.UnreadIndicator`、`FilePicker::show_hidden`と`FilePicker.ShowHidden`が対応します
 
 ## Controlled stateとitem value
 
@@ -224,6 +237,9 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Undoとredo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
+| Selectable text content | `SelectableTextContent::plain` / `styled` | `widget.NewPlainSelectableTextContent` / `NewSelectableTextContent` |
+| Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
+| Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

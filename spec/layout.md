@@ -68,5 +68,41 @@ tree
 - Existing eager ScrollViewport construction remains available for bounded
   child trees
 
+A `VirtualFlow` is a vertical viewport for ordered stable items whose measured
+Cell heights may differ
+
+- The application supplies an immutable order of unique stable `NodeId` keys.
+  Reusing the same order storage skips structural reconciliation
+- The source supplies a width-aware estimated height and a Node builder. Both
+  estimated and measured heights normalize to at least one Cell
+- The source also supplies an opaque content revision. A reset invalidates all
+  measurements. A changed current-index range is accepted only when its prior
+  revision matches the runtime; otherwise every item is invalidated
+- Item height and a prefix-height index remain in Interaction State. Prefix
+  extent, point lookup, and single-height changes use logarithmic operations;
+  order and width changes are linear in item count
+- Overscan is expressed in Cells before and after the visible range. A builder
+  is called at most once for each required index in one semantic frame.
+  Estimate correction may discover and build additional items until visible
+  coverage is resolved; temporary items outside the final range are discarded
+- While following the end, append and tail growth retain an end-affinity
+  anchor. Away from the end, prepend, reordering, height changes, and width
+  changes retain the first visible stable key and its intra-item Cell offset
+- A removed anchor falls forward to the next surviving key in the prior order,
+  then backward to the previous surviving key, then to the start
+- Semantic anchor correction does not invoke the application scroll callback
+  or resume end following after the user has left the end
+- The resolved `VirtualFlowState` exposes ScrollState, optional anchor,
+  non-overscanned visible index range, and current item count. Domain unread,
+  paging, and persistence state remains application-owned
+- Only the final built item Nodes participate in semantic traversal. Explicit
+  reveal and focused-descendant tracking are limited to that built fragment
+- A VirtualFlow has zero intrinsic height because content extent is retained by
+  Interaction State rather than the semantic Node. Applications MUST assign a
+  parent layout length or otherwise place it in a supplied rectangle
+- VirtualFlow reuses the existing vertical scroll actions, wheel handling,
+  `ScrollTo` Effect, and ScrollState callback without timers, tasks, I/O, or a
+  new wake-up source
+
 The solver is not a separate public API; applications configure layout through
 semantic Node lengths and composition

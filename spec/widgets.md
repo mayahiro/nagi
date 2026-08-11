@@ -69,6 +69,26 @@ spinner ticks, and modal visibility
   style. Its activation descriptor is `disabled-pass-through`
 - The rendered default label is `[ LABEL ]`
 
+## VirtualFeed
+
+- VirtualFeed composes one Core VirtualFlow as a flexible body and follows its
+  end by default. The supplied stable Node ID belongs to that viewport
+- The application owns the immutable item order, update revision, estimated
+  heights, item builder, unread state, and paging lifecycle
+- An optional empty Node is centered over the body only while the item order is
+  empty
+- Optional loading-before and loading-after Nodes are pinned outside the
+  scrollable body. The application decides whether either slot exists and what
+  its content means
+- An optional unread-indicator Node is aligned to the bottom end over the body.
+  The application owns its visibility and count; VirtualFeed does not infer
+  unread state
+- Follow-end, Cell overscan, focused-descendant reveal, and the ScrollState
+  callback configure the underlying VirtualFlow. The callback can update
+  application-owned unread state from `AtEnd`
+- Jump-to-end uses the existing `nagi.scroll.end` action or ScrollTo Effect.
+  VirtualFeed adds no Agent, transcript, message, role, Tool, or storage type
+
 ## Modal
 
 - A Modal uses the public Core modal node, so routing and tab traversal remain
@@ -449,6 +469,58 @@ spinner ticks, and modal visibility
   text is shortened, so replacement preserves unselected prefix and suffix
   text. Existing over-limit content is not rewritten, and deletion remains
   available
+
+## SelectableText
+
+- SelectableText is a controlled keyboard-selection view over one semantic
+  UTF-8 document. The application owns its cursor, optional selection anchor,
+  and the meaning and destination of copy requests
+- Content is immutable ordered TextSpan data plus the concatenated semantic
+  text. Clones share that storage. Go replaces invalid UTF-8 before calculating
+  offsets; Rust text is valid UTF-8 by type
+- A hidden span makes the complete document non-copyable. Applications MUST
+  redact sensitive values before constructing content; the widget does not
+  retain a pre-redaction value
+- Cursor and anchor are UTF-8 byte offsets normalized down to extended
+  grapheme boundaries. Selection is the ordered non-empty range between them.
+  Applications can explicitly normalize state after replacing content, and
+  widget construction also normalizes the supplied state
+- The root declares 19 semantic actions in this order: cursor left and right;
+  cursor word left and right; cursor line start and end; cursor document start
+  and end; selection extension for the same eight movements; select all; copy
+  selection; and copy document
+- Defaults are Left, Right, Control-Left, Control-Right, Home, End,
+  Control-Home, and Control-End, with Shift added for the corresponding
+  selection extensions. Control-A selects all, Control-C copies the selection,
+  and Control-Shift-C copies the document
+- Movement, selection extension, and select-all defaults accept explicit
+  repeat. Copy defaults are initial-only. An enabled movement consumes at a
+  boundary and emits state only when state changes. Every action is
+  disabled-pass-through when the widget is disabled
+- Plain Left and Right collapse an existing selection to its start and end.
+  Other plain word, line, and document movements discard the selection and
+  move to their computed target. Movement is by extended grapheme; logical
+  lines use CR, LF, and CRLF. Document movement uses byte offsets zero and
+  semantic-text length
+- Word separators are exactly U+0009 through U+000D and U+0020. Word-left
+  skips separators to the preceding word start. Word-right skips the current
+  word and following separators to the next word start or document end. Up,
+  Down, and visual wrapped-line movement remain available to ancestor routing
+- Selection extension preserves an existing anchor. When selection is empty,
+  it preserves the cursor before the first extension as the new anchor.
+  Select-all sets the anchor to zero and cursor to the document length
+- Copy-selection is enabled only with an application callback, copyable
+  content, and a non-empty selection. Copy-document also requires a non-empty
+  document. Otherwise the corresponding action is disabled-pass-through
+- A copy callback receives an owned request containing the source Node ID,
+  selection-or-document kind, copied semantic text, and its UTF-8 byte range in
+  the original document. The widget performs no terminal, OS, or OSC 52
+  clipboard I/O
+- Caller span styles are preserved. Selection defaults to reverse, focus to an
+  underline overlay, and disabled content to dim. ParagraphOptions controls
+  wrapping and alignment without changing selection or copy text
+- Pointer selection, pointer capture, viewport auto-scroll, and selection
+  across multiple Nodes are outside this widget contract
 
 ## Sparkline
 
