@@ -2,15 +2,16 @@
 
 [日本語](API_MAPPING_ja.md)
 
-Nagi keeps observable TUI and CLI behavior aligned while using each language's
-normal naming and ownership conventions. This mapping covers the main public
-entry points; generated API documentation remains authoritative for complete
-method signatures
+Nagi keeps observable Content, TUI, and CLI behavior aligned while using each
+language's normal naming and ownership conventions. This mapping covers the
+main public entry points; generated API documentation remains authoritative
+for complete method signatures
 
 ## Packages
 
 | Responsibility | Rust | Go |
 | --- | --- | --- |
+| Source-neutral content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
 | Core runtime and nodes | `nagi-tui` | `github.com/mayahiro/nagitui-go` |
 | Unicode text | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | VT codec, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
@@ -22,6 +23,44 @@ method signatures
 
 The Rust `nagi-tui` facade and Go `tui` package re-export the canonical
 Geometry and Style types for application-facing APIs
+
+## Source-neutral content
+
+| Purpose | Rust | Go |
+| --- | --- | --- |
+| Content node | `Content` | `content.Content` |
+| Content kind | `ContentKind` | `content.ContentKind` |
+| Text | `Content::text(value)` | `content.NewText(value)` |
+| Byte-oriented text | `Content::text_bytes(bytes)` | `content.NewTextBytes(bytes)` |
+| Hard break | `Content::hard_break()` | `content.NewHardBreak()` |
+| Element | `Element` | `content.Element` |
+| Element kind | `ElementKind` | `content.ElementKind` |
+| Inline element | `Element::new(ElementKind::Inline, children)` | `content.NewInline(children)` |
+| Flow element | `Element::new(ElementKind::Flow, children)` | `content.NewFlow(children)` |
+| Paragraph element | `Element::new(ElementKind::Paragraph, children)` | `content.NewParagraph(children)` |
+| Sequence element | `Element::new(ElementKind::Sequence, children)` | `content.NewSequence(children)` |
+| Convert element to content | `Element::into_content()` | `Element.Content()` |
+| Stable identity | `ElementId::new` / `Element::with_id` | `content.NewElementID` / `Element.WithID` |
+| Opaque revision | `Element::with_revision` | `Element.WithRevision` |
+| Semantic role | `Role::new` / `Element::with_roles` | `content.NewRole` / `Element.WithRoles` |
+| Presentation class | `Class::new` / `Element::with_classes` | `content.NewClass` / `Element.WithClasses` |
+| Application annotation | `AnnotationId::new` / `Element::with_annotation` | `content.NewAnnotationID` / `Element.WithAnnotation` |
+| Semantic boundary | `SemanticBoundary` / `Element::with_boundary` | `content.SemanticBoundary` / `Element.WithBoundary` |
+| Identifier failure | `IdentifierError` / `IdentifierErrorKind` | `content.IdentifierError` / `IdentifierErrorKind` |
+| Duplicate role or class | `DuplicateRole` / `DuplicateClass` | `content.DuplicateRoleError` / `DuplicateClassError` |
+| Semantic projection | `semantic_text` / `SemanticText` | `content.ProjectSemanticText` / `SemanticText` |
+| Annotation byte range | `AnnotationRange` | `content.AnnotationRange` |
+| Explicit validation | `validate(content, limits)` | `content.Validate(value, limits)` |
+| Unlimited validation | `Limits::UNLIMITED` | `content.UnlimitedLimits()` |
+| Resource result | `Stats` | `content.Stats` |
+| Validation failure | `ValidationError` / `ValidationErrorKind` | `content.ValidationError` / `ValidationErrorKind` |
+
+Rust `Content` clones and Go `Content` value copies share immutable backing
+storage. Slice accessors return immutable slices in Rust and defensive copies
+in Go. Go defines zero `Content` as empty Text and zero `Element` as empty
+Inline. Go modifier errors reject invalid zero-value identifiers and unknown
+numeric boundaries; Rust validated identifiers and closed enums make those
+states unrepresentable
 
 ## Core nodes
 

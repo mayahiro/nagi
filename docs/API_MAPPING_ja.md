@@ -2,12 +2,13 @@
 
 [English](API_MAPPING.md)
 
-Nagiは外部から観測できるTUIとCLIの挙動を揃えながら、各言語の標準的な命名と所有規約を使用します。この対応表は主要なpublic entry pointを対象とし、完全なmethod signatureは生成されるAPI documentを正とします
+Nagiは外部から観測できるContent、TUI、CLIの挙動を揃えながら、各言語の標準的な命名と所有規約を使用します。この対応表は主要なpublic entry pointを対象とし、完全なmethod signatureは生成されるAPI documentを正とします
 
 ## Package
 
 | 責務 | Rust | Go |
 | --- | --- | --- |
+| Source-neutral Content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
 | Core runtimeとNode | `nagi-tui` | `github.com/mayahiro/nagitui-go` |
 | Unicode text | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | VT codec、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
@@ -18,6 +19,45 @@ Nagiは外部から観測できるTUIとCLIの挙動を揃えながら、各言�
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonicalなGeometry型とStyle型を再公開します
+
+## Source-neutral Content
+
+| 用途 | Rust | Go |
+| --- | --- | --- |
+| Content node | `Content` | `content.Content` |
+| Content kind | `ContentKind` | `content.ContentKind` |
+| Text | `Content::text(value)` | `content.NewText(value)` |
+| Byte-oriented text | `Content::text_bytes(bytes)` | `content.NewTextBytes(bytes)` |
+| Hard break | `Content::hard_break()` | `content.NewHardBreak()` |
+| Element | `Element` | `content.Element` |
+| Element kind | `ElementKind` | `content.ElementKind` |
+| Inline element | `Element::new(ElementKind::Inline, children)` | `content.NewInline(children)` |
+| Flow element | `Element::new(ElementKind::Flow, children)` | `content.NewFlow(children)` |
+| Paragraph element | `Element::new(ElementKind::Paragraph, children)` | `content.NewParagraph(children)` |
+| Sequence element | `Element::new(ElementKind::Sequence, children)` | `content.NewSequence(children)` |
+| ElementからContentへの変換 | `Element::into_content()` | `Element.Content()` |
+| Stable identity | `ElementId::new` / `Element::with_id` | `content.NewElementID` / `Element.WithID` |
+| Opaque revision | `Element::with_revision` | `Element.WithRevision` |
+| Semantic role | `Role::new` / `Element::with_roles` | `content.NewRole` / `Element.WithRoles` |
+| Presentation class | `Class::new` / `Element::with_classes` | `content.NewClass` / `Element.WithClasses` |
+| Application annotation | `AnnotationId::new` / `Element::with_annotation` | `content.NewAnnotationID` / `Element.WithAnnotation` |
+| Semantic boundary | `SemanticBoundary` / `Element::with_boundary` | `content.SemanticBoundary` / `Element.WithBoundary` |
+| Identifier failure | `IdentifierError` / `IdentifierErrorKind` | `content.IdentifierError` / `IdentifierErrorKind` |
+| Duplicate roleまたはclass | `DuplicateRole` / `DuplicateClass` | `content.DuplicateRoleError` / `DuplicateClassError` |
+| Semantic projection | `semantic_text` / `SemanticText` | `content.ProjectSemanticText` / `SemanticText` |
+| Annotation byte range | `AnnotationRange` | `content.AnnotationRange` |
+| 明示的validation | `validate(content, limits)` | `content.Validate(value, limits)` |
+| Unlimited validation | `Limits::UNLIMITED` | `content.UnlimitedLimits()` |
+| Resource result | `Stats` | `content.Stats` |
+| Validation failure | `ValidationError` / `ValidationErrorKind` | `content.ValidationError` / `ValidationErrorKind` |
+
+Rustの`Content` cloneとGoの`Content` value copyはimmutableなbacking storageを共有します
+
+Slice accessorはRustでimmutable sliceを返し、Goでdefensive copyを返します
+
+Goのzero `Content`はempty Text、zero `Element`はempty Inlineです
+
+Goのmodifier errorはinvalidなzero-value identifierと未知のnumeric boundaryを拒否し、Rustではvalidated identifierとclosed enumにより同じ状態を表現できません
 
 ## Core Node
 

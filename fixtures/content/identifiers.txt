@@ -1,0 +1,22 @@
+nagi-fixture-v1	content-identifiers
+# kind is element, role, class, or annotation
+element-simple	kind=element	value=turn-1	expected=ok
+element-opaque	kind=element	value=turn 1/output	expected=ok
+element-unicode	kind=element	value=会話 1	expected=ok
+element-empty	kind=element	value=	expected=empty
+element-invalid-utf8	kind=element	value=\xFF	expected=invalid-utf8
+role-simple	kind=role	value=heading	expected=ok
+role-namespaced	kind=role	value=diagnostic.code	expected=ok
+role-empty	kind=role	value=	expected=empty
+role-invalid-utf8	kind=role	value=heading.\xFF	expected=invalid-utf8
+role-leading-digit	kind=role	value=1heading	expected=invalid-segment-start
+role-empty-segment	kind=role	value=diagnostic..code	expected=invalid-segment-start
+role-uppercase-start	kind=role	value=Heading	expected=invalid-segment-start
+role-uppercase-rest	kind=role	value=headIng	expected=invalid-character
+role-invalid-character	kind=role	value=heading/link	expected=invalid-character
+class-source	kind=class	value=source.ansi.sgr-33-1	expected=ok
+class-trailing-dot	kind=class	value=source.ansi.	expected=invalid-segment-start
+class-space	kind=class	value=source ansi	expected=invalid-character
+annotation-simple	kind=annotation	value=link.documentation	expected=ok
+annotation-underscore	kind=annotation	value=copy.tool_output	expected=ok
+annotation-unicode	kind=annotation	value=link.資料	expected=invalid-segment-start

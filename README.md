@@ -5,14 +5,14 @@
 Nagi is a family of native Rust and Go libraries for terminal applications
 
 The family separates full-screen interactive TUI applications, command-style
-CLI applications, and independently reusable Text and VT foundations
+CLI applications, and independently reusable Content, Text, and VT foundations
 
 ## Repositories
 
 | Repository | Responsibility | Release unit |
 | --- | --- | --- |
-| [`nagi-rs`](nagi-rs/README.md) | All Rust Text, VT, Surface, TUI, CLI, Widget, and test-support crates | One coordinated Cargo workspace version |
-| [`nagi-go`](nagi-go/README.md) | Shared Go `text` and `vt` packages | `github.com/mayahiro/nagi-go` |
+| [`nagi-rs`](nagi-rs/README.md) | All Rust Content, Text, VT, Surface, TUI, CLI, Widget, and test-support crates | One coordinated Cargo workspace version |
+| [`nagi-go`](nagi-go/README.md) | Shared Go `content`, `text`, and `vt` packages | `github.com/mayahiro/nagi-go` |
 | [`nagitui-go`](nagitui-go/README.md) | Go Surface, TUI runtime, Widgets, and TUI Test | `github.com/mayahiro/nagitui-go` |
 | [`nagicli-go`](nagicli-go/README.md) | Go Command Graph, parser, runtime, and CLI Test | `github.com/mayahiro/nagicli-go` |
 
@@ -22,9 +22,9 @@ fixtures
 
 ## Dependency boundaries
 
-Nagi Text and Nagi VT are the shared foundations. Nagi Surface depends on both,
-and Nagi TUI depends on Text, VT, and Surface. Nagi CLI may depend on Text and
-VT but must not depend on Surface or TUI
+Nagi Content depends only on Nagi Text. Nagi Surface depends on Text and VT,
+and Nagi TUI depends on Text, VT, and Surface. Nagi CLI may depend on Content,
+Text, and VT but must not depend on Surface or TUI
 
 Geometry types (`Point`, `Size`, and `Rect`) are owned by Nagi Surface. Terminal
 `Color`, `Attributes`, and `Style` are owned by Nagi VT. TUI facade packages may
@@ -36,10 +36,11 @@ workspace because Cargo crates remain separately selectable dependencies
 
 ## Current status
 
-The existing Nagi TUI implementation provides native Rust and Go runtimes,
-Unicode-aware text, typed VT codecs, cell surfaces, deterministic test
-harnesses, 27 standard widgets, virtual ScrollViewports, and stable
-variable-height VirtualFeeds for large content
+The shared Rust and Go foundations provide immutable source-neutral Content,
+Unicode-aware text, and typed VT codecs. The existing Nagi TUI implementation
+adds native runtimes, cell surfaces, deterministic test harnesses, 27 standard
+widgets, virtual ScrollViewports, and stable variable-height VirtualFeeds for
+large content
 
 Nagi CLI provides native Rust and Go Command Graphs, command-local typed value
 scopes, portable option groups and validators, structured deterministic Help
@@ -50,10 +51,12 @@ drivers, and matching examples
 ## Usage and contracts
 
 - [Runnable Rust examples](nagi-rs/README.md#examples)
-- [Runnable Go Text and VT example](nagi-go/README.md#example)
+- [Runnable Rust and Go Content examples](docs/CONTENT.md#projection-and-validation)
+- [Runnable Go Text and VT example](nagi-go/README.md#examples)
 - [Runnable Go TUI examples](nagitui-go/README.md#examples)
 - [Runnable Go CLI examples](nagicli-go/README.md#examples)
 - [Nagi semantic specifications](spec/README.md), including [CLI commands](spec/cli.md)
+- [Source-neutral Content guide](docs/CONTENT.md) and [Japanese version](docs/CONTENT_ja.md)
 - [Public TUI API guide](docs/API.md) and [Japanese version](docs/API_ja.md)
 - [Event-driven TUI application architecture](docs/EVENT_DRIVEN_APPLICATIONS.md) and [Japanese version](docs/EVENT_DRIVEN_APPLICATIONS_ja.md)
 - [Public CLI API guide](docs/CLI_API.md) and [Japanese version](docs/CLI_API_ja.md)

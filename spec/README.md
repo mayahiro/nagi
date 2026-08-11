@@ -1,7 +1,7 @@
 # Nagi semantic specifications
 
 These documents define the observable semantics shared by the native Rust and
-Go implementations of Nagi TUI and Nagi CLI
+Go implementations of Nagi Content, TUI, and CLI
 
 The specifications are intentionally language-neutral. Rust and Go APIs may
 use different shapes when that is idiomatic, but equivalent inputs must produce
@@ -16,6 +16,7 @@ strength
 - [Geometry](geometry.md)
 - [Layout](layout.md)
 - [Core nodes](core-nodes.md)
+- [Source-neutral content](content.md)
 - [Unicode and terminal text](text.md)
 - [Cell surfaces](surface.md)
 - [VT input](vt-input.md)
