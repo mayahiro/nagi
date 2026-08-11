@@ -54,11 +54,20 @@ Geometry and Style types for application-facing APIs
 | Visible virtual request | `VirtualViewport` | `tui.VirtualViewport` |
 | Virtual fragment | `VirtualFragment::new(...)` | `tui.NewVirtualFragment[M](...)` |
 | Modal scope | `Node::modal(...)` | `tui.Modal[M](...)` |
+| Configured modal focus | `Node::modal_with_focus(...)` | `tui.ModalWithFocus[M](...)` |
+| Modal focus options | `ModalFocusOptions` | `tui.ModalFocusOptions` |
+| Modal entry policy | `ModalInitialFocus` | `tui.ModalInitialFocusFirst` / `Target` / `None` |
+| Modal return policy | `ModalReturnFocus` | `tui.ModalReturnFocusPrevious` / `Target` / `None` |
 
 Node modifiers follow the same mapping pattern: Rust uses `with_id`,
 `focusable`, `tab_stop`, `with_focused_style`, `on_event`, and `with_length`; Go
 uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 `WithLength`
+
+| Purpose | Rust | Go |
+| --- | --- | --- |
+| Explicit viewport reveal target | `Node::reveal_descendant(...)` | `Node.RevealDescendant(...)` |
+| Disappearing-subtree focus fallback | `Node::focus_fallback(...)` | `Node.FocusFallback(...)` |
 
 `TextSpan::new` maps to `tui.NewTextSpan`, and
 `ParagraphOptions::default` maps to `tui.DefaultParagraphOptions`
@@ -107,6 +116,9 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
 | Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
 | Dismiss Action ID | `DISMISS_ACTION_ID` | `widget.DismissActionID` |
+| Confirm Action ID | `CONFIRM_ACTION_ID` | `widget.ConfirmActionID` |
+| Composer submit Action ID | `COMPOSER_SUBMIT_ACTION_ID` | `widget.ComposerSubmitActionID` |
+| History recall Action IDs | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
 | Text cursor Action IDs | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection-extension Action IDs | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -114,6 +126,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Text line-break, undo, and redo Action IDs | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
 | Standard activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
 | Standard dismiss descriptor | `dismiss_action_descriptor` | `widget.DismissActionDescriptor` |
+| Standard confirm descriptor | `confirm_action_descriptor` | `widget.ConfirmActionDescriptor` |
 | Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
 | Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
 | Radio action descriptor | `Radio::action_descriptor` | `Radio.ActionDescriptor` |
@@ -124,6 +137,20 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Table action descriptors | `Table::action_descriptors` | `Table.ActionDescriptors` |
 | Tree action descriptors | `Tree::action_descriptors` | `Tree.ActionDescriptors` |
 | TextArea action descriptors | `TextArea::action_descriptors` | `TextArea.ActionDescriptors` |
+| TextArea soft wrap and no-wrap | `TextArea::soft_wrap` / `no_wrap` | `TextArea.SoftWrap` / `NoWrap` |
+| TextArea vertical boundary policy | `TextAreaBoundaryNavigation` / `TextArea::boundary_navigation` | `widget.TextAreaBoundaryNavigation` / `TextArea.BoundaryNavigation` |
+| TextArea caret viewport | `TextArea::viewport` | `TextArea.Viewport` |
+| Composer action descriptors | `Composer::action_descriptors` | `Composer.ActionDescriptors` |
+| Composer row bounds | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
+| Composer length limits | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
+| Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
+| Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
+| Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
+| Dialog role selection | `Dialog::default_action` / `cancel_action` | `Dialog.DefaultAction` / `CancelAction` |
+| Dialog actions | `Dialog::action_descriptors` | `Dialog.ActionDescriptors` |
+| Dialog action wrapping | `Dialog::action_wrap_width` | `Dialog.ActionWrapWidth` |
+| Confirm default | `ConfirmDialogDefault` | `widget.ConfirmDialogDefaultConfirm` / `ConfirmDialogDefaultCancel` |
+| Modal focus builders | `Modal::initial_focus` / `return_focus` | `Modal.InitialFocus` / `ReturnFocus` |
 | Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
 | Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
 | Modal action descriptor | `Modal::action_descriptor` | `Modal.ActionDescriptor` |
@@ -146,10 +173,14 @@ the shared `nagi.activate` action. Select, the Tabs root, List, Table, Tree, and
 the Command Palette root declare the four shared selection Action IDs with
 widget-owned default bindings. Tree also declares the shared collapse and
 expand Action IDs. TextArea declares the 18 Core `nagi.text.*` operations under
-its root while retaining Text and Paste as raw editing input. Command Palette
-retains query TextInput handling before its ancestor root actions. Modal
-declares the shared `nagi.dismiss` action at its root and leaves an outer-action
-propagation boundary opt-in. Paginator declares the four shared selection
+its root while retaining Text and Paste as raw editing input. Composer declares
+submit and both history operations before those inherited text actions under
+the same root. Command Palette retains query TextInput handling before its
+ancestor root actions. Modal declares the shared `nagi.dismiss` action at its
+root and leaves an outer-action propagation boundary opt-in. Dialog declares
+`nagi.confirm` followed by `nagi.dismiss`, maps both roles to explicit action
+IDs, and uses existing Button activation for each action. Paginator declares
+the four shared selection
 actions without activation and gives previous and next three ordered fallback
 keys each. FilePicker declares activation, all six shared selection actions,
 and navigation back at its root with callback-sensitive availability. Calendar
@@ -164,10 +195,14 @@ structured conflict directly
 | List | `List::new` | `widget.NewList` |
 | Button | `Button::new` | `widget.NewButton` |
 | Modal | `Modal::new` | `widget.NewModal` |
+| Disclosure | `Disclosure::new` | `widget.NewDisclosure` |
+| Dialog | `Dialog::new` | `widget.NewDialog` |
+| ConfirmDialog | `ConfirmDialog::new` | `widget.NewConfirmDialog` |
 | Progress | `Progress::new` | `widget.NewProgress` |
 | Spinner | `Spinner::new` | `widget.NewSpinner` |
 | Scrollbar | `Scrollbar::new` | `widget.NewScrollbar` |
 | TextArea | `TextArea::new` | `widget.NewTextArea` |
+| Composer | `Composer::new` | `widget.NewComposer` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -194,7 +229,10 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Purpose | Rust | Go |
 | --- | --- | --- |
 | Multiline edit state | `TextAreaState` | `widget.TextAreaState` |
+| Preferred visual column | `TextAreaState::preferred_column` | `TextAreaState.PreferredColumn` |
 | Undo and redo history | `TextAreaHistory` | `widget.TextAreaHistory` |
+| Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
+| Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

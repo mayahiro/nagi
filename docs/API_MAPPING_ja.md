@@ -50,8 +50,17 @@ Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonical
 | Visible virtual request | `VirtualViewport` | `tui.VirtualViewport` |
 | Virtual fragment | `VirtualFragment::new(...)` | `tui.NewVirtualFragment[M](...)` |
 | Modal scope | `Node::modal(...)` | `tui.Modal[M](...)` |
+| Focus設定付きModal | `Node::modal_with_focus(...)` | `tui.ModalWithFocus[M](...)` |
+| Modal focus option | `ModalFocusOptions` | `tui.ModalFocusOptions` |
+| Modal entry policy | `ModalInitialFocus` | `tui.ModalInitialFocusFirst` / `Target` / `None` |
+| Modal return policy | `ModalReturnFocus` | `tui.ModalReturnFocusPrevious` / `Target` / `None` |
 
 Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focusable`、`tab_stop`、`with_focused_style`、`on_event`、`with_length`は、Goの`WithID`、`Focusable`、`TabStop`、`WithFocusedStyle`、`OnEvent`、`WithLength`に対応します
+
+| 用途 | Rust | Go |
+| --- | --- | --- |
+| 明示的なviewport内target表示 | `Node::reveal_descendant(...)` | `Node.RevealDescendant(...)` |
+| 消えるsubtreeのfocus fallback | `Node::focus_fallback(...)` | `Node.FocusFallback(...)` |
 
 `TextSpan::new`は`tui.NewTextSpan`、`ParagraphOptions::default`は`tui.DefaultParagraphOptions`に対応します
 
@@ -99,6 +108,9 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
 | Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
 | Dismiss Action ID | `DISMISS_ACTION_ID` | `widget.DismissActionID` |
+| Confirm Action ID | `CONFIRM_ACTION_ID` | `widget.ConfirmActionID` |
+| Composer submit Action ID | `COMPOSER_SUBMIT_ACTION_ID` | `widget.ComposerSubmitActionID` |
+| History recall Action ID | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
 | Text cursor Action ID | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection extension Action ID | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -106,6 +118,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Text line break、undo、redo Action ID | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
 | 標準activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
 | 標準dismiss descriptor | `dismiss_action_descriptor` | `widget.DismissActionDescriptor` |
+| 標準confirm descriptor | `confirm_action_descriptor` | `widget.ConfirmActionDescriptor` |
 | Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
 | Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
 | Radio action descriptor | `Radio::action_descriptor` | `Radio.ActionDescriptor` |
@@ -116,6 +129,20 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Table action descriptors | `Table::action_descriptors` | `Table.ActionDescriptors` |
 | Tree action descriptors | `Tree::action_descriptors` | `Tree.ActionDescriptors` |
 | TextArea action descriptors | `TextArea::action_descriptors` | `TextArea.ActionDescriptors` |
+| TextArea soft wrapとno-wrap | `TextArea::soft_wrap` / `no_wrap` | `TextArea.SoftWrap` / `NoWrap` |
+| TextArea vertical boundary policy | `TextAreaBoundaryNavigation` / `TextArea::boundary_navigation` | `widget.TextAreaBoundaryNavigation` / `TextArea.BoundaryNavigation` |
+| TextArea caret viewport | `TextArea::viewport` | `TextArea.Viewport` |
+| Composer action descriptor | `Composer::action_descriptors` | `Composer.ActionDescriptors` |
+| Composer row境界 | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
+| Composer長さ制限 | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
+| Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
+| Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
+| Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
+| Dialog role選択 | `Dialog::default_action` / `cancel_action` | `Dialog.DefaultAction` / `CancelAction` |
+| Dialog action | `Dialog::action_descriptors` | `Dialog.ActionDescriptors` |
+| Dialog action wrapping | `Dialog::action_wrap_width` | `Dialog.ActionWrapWidth` |
+| Confirm default | `ConfirmDialogDefault` | `widget.ConfirmDialogDefaultConfirm` / `ConfirmDialogDefaultCancel` |
+| Modal focus builder | `Modal::initial_focus` / `return_focus` | `Modal.InitialFocus` / `ReturnFocus` |
 | Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
 | Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
 | Modal action descriptor | `Modal::action_descriptor` | `Modal.ActionDescriptor` |
@@ -142,9 +169,11 @@ Treeは共有collapseとexpand Action IDも宣言します
 
 TextAreaは18個のCore `nagi.text.*` operationをrootで宣言し、TextとPasteをraw editing inputとして維持します
 
+Composerは同じrootで継承したtext actionより先にsubmitと2個のhistory operationを宣言します
+
 Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
 
-Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします
+Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします。Dialogは`nagi.confirm`の後に`nagi.dismiss`を宣言し、両roleを明示的なaction IDへmapして各actionで既存Button activationを使用します
 
 Paginatorはactivationなしで4個の共有selection actionを宣言し、previousとnextにそれぞれ3個のordered fallback keyを持たせます
 
@@ -161,10 +190,14 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | List | `List::new` | `widget.NewList` |
 | Button | `Button::new` | `widget.NewButton` |
 | Modal | `Modal::new` | `widget.NewModal` |
+| Disclosure | `Disclosure::new` | `widget.NewDisclosure` |
+| Dialog | `Dialog::new` | `widget.NewDialog` |
+| ConfirmDialog | `ConfirmDialog::new` | `widget.NewConfirmDialog` |
 | Progress | `Progress::new` | `widget.NewProgress` |
 | Spinner | `Spinner::new` | `widget.NewSpinner` |
 | Scrollbar | `Scrollbar::new` | `widget.NewScrollbar` |
 | TextArea | `TextArea::new` | `widget.NewTextArea` |
+| Composer | `Composer::new` | `widget.NewComposer` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -187,7 +220,10 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | 用途 | Rust | Go |
 | --- | --- | --- |
 | Multiline edit state | `TextAreaState` | `widget.TextAreaState` |
+| Preferred visual column | `TextAreaState::preferred_column` | `TextAreaState.PreferredColumn` |
 | Undoとredo history | `TextAreaHistory` | `widget.TextAreaHistory` |
+| Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
+| Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

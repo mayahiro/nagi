@@ -14,7 +14,7 @@ nodes from `view`, and receive messages sequentially through `update`
 | Unicode graphemes and terminal width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input/output, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry, Cells, surfaces, composition, snapshots | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| Twenty-one standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| Twenty-five standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual time and deterministic application driving | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindings remain private implementation details
@@ -82,11 +82,25 @@ event, change focus, capture or release the pointer, and request redraw. The
 public focus-style modifier can overlay a style while any identified Node owns
 focus without changing its layout or routing
 
+`Node::modal_with_focus` in Rust and `ModalWithFocus` in Go add declarative
+modal entry and return policies. Entry selects the first focusable descendant,
+a stable target, or no focus; close returns to previous focus, a stable target,
+or no focus. The existing modal constructors default to first and previous.
+Application-driven disappearance, nested modals, and overlaid sibling modals
+use the same last-in-first-out lifecycle. `Node::focus_fallback` and
+`Node.FocusFallback` let a disappearing focused subtree prefer an available
+stable target before normal deterministic reconciliation
+
 ANSI Text accepts terminal-like log text, applies SGR colors and attributes,
 and discards every other control sequence before creating ordinary styled
 spans. Both viewport forms can select their axis, follow growing content while
-at the end, keep a focused descendant visible, and report resolved
-`ScrollState`. ScrollViewport receives an eager child tree.
+at the end, keep a focused descendant visible, declaratively reveal another
+identified descendant, and report resolved `ScrollState`. Use
+`Node::reveal_descendant` in Rust or `Node.RevealDescendant` in Go when a caret
+or anchor that does not own focus must remain visible. Explicit reveal takes
+precedence over focus tracking in the same viewport, nested viewports adjust
+inside-out, and automatic reveal does not emit a user-scroll message.
+ScrollViewport receives an eager child tree.
 VirtualScrollViewport instead receives a complete cell extent and builds one
 `VirtualFragment` for the resolved visible `VirtualViewport`; only that
 fragment enters semantic traversal. Standard List and Table viewports use this
@@ -148,9 +162,10 @@ available
 
 The standard widget packages expose constants for `nagi.activate`, four
 single-item and two page-scale `nagi.selection.*` operations,
-`nagi.navigation.back`, `nagi.collapse`, `nagi.expand`, and `nagi.dismiss`.
-Button, Checkbox, Radio, Select, each Tabs item, List, Table, Tree, and Command
-Palette declare activation with unmodified Enter and Space defaults. Select
+`nagi.navigation.back`, `nagi.collapse`, `nagi.expand`, `nagi.confirm`, and
+`nagi.dismiss`. Button, Checkbox, Radio, Select, each Tabs item, List, Table,
+Tree, Disclosure, Dialog action Buttons, and Command Palette declare activation
+with unmodified Enter and Space defaults. Select
 declares all four single-item selection actions under its single owner.
 The Tabs root declares them with Left, Right, Home, and End defaults. List,
 Table, Tree, and Command Palette roots declare them with Up, Down, Home, and
@@ -167,10 +182,23 @@ Core also exposes 18 `nagi.text.*` Action ID constants for cursor movement,
 selection extension, select all, deletion, line-break insertion, undo, and
 redo. TextArea declares them under its focus-owning root with its existing
 keyboard defaults and explicit-repeat behavior. Boundary movement and deletion
-remain enabled and consume without a message. Undo and redo are
-disabled-pass-through when their callbacks are absent. Text and Paste remain
-raw editing input after local action resolution, and Paste never invokes an
-action
+remain enabled and consume without a message by default. Bubble navigation can
+instead pass Up and Down through at the first or last visual line. Opt-in soft
+wrap makes those actions preserve a preferred visual column, while Home and End
+remain logical-line operations. A TextArea viewport follows an identified caret
+without adding a Tab stop. Undo and redo are disabled-pass-through when their
+callbacks are absent. Text and Paste remain raw editing input after local action
+resolution, and Paste never invokes an action
+
+Composer layers controlled history recall, submit validity, automatic one-to-six
+row height, optional validation content, and UTF-8-byte or grapheme insertion
+limits over TextArea without owning message or persistence semantics. It
+declares `nagi.composer.submit`, `nagi.history.previous`, and
+`nagi.history.next` before the inherited text actions under the same root.
+Enter submits without accepting repeat; Shift-Enter, Alt-Enter, and Control-O
+insert a line break. Cursor movement takes precedence while another visual line
+exists, then Up or Down recalls history. Active scopes can replace the complete
+submit and line-break binding lists, and Paste remains editing input
 
 Command Palette declares activation plus vertical selection at its root and
 activation on each visible command row. Query TextInput editing consumes Text,
@@ -184,6 +212,21 @@ default. A missing dismissal handler makes the descriptor
 disabled-pass-through. Child handling retains target-to-root precedence, and
 the Modal does not add an implicit stop-at-scope boundary; applications may
 attach that boundary explicitly without stopping raw ancestor routing
+
+Dialog composes an optional title Node, body, controlled lazy Disclosure, and
+ordered application-defined actions in a Core Modal. Its root declares
+`nagi.confirm` before `nagi.dismiss`. Applications explicitly select default
+and cancel action IDs; an unselected role passes through, an enabled target
+emits its action message, and an absent or disabled configured target consumes
+without escaping. The root confirmation defaults to non-repeating Enter, while
+focused action Buttons and Disclosure headers retain child precedence. A default action
+also becomes the entry-focus target unless the application overrides the focus
+policy. Action rows wrap greedily at an application-supplied Cell width
+
+ConfirmDialog accepts exactly confirm and cancel actions plus an explicit
+Confirm-or-Cancel default. It reuses Dialog focus, wrapping, and lazy details.
+Destructive appearance is an application-supplied ButtonStyle rather than a
+Nagi policy; applications use generic Dialog for three or more choices
 
 Paginator declares previous, next, first, and last at its stable root in both
 dot and numeric modes. Every previous or next fallback moves exactly one page,
@@ -201,9 +244,11 @@ from keyboard rebinding
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
-List, Table, Tree, TextArea, Command Palette, Modal, Paginator, and FilePicker
-have not yet migrated. See the [scoped key-map specification](../spec/keymap.md)
-for the complete dispatch, matching, override, conflict, and notation contract
+List, Table, Tree, Disclosure, TextArea, Composer, Command Palette, Modal,
+Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
+migrated. See the
+[scoped key-map specification](../spec/keymap.md) for the complete dispatch,
+matching, override, conflict, and notation contract
 
 ## Effects and subscriptions
 
@@ -239,8 +284,9 @@ Standard widgets use public Core composition and the public Unicode text API
   pagination, and a `Length` viewport
 - Button exposes `nagi.activate` with unmodified Enter and Space defaults and a
   separately routed left-button press
-- Modal centers a bordered focus and routing scope and declares a root-owned,
-  rebindable dismissal action without imposing an ancestor-action boundary
+- Modal centers a bordered focus and routing scope, applies configurable first
+  and previous focus lifecycle defaults, and declares a root-owned, rebindable
+  dismissal action without imposing an ancestor-action boundary
 - Progress renders bounded determinate completion without integer overflow
 - Spinner renders an application-clock-driven stable frame cycle
 - Scrollbar renders overflow-safe vertical or horizontal viewport geometry
@@ -258,8 +304,20 @@ Standard widgets use public Core composition and the public Unicode text API
   application-owned expansion state, reusable `TreeState`, and
   selection-following viewports
 - TextArea edits multiline text at extended grapheme boundaries with selection,
-  horizontal scrolling, application-owned undo and redo history, and a
-  root-owned semantic action set whose complete key lists can be rebound
+  no-wrap or opt-in soft-wrap visual lines, preferred-column navigation,
+  optional caret-following viewport, application-owned undo and redo history,
+  and a root-owned semantic action set whose complete key lists can be rebound
+- Composer adds controlled submit, history recall, insertion limits, automatic
+  row bounds, and application-provided validation content over TextArea without
+  owning message meaning or persistence
+- Disclosure provides a controlled, focusable summary with rebindable toggle,
+  collapse, and expand actions, raw pointer toggling, a body builder that is not
+  called while collapsed, and nested focus fallback
+- Dialog composes application-defined actions with explicit default and cancel
+  targets, lazy controlled details, modal focus policies, pointer activation,
+  and Cell-width action wrapping
+- ConfirmDialog provides the explicit-default two-action convenience and
+  accepts application-supplied destructive styling
 - Command Palette combines controlled query input with root-owned vertical
   actions and row-owned activation over filtered stable command IDs
 - Sparkline, BarChart, and Chart provide bounded, deterministic cell graphics

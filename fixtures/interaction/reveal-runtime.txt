@@ -1,0 +1,9 @@
+nagi-fixture-v1	interaction-reveal-runtime
+explicit-unfocused	lines=5	viewport=2	prior-reveal=-	reveal=row-4	focus=-	ensure-focus=false	stick-end=false	expected-offset=3	expected-top=3
+explicit-above-end	lines=5	viewport=2	prior-reveal=-	reveal=row-0	focus=-	ensure-focus=false	stick-end=true	expected-offset=0	expected-top=0
+focus-fallback	lines=5	viewport=2	prior-reveal=-	reveal=-	focus=row-4	ensure-focus=true	stick-end=false	expected-offset=3	expected-top=3
+explicit-precedes-focus	lines=5	viewport=2	prior-reveal=-	reveal=row-4	focus=row-0	ensure-focus=true	stick-end=false	expected-offset=3	expected-top=3
+missing-explicit-blocks-focus	lines=5	viewport=2	prior-reveal=-	reveal=missing	focus=row-0	ensure-focus=true	stick-end=true	expected-offset=3	expected-top=3
+outside-ignored	lines=5	viewport=2	prior-reveal=-	reveal=outside	focus=-	ensure-focus=false	stick-end=true	expected-offset=3	expected-top=3
+already-visible	lines=5	viewport=2	prior-reveal=-	reveal=row-1	focus=-	ensure-focus=false	stick-end=false	expected-offset=0	expected-top=0
+later-target-replaces	lines=5	viewport=2	prior-reveal=row-0	reveal=row-4	focus=-	ensure-focus=false	stick-end=false	expected-offset=3	expected-top=3

@@ -263,13 +263,28 @@ or business model
 transient surface. Its default is exact unmodified Escape and accepts explicit
 repeat events
 
-Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, Command Palette,
-FilePicker, and Calendar declare `nagi.activate` for keyboard activation.
+`nagi.confirm`, with the English label `Confirm`, identifies invocation of a
+Dialog's application-selected default action. Its default is exact unmodified
+Enter with `initial-only` repeat policy
+
+`nagi.composer.submit`, `nagi.history.previous`, and `nagi.history.next`, with
+the English labels `Submit`, `Previous history entry`, and `Next history entry`,
+identify message submission and controlled recall independently from an
+application's history storage or message meaning
+
+Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, Disclosure, Dialog
+action Buttons, Command Palette, FilePicker, and Calendar declare
+`nagi.activate` for keyboard activation.
 Select declares all five actions under one owner. Each enabled Tabs item owns
 one activation action, while the Tabs root owns the four selection actions with
 Left, Right, Home, and End defaults. This two-level ownership allows the same
 stroke in an item and root group; target-to-root route precedence selects the
 item action first
+
+Disclosure owns activation followed by collapse and expand under its summary
+ID. Activation uses Enter and Space, collapse uses Left only while expanded,
+and expand uses Right only while collapsed. The inapplicable direction is
+disabled-pass-through so an ancestor may handle it
 
 Enabled non-empty List and Table roots each declare activation followed by the
 four selection actions. Their navigation defaults are Up, Down, Home, and End.
@@ -311,14 +326,44 @@ implicitly create a `stop-at-scope` boundary; an application may attach one
 when outer semantic actions must be excluded while raw ancestor routing remains
 available
 
+A Dialog root declares confirmation followed by dismissal. Each role names an
+application-selected Dialog action ID. An unselected role is
+disabled-pass-through, a role naming an enabled action is enabled, and a role
+naming an absent or disabled action is disabled-consume. This prevents a
+configured confirmation or cancellation key from escaping while preserving
+normal fallback when the application intentionally leaves a role unselected.
+Focused action Buttons and Disclosure headers retain target-to-root precedence
+over both root actions. Active KeyMap scopes may replace or remove each
+complete root binding list independently
+
 An enabled TextArea declares all 18 text actions under its focus-owning root.
 Its defaults are exact unmodified movement, deletion, and Enter keys; six
 Shift-modified selection-extension keys; Control-A; Control-Z; and Control-Y
 followed by Control-Shift-Z for redo. All defaults accept explicit repeat
-events. Movement and deletion stay enabled at boundaries to preserve
-consume-without-message behavior. Undo and redo are disabled-pass-through when
-their callback is absent. Text and Paste continue through raw editing only when
-no local action matches; Paste cannot match an action
+events. Movement and deletion stay enabled at boundaries by default to
+preserve consume-without-message behavior. In opt-in Bubble navigation, an Up
+or Down action and its corresponding selection-extension action are
+disabled-pass-through when no visual line exists in that direction. Undo and
+redo are disabled-pass-through when their callback is absent. Text and Paste
+continue through raw editing only when no local action matches; Paste cannot
+match an action
+
+Composer declares submit, previous history, and next history before the 18
+inherited TextArea actions under one focus-owning root. Submit defaults to exact
+unmodified Enter with `initial-only` repeat policy. Composer replaces the line
+break bindings with Shift-Enter, Alt-Enter, and Control-O; all three line-break
+bindings and the Up or Down history defaults use `allow-repeat`. Control-O has
+`supported` terminal metadata and is the compatibility fallback for terminals
+that do not distinguish modified Enter
+
+TextArea Up or Down is enabled when a visual line exists in that direction;
+otherwise the matching history action may become enabled. At most one action
+using each default stroke is therefore enabled under the shared owner. The
+three Composer actions and inherited text actions use disabled-pass-through
+when Composer is disabled. Submit instead uses disabled-consume when editing is
+enabled but submission is invalid. A scope may replace or remove each complete
+binding list, including assigning Enter to line break and another stroke to
+submit. Text and Paste remain raw editing input, and Paste never invokes submit
 
 An enabled Command Palette with at least one filtered command declares
 activation followed by the four vertical selection actions under its root.
@@ -332,11 +377,12 @@ indices
 
 An active KeyMap scope may replace or remove any complete keyboard binding
 list. Disabled instances and empty Selects, Tabs, Lists, Tables, or Trees expose
-their descriptors as `disabled-pass-through`; disabled TextAreas do the same
-for all text actions. Disabled Command Palettes and palettes with no filtered
-command expose both root and command descriptors as `disabled-pass-through`.
-Left-button press remains raw pointer handling and is not changed by a keyboard
-rebind. Each widget retains its own controlled Message behavior
+their descriptors as `disabled-pass-through`; disabled TextAreas and Composers
+do the same for all of their actions. Disabled Command Palettes and palettes
+with no filtered command expose both root and command descriptors as
+`disabled-pass-through`. Left-button press remains raw pointer handling and is
+not changed by a keyboard rebind. Each widget retains its own controlled
+Message behavior
 
 Focus traversal and ScrollViewport keyboard scrolling use the Core semantic
 actions above. Their complete binding lists may be replaced or removed through

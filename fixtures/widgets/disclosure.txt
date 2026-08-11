@@ -1,0 +1,16 @@
+nagi-fixture-v1	widget-disclosure
+# availability is activate,collapse,expand before the event; builds counts body builder calls across rendered frames
+collapsed-idle	expanded=false	enabled=true	body=true	event=none	mode=default	outer=none	message=-	consumed=false	focus=none	expected-expanded=false	builds=0	marker=▶	availability=enabled,pass,enabled
+expanded-idle	expanded=true	enabled=true	body=true	event=none	mode=default	outer=none	message=-	consumed=false	focus=none	expected-expanded=true	builds=1	marker=▼	availability=enabled,enabled,pass
+enter-expand	expanded=false	enabled=true	body=true	event=enter	mode=default	outer=none	message=true	consumed=true	focus=disclosure	expected-expanded=true	builds=1	marker=▼	availability=enabled,pass,enabled
+space-collapse	expanded=true	enabled=true	body=true	event=space	mode=default	outer=none	message=false	consumed=true	focus=disclosure	expected-expanded=false	builds=1	marker=▶	availability=enabled,enabled,pass
+left-collapse	expanded=true	enabled=true	body=true	event=left	mode=default	outer=none	message=false	consumed=true	focus=disclosure	expected-expanded=false	builds=1	marker=▶	availability=enabled,enabled,pass
+right-expand	expanded=false	enabled=true	body=true	event=right	mode=default	outer=none	message=true	consumed=true	focus=disclosure	expected-expanded=true	builds=1	marker=▼	availability=enabled,pass,enabled
+collapsed-left-passes	expanded=false	enabled=true	body=true	event=left	mode=default	outer=raw	message=raw	consumed=true	focus=disclosure	expected-expanded=false	builds=0	marker=▶	availability=enabled,pass,enabled
+expanded-right-passes	expanded=true	enabled=true	body=true	event=right	mode=default	outer=raw	message=raw	consumed=true	focus=disclosure	expected-expanded=true	builds=2	marker=▼	availability=enabled,enabled,pass
+rebound-toggle	expanded=false	enabled=true	body=true	event=x	mode=rebind	outer=none	message=true	consumed=true	focus=disclosure	expected-expanded=true	builds=1	marker=▼	availability=enabled,pass,enabled
+unbound-toggle-passes	expanded=false	enabled=true	body=true	event=enter	mode=unbind	outer=raw	message=raw	consumed=true	focus=disclosure	expected-expanded=false	builds=0	marker=▶	availability=enabled,pass,enabled
+pointer-expand	expanded=false	enabled=true	body=true	event=pointer	mode=default	outer=none	message=true	consumed=true	focus=disclosure	expected-expanded=true	builds=1	marker=▼	availability=enabled,pass,enabled
+disabled-pointer-passes	expanded=false	enabled=false	body=true	event=pointer	mode=default	outer=raw	message=raw	consumed=true	focus=none	expected-expanded=false	builds=0	marker=▶	availability=pass,pass,pass
+external-collapse-fallback	expanded=true	enabled=true	body=true	event=external-collapse	mode=default	outer=none	message=-	consumed=false	focus=disclosure	expected-expanded=false	builds=1	marker=▶	availability=enabled,enabled,pass
+expanded-without-body	expanded=true	enabled=true	body=false	event=none	mode=default	outer=none	message=-	consumed=false	focus=none	expected-expanded=true	builds=0	marker=▼	availability=enabled,enabled,pass

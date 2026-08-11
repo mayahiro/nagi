@@ -32,6 +32,17 @@ The length model contains `Auto`, `Fixed`, `Flex`, `Percent`, and `MinMax`
 - `StickToEnd` starts at the end and follows content growth only while the
   viewport remains at the end. User scrolling away preserves the offset; an
   End action that returns to the end resumes following
+- An eager or virtual ScrollViewport MAY declaratively name one stable
+  descendant Node ID as its explicit reveal target. On every semantic-frame
+  preparation, the runtime adjusts enabled-axis offsets until the complete
+  target rectangle is visible when possible
+- An explicit reveal target takes precedence over focused-descendant tracking
+  in the same viewport. A missing target, a target outside the viewport, or a
+  target outside the current virtual fragment causes no reveal and does not
+  fall back to the focused descendant
+- Nested explicit reveal targets are adjusted from the innermost viewport to
+  the outermost viewport. Automatic reveal does not invoke the user-scroll
+  callback
 
 A virtual ScrollViewport has the same retained scroll state and options, but
 declares its complete content `Size` without constructing the complete child

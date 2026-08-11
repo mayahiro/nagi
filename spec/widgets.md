@@ -73,6 +73,15 @@ spinner ticks, and modal visibility
 
 - A Modal uses the public Core modal node, so routing and tab traversal remain
   restricted to its subtree
+- Modal entry focuses the first focusable descendant by default and close
+  returns to the node focused before entry. Applications may select a stable
+  initial or return target, or explicitly leave the corresponding scope
+  unfocused
+- A missing initial target falls back to the first focusable modal descendant.
+  An unavailable return target uses deterministic Core focus reconciliation
+- Nested and overlaid Modal scopes preserve focus in last-in-first-out order.
+  Visibility remains application state, and external disappearance uses the
+  same return policy as dismissal
 - Modal content is centered and enclosed by the public Border primitive
 - A non-empty title is the first row inside the border
 - The Modal root declares the standard `nagi.dismiss` semantic action with the
@@ -88,6 +97,77 @@ spinner ticks, and modal visibility
   required, without stopping raw ancestor routing
 - Visibility remains application state; dismissing does not mutate runtime
   state directly
+
+## Disclosure
+
+- Disclosure receives one stable header ID, a display-only summary Node,
+  application-owned expanded state, a Boolean toggle callback, and an optional
+  lazy body builder
+- The summary header is one Tab stop and owns `nagi.activate`, `nagi.collapse`,
+  and `nagi.expand` in that order. Summary child interaction is outside the
+  initial contract
+- Activate defaults to exact unmodified Enter and Space and requests the
+  opposite expanded state. Collapse defaults to Left and is enabled only while
+  expanded. Expand defaults to Right and is enabled only while collapsed
+- State-inapplicable actions and every action on a disabled Disclosure are
+  `disabled-pass-through`. An active KeyMap scope may replace or remove each
+  complete binding list
+- A left-button press remains a raw pointer path independent from keyboard
+  rebinding. Successful keyboard and pointer toggles emit one Boolean message
+  and focus the summary header
+- A collapsed Disclosure does not invoke its body builder and does not place
+  the body in layout, rendering, semantic traversal, or action resolution
+- When an expanded body descendant owns focus and later disappears on collapse,
+  focus prefers the header. Nested Disclosure bodies use the nearest header
+  fallback
+- Default collapsed and expanded markers are `▶ ` and `▼ `. Marker, focused,
+  and disabled-marker styles are replaceable; summary styling remains owned by
+  its Node
+- Disabling the header does not rewrite application-owned expanded state or
+  disable interactions explicitly supplied inside an already expanded body
+
+## Dialog and ConfirmDialog
+
+- Dialog receives one stable modal ID, an optional title Node, a body Node, an
+  optional controlled Disclosure, and an ordered list of Dialog actions
+- Every Dialog action has a distinct stable Node ID, a single-line label,
+  enabled state, Button styles, and an application message callback. Enabled
+  actions use the standard Button `nagi.activate` keyboard behavior and raw
+  left-button activation
+- The application may explicitly select one action ID as the default and one
+  as cancel. Dialog does not infer either selection from order, label, style,
+  or application semantics
+- The Dialog root declares `nagi.confirm` followed by `nagi.dismiss`.
+  Confirmation defaults to exact unmodified Enter with `initial-only` repeat
+  policy. Dismissal retains the standard exact unmodified Escape default and
+  accepts explicit repeat events
+- An unselected default or cancel role is `disabled-pass-through`. A selected
+  ID that names an enabled action is enabled and emits that action's message.
+  A selected ID that is absent or disabled is `disabled-consume`, preventing
+  the same key from escaping the Dialog
+- Focused child actions retain target-to-root precedence over Dialog root
+  actions. Enter therefore activates a focused action or Disclosure header
+  before considering the Dialog default
+- Without an explicit entry-focus override, a selected default action is the
+  modal entry target. A Dialog without a default selects its first focusable
+  descendant. Missing or disabled targets use the Core first-focus fallback
+- Dialog close returns to previous focus by default. Applications may replace
+  both entry and return focus policies with the public Core modal policies
+- Action order is preserved. Without a wrap width all actions occupy one Row.
+  With a maximum action-row width, actions are greedily packed with one Cell
+  between them. Zero normalizes to one, and an oversized action occupies one
+  unsplit row
+- The optional details slot accepts an existing controlled Disclosure and
+  preserves its lazy collapsed-body contract
+- ConfirmDialog is a convenience that accepts exactly one confirm action, one
+  cancel action, and an explicit Confirm-or-Cancel default selection. The
+  cancel action always owns dismissal
+- ConfirmDialog delegates title, details, wrapping, focus, and Dialog styles to
+  Dialog. Its optional destructive style is an application-supplied
+  ButtonStyle applied only to the confirm action; Nagi does not assign safety
+  meaning or a color
+- Applications use generic Dialog for three or more choices. Agent, approval,
+  provider, tool, and policy meanings remain application state
 
 ## Progress
 
@@ -273,12 +353,16 @@ spinner ticks, and modal visibility
   Backspace and Delete remove one extended grapheme cluster, including a CRLF
   line break as one cluster
 - Left and Right move by one cluster. Home and End move within the current
-  logical line. Up and Down preserve the terminal-cell column where possible
-  and otherwise choose the longest grapheme-aligned target prefix that does not
-  exceed that column
+  logical line. Up and Down move between visual lines and preserve a preferred
+  terminal-cell column across shorter targets. Editing and successful
+  non-vertical movement clear that preferred column
 - CR, LF, and CRLF delimit logical lines. An enabled TextArea renders `▏` at the
   application cursor and uses a focus overlay to identify active editing. A
   disabled TextArea omits the cursor and cannot receive input
+- TextArea uses logical lines without wrapping by default. Opt-in soft wrapping
+  accepts a terminal-cell width, normalizes zero to one, and hard-wraps without
+  changing text or splitting an extended grapheme cluster. A cursor on a byte
+  boundary shared by wrapped lines belongs to the following visual line
 - A handled no-op consumes the event without emitting unchanged state
 - Go replaces invalid UTF-8 runs before state offsets are calculated; Rust text
   is valid UTF-8 by type
@@ -290,7 +374,11 @@ spinner ticks, and modal visibility
   cell offset
 - Horizontal offset omits leading complete graphemes from every logical line.
   An offset inside a wide grapheme advances to its next boundary and never
-  renders a partial grapheme
+  renders a partial grapheme. Soft wrapping ignores the offset while retaining
+  it in controlled state for a later return to no-wrap mode
+- An optional vertical viewport receives distinct application-defined viewport
+  and caret Node IDs plus a `Length`. It is not another Tab stop and uses the
+  caret ID as an explicit reveal target
 - Control-Z requests undo. Control-Y and Control-Shift-Z request redo when the
   corresponding handler exists. TextAreaHistory is bounded application-owned
   history: content changes create steps, cursor and selection changes do not,
@@ -304,15 +392,63 @@ spinner ticks, and modal visibility
   Backspace, Delete, and Enter; the six corresponding Shift-modified movement
   keys; Control-A; Control-Z; and Control-Y followed by Control-Shift-Z for
   redo. All defaults accept explicit repeat events
-- Movement and deletion remain enabled at a boundary so a handled no-op is
-  consumed. Undo and redo are disabled-pass-through when their corresponding
-  callback is absent. Every action is disabled-pass-through when TextArea is
-  disabled
+- Movement and deletion remain enabled at a boundary by default so a handled
+  no-op is consumed. Opt-in Bubble navigation makes Up or Down and its matching
+  selection-extension action disabled-pass-through when no visual line exists
+  in that direction. Undo and redo are disabled-pass-through when their
+  corresponding callback is absent. Every action is disabled-pass-through when
+  TextArea is disabled
 - Text and Paste remain raw editing input after local action resolution. A
   KeyMap may therefore bind a single-scalar Text event to an action before raw
   insertion, while Paste always remains one edit and never invokes an action
 - Rebinding replaces, and an empty replacement removes, the complete binding
   list without falling back to the former raw keyboard shortcut
+
+## Composer
+
+- Composer is a controlled multiline message editor built on TextArea. Its
+  application-owned state contains the complete TextArea state, an optional
+  oldest-to-newest history index, and the draft restored after browsing past
+  the newest entry. The widget owns neither history persistence nor submit
+  meaning
+- History entries are supplied oldest-to-newest. Previous history is available
+  only when ordinary visual-line Up movement is unavailable and an older entry
+  exists. Next history is available only while browsing and when ordinary
+  visual-line Down movement is unavailable. The first recall preserves the
+  complete draft cursor, selection, horizontal offset, and preferred column
+- Browsing past the newest entry restores the preserved draft. A value edit
+  leaves history browsing and makes the edited value the new draft; cursor or
+  selection movement alone retains the browsing position. Applications own
+  persistence, deduplication, capacity, and sensitive-value policy
+- The root, editor viewport, and caret receive distinct stable
+  application-defined Node IDs. The viewport height follows the visual-line
+  count within normalized inclusive row bounds. Bounds default to one through
+  six rows; the minimum is at least one and the maximum is at least the minimum
+- Composer declares submit, previous history, and next history before the 18
+  inherited TextArea actions under the same focus-owning root. Their stable IDs
+  are `nagi.composer.submit`, `nagi.history.previous`, and
+  `nagi.history.next`. This ownership and mutually exclusive Up or Down
+  availability prevent one stroke from both moving the cursor and recalling
+  history
+- Submit defaults to exact unmodified Enter and does not accept explicit repeat
+  events. Composer replaces the inherited line-break defaults with
+  Shift-Enter, Alt-Enter, and Control-O; history and line-break defaults accept
+  explicit repeat events. Control-O is the supported compatibility fallback
+  when a terminal cannot distinguish modified Enter
+- An active KeyMap scope may replace the complete submit and line-break binding
+  lists, including swapping Enter between those actions. Text and Paste remain
+  raw TextArea editing input, and Paste never submits
+- When Composer is disabled, all 21 actions are disabled-pass-through. When
+  editing remains enabled but submit is invalid, submit is disabled-consume so
+  Enter cannot escape to an ancestor action. Validation content is an optional
+  application-provided Node below the editor viewport; the application controls
+  its meaning and submit availability separately
+- Applications may limit future insertion by UTF-8 bytes or extended grapheme
+  count. Reject discards the complete Text, Paste, or line-break insertion;
+  Truncate inserts the longest grapheme-aligned prefix that fits. Only inserted
+  text is shortened, so replacement preserves unselected prefix and suffix
+  text. Existing over-limit content is not rewritten, and deletion remains
+  available
 
 ## Sparkline
 

@@ -12,6 +12,18 @@ The harnesses provide equivalent observable behavior for
 - Manual Subscription delivery and lifecycle inspection
 - Interaction State inspection and focus control
 - Resolved ScrollViewport state and application exit-request inspection
+- Explicit reveal-target scrolling without terminal timing
+- TextArea visual wrapping, preferred-column movement, boundary availability,
+  and caret-viewport following
+- Composer submission, line-break rebinding, controlled history recall, length
+  limits, automatic height, validation placement, and viewport following
+- Modal first, target, none, nested, replacement, and return-focus lifecycle
+  across application-driven view changes
+- Disclosure state-dependent actions, rebinding, pointer toggling, collapsed
+  lazy construction, and nested focus fallback
+- Dialog and ConfirmDialog default and cancel availability, child precedence,
+  rebinding, repeat behavior, pointer activation, lazy details, explicit focus,
+  destructive styling, and Cell-width action wrapping
 - Active target-to-root resolved action-group inspection
 - Message history, frame history, and canonical Surface snapshots
 - Active-task, stale-result, and backpressure diagnostics

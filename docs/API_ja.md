@@ -12,7 +12,7 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 | Unicode graphemeと端末幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input／output、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry、Cell、Surface、composition、snapshot | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| 21個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| 25個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual timeと決定的application操作 | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindingはprivateな実装詳細として維持します
@@ -50,7 +50,9 @@ Stateful、focusable、event受信Nodeにはapplication定義の安定した`Nod
 
 Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
 
-ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。両方のviewport形式がaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、解決済み`ScrollState`の通知に対応します。ScrollViewportはeagerなchild treeを受け取ります。VirtualScrollViewportは代わりにcontent全体のCell extentを受け取り、解決済みのvisible `VirtualViewport`に対応する`VirtualFragment`だけを構築してsemantic traversalへ入れます。標準ListとTableのviewportはsemantic rowにこのvirtual pathを使用しますが、既存collection APIは全itemまたはrow metadataをmaterializeし、Listのfilterは全件を走査します。Collection access自体もlazyにする場合はCore virtual viewportを直接使用します。標準ListとTableのvirtual viewport内では各rowを1 Cell高とし、折り返しまたは複数行のcontentをclipします
+Rustの`Node::modal_with_focus`とGoの`ModalWithFocus`はdeclarativeなModal entryとreturn policyを追加します。Entryは最初のfocusable descendant、stable target、focusなしから選び、closeは以前のfocus、stable target、focusなしから選びます。既存Modal constructorのdefaultはFirstとPreviousです。Application stateによる消滅、nested Modal、重ねたsibling Modalも同じLIFO lifecycleを使用します。Rustの`Node::focus_fallback`とGoの`Node.FocusFallback`はfocused subtreeが消える場合に通常のdeterministic reconciliationより先にavailableなstable targetを選べます
+
+ANSI Textはterminal形式のlog textからSGR colorとattributeだけを適用し、それ以外のcontrol sequenceを破棄して通常のstyled spanへ変換します。両方のviewport形式がaxis選択、末尾表示中のcontent追従、focused descendantの表示維持、focusを持たないidentified descendantのdeclarativeなreveal、解決済み`ScrollState`の通知に対応します。同じviewportではexplicit revealがfocus追従より優先し、nested viewportは内側から外側へ調整され、automatic revealはuser scroll messageを発行しません。Rustでは`Node::reveal_descendant`、Goでは`Node.RevealDescendant`を使用します。ScrollViewportはeagerなchild treeを受け取ります。VirtualScrollViewportは代わりにcontent全体のCell extentを受け取り、解決済みのvisible `VirtualViewport`に対応する`VirtualFragment`だけを構築してsemantic traversalへ入れます。標準ListとTableのviewportはsemantic rowにこのvirtual pathを使用しますが、既存collection APIは全itemまたはrow metadataをmaterializeし、Listのfilterは全件を走査します。Collection access自体もlazyにする場合はCore virtual viewportを直接使用します。標準ListとTableのvirtual viewport内では各rowを1 Cell高とし、折り返しまたは複数行のcontentをclipします
 
 ## Scoped KeyMap基盤
 
@@ -104,9 +106,9 @@ actionとbinding順序を維持し、Help-hidden actionを除外して、unavail
 
 既存の手書き`HelpBinding`も引き続き利用できます
 
-標準Widget packageは`nagi.activate`、entry単位4個とpage単位2個の`nagi.selection.*` operation、`nagi.navigation.back`、`nagi.collapse`、`nagi.expand`、`nagi.dismiss`を表すconstantを公開します
+標準Widget packageは`nagi.activate`、entry単位4個とpage単位2個の`nagi.selection.*` operation、`nagi.navigation.back`、`nagi.collapse`、`nagi.expand`、`nagi.confirm`、`nagi.dismiss`を表すconstantを公開します
 
-Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Tree、Command Paletteはunmodified EnterとSpaceをdefaultに持つactivationを宣言します
+Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Tree、Disclosure、Dialog action Button、Command Paletteはunmodified EnterとSpaceをdefaultに持つactivationを宣言します
 
 Selectは単一ownerで4個のselection actionを宣言し、Tabs rootはLeft、Right、Home、End、List、Table、Tree、Command Palette rootはUp、Down、Home、Endをdefaultに持つ同じactionを宣言します
 
@@ -126,9 +128,15 @@ Coreはcursor移動、selection extension、select all、削除、改行挿入�
 
 TextAreaは既存のdefault keyとexplicit Repeat挙動を持つこれらのactionをfocus所有rootで宣言します
 
-boundaryでの移動と削除はEnabledのままMessageなしでconsumeし、undoとredoは対応callbackがない場合にDisabledPassThroughになります
+boundaryでの移動と削除はdefaultではEnabledのままMessageなしでconsumeします。Bubble navigationでは最初または最後のvisual lineにおけるUpとDownをDisabledPassThroughにできます。Opt-inのsoft wrapではUpとDownがpreferred visual columnを保持し、HomeとEndはlogical line操作のままです。TextArea viewportはTab stopを増やさずidentified caretへ追従します。undoとredoは対応callbackがない場合にDisabledPassThroughになります
 
 TextとPasteはlocal action解決後のraw editing inputとして残り、Pasteはactionを起動しません
+
+ComposerはTextAreaへcontrolled history recall、submit validity、1行から6行までの自動高さ、任意のvalidation content、UTF-8 byte数またはgrapheme数による挿入制限を加え、messageの意味や永続化は所有しません
+
+同じrootで継承したtext actionより先に`nagi.composer.submit`、`nagi.history.previous`、`nagi.history.next`を宣言します
+
+EnterはRepeatを受け付けずにsubmitし、Shift-Enter、Alt-Enter、Control-Oは改行を挿入します。別のvisual lineが存在する間はcursor移動を優先し、その後にUpまたはDownでhistoryをrecallします。Active scopeはsubmitと改行のbinding list全体を置換でき、Pasteはediting inputのままです
 
 Command Paletteはrootでactivationとvertical selection、表示中の各command rowでactivationを宣言します
 
@@ -138,13 +146,21 @@ row activationはtarget-to-root順序でroot activationより先に処理され�
 
 disabledまたはfilter結果が空のpaletteはDisabledPassThrough descriptorを公開します
 
-Modalはrootで`nagi.dismiss`を宣言し、修飾なしEscapeだけをdefaultにします
+ModalはconfigurableなFirstとPreviousのfocus lifecycle defaultを持ち、rootで`nagi.dismiss`を宣言して修飾なしEscapeだけをdefaultにします
 
 dismiss handlerがない場合はDisabledPassThrough descriptorになります
 
 child handlingはtarget-to-root precedenceを維持し、Modalは暗黙のstop-at-scope境界を追加しません
 
 applicationはraw ancestor routingを止めずにこの境界を明示的にattachできます
+
+Dialogはoptional title Node、body、controlled lazy Disclosure、順序付きapplication-defined actionをCore Modal内へ構成し、rootで`nagi.confirm`の後に`nagi.dismiss`を宣言します
+
+Applicationはdefaultとcancelのaction IDを明示します。未選択roleはpass-throughし、enabled targetはaction Messageを発行し、設定済みtargetが欠落またはdisabledなら外へ伝播せずconsumeします。Root confirmはRepeatを受け付けないEnterをdefaultにし、focused action ButtonとDisclosure headerはchild precedenceを維持します。Default actionはApplicationがfocus policyをoverrideしない場合のentry targetにもなり、action rowはApplication suppliedのCell幅でgreedyにwrapします
+
+ConfirmDialogはconfirmとcancelの二actionと明示的なConfirmまたはCancelのdefaultを受け取り、Dialogのfocus、wrapping、lazy detailsを再利用します。Destructive表現はNagi policyではなくApplication suppliedのButtonStyleとし、三択以上ではgeneric Dialogを使用します
+
+Disclosureはcontrolledなfocusable summary、rebind可能なtoggle、collapse、expand action、raw pointer toggleを提供します。Collapsed時はbody builderを呼ばず、nested bodyが消える場合は最も近いsummaryへfocusを戻します
 
 Paginatorはdotとnumeric modeの安定したrootでprevious、next、first、lastを宣言します
 
@@ -160,7 +176,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、TextArea、Command Palette、Modal、Paginator、FilePicker以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -201,7 +217,10 @@ Subscriptionは安定key付きの長期sourceを表します
 - Selectは共有Action IDを通じてWidget所有のactivationとselection defaultを公開し、wrapするactivationとboundary consumeを維持する
 - Tableはeagerとvirtualized bodyで同じroot action setを持つ1個のcomposite Tab stopとして動作し、columnと任意のbody viewportを`Length`でsizeし、headerを固定してkeyboard selectionへ追従する
 - Treeはroot所有のactivation、vertical selection、collapse、expand actionを持つ1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
-- TextAreaはselection、horizontal scroll、application所有のundoとredo history、binding list全体をrebindできるroot所有semantic action setを使い、extended grapheme境界でmultiline textを編集する
+- TextAreaはselection、no-wrapまたはopt-in soft-wrap visual line、preferred-column navigation、任意のcaret追従viewport、application所有のundoとredo history、binding list全体をrebindできるroot所有semantic action setを使い、extended grapheme境界でmultiline textを編集する
+- Composerはmessageの意味や永続化を所有せず、TextAreaへcontrolled submit、history recall、挿入制限、自動row境界、application提供のvalidation contentを加える
+- Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
+- ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する
 - Command Paletteはfilterされた安定したcommand IDに対するcontrolled query、root所有vertical action、row所有activationを組み合わせる
 - Sparkline、BarChart、Chartは上限付きで決定的なCell graphicsを提供する
 - Helpは手書きまたはresolved action由来のkey bindingをcompactまたはaligned形式で表示する
