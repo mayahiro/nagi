@@ -86,14 +86,23 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |
 | Selection first Action ID | `SELECTION_FIRST_ACTION_ID` | `widget.SelectionFirstActionID` |
 | Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
+| Selection previous page Action ID | `SELECTION_PREVIOUS_PAGE_ACTION_ID` | `widget.SelectionPreviousPageActionID` |
+| Selection next page Action ID | `SELECTION_NEXT_PAGE_ACTION_ID` | `widget.SelectionNextPageActionID` |
+| Calendar day Action ID | `SELECTION_PREVIOUS_DAY_ACTION_ID` / `SELECTION_NEXT_DAY_ACTION_ID` | `widget.SelectionPreviousDayActionID` / `widget.SelectionNextDayActionID` |
+| Calendar week Action ID | `SELECTION_PREVIOUS_WEEK_ACTION_ID` / `SELECTION_NEXT_WEEK_ACTION_ID` | `widget.SelectionPreviousWeekActionID` / `widget.SelectionNextWeekActionID` |
+| Calendar month Action ID | `SELECTION_PREVIOUS_MONTH_ACTION_ID` / `SELECTION_NEXT_MONTH_ACTION_ID` | `widget.SelectionPreviousMonthActionID` / `widget.SelectionNextMonthActionID` |
+| Calendar month境界Action ID | `SELECTION_FIRST_DAY_OF_MONTH_ACTION_ID` / `SELECTION_LAST_DAY_OF_MONTH_ACTION_ID` | `widget.SelectionFirstDayOfMonthActionID` / `widget.SelectionLastDayOfMonthActionID` |
+| Navigation back Action ID | `NAVIGATION_BACK_ACTION_ID` | `widget.NavigationBackActionID` |
 | Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
 | Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
+| Dismiss Action ID | `DISMISS_ACTION_ID` | `widget.DismissActionID` |
 | Text cursor Action ID | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection extension Action ID | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
 | Text deletion Action ID | `TEXT_DELETE_*_ACTION_ID` | `tui.TextDelete*ActionID` |
 | Text line break、undo、redo Action ID | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
 | 標準activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
+| 標準dismiss descriptor | `dismiss_action_descriptor` | `widget.DismissActionDescriptor` |
 | Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
 | Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
 | Radio action descriptor | `Radio::action_descriptor` | `Radio.ActionDescriptor` |
@@ -106,6 +115,10 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | TextArea action descriptors | `TextArea::action_descriptors` | `TextArea.ActionDescriptors` |
 | Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
 | Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
+| Modal action descriptor | `Modal::action_descriptor` | `Modal.ActionDescriptor` |
+| Paginator action descriptors | `Paginator::action_descriptors` | `Paginator.ActionDescriptors` |
+| FilePicker action descriptors | `FilePicker::action_descriptors` | `FilePicker.ActionDescriptors` |
+| Calendar action descriptors | `Calendar::action_descriptors` | `Calendar.ActionDescriptors` |
 | Resolved actionからのHelp | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
 
 RustはCharacterとFunctionの値を`KeyCode`内に保持します
@@ -127,6 +140,14 @@ Treeは共有collapseとexpand Action IDも宣言します
 TextAreaは18個のCore `nagi.text.*` operationをrootで宣言し、TextとPasteをraw editing inputとして維持します
 
 Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
+
+Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします
+
+Paginatorはactivationなしで4個の共有selection actionを宣言し、previousとnextにそれぞれ3個のordered fallback keyを持たせます
+
+FilePickerはrootでactivation、6個の共有selection action、navigation backを宣言し、openとback callbackに応じてavailabilityを切り替えます
+
+Calendarはactive date rootでactivationと8個のcalendar scale selection actionを宣言します
 
 Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを直接返します
 

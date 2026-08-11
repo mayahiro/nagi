@@ -128,18 +128,22 @@ binding order, omit Help-hidden actions, and mark unavailable or unsupported
 bindings disabled. Existing manual `HelpBinding` construction remains
 available
 
-The standard widget packages expose constants for `nagi.activate`, the four
-`nagi.selection.*` operations, `nagi.collapse`, and `nagi.expand`. Button,
-Checkbox, Radio, Select, each Tabs item, List, Table, Tree, and Command Palette
-declare activation with unmodified Enter and Space defaults. Select declares
-all four selection actions under its single owner. The Tabs root declares them
-with Left, Right, Home, and End defaults. List, Table, Tree, and Command Palette
-roots declare them with Up, Down, Home, and End defaults. Tree adds collapse
-and expand with Left and Right and uses the same single root action group in
-full and viewport layouts. Defaults belong to each widget even when the Action
-ID is shared. An active scope may replace or remove each complete binding list.
-Left-button press remains raw pointer handling and is independent from keyboard
-rebinding
+The standard widget packages expose constants for `nagi.activate`, four
+single-item and two page-scale `nagi.selection.*` operations,
+`nagi.navigation.back`, `nagi.collapse`, `nagi.expand`, and `nagi.dismiss`.
+Button, Checkbox, Radio, Select, each Tabs item, List, Table, Tree, and Command
+Palette declare activation with unmodified Enter and Space defaults. Select
+declares all four single-item selection actions under its single owner.
+The Tabs root declares them with Left, Right, Home, and End defaults. List,
+Table, Tree, and Command Palette roots declare them with Up, Down, Home, and
+End defaults. Paginator declares the same four actions without activation;
+previous uses Left, Up, and PageUp, while next uses Right, Down, and PageDown.
+Tree adds collapse and expand with Left and Right and uses the same single root
+action group in full and viewport layouts. FilePicker adds Right as an
+activation fallback, page-scale selection, and navigation back. Defaults belong
+to each widget even when the Action ID is shared. An active scope may replace
+or remove each complete binding list. Left-button press remains raw pointer
+handling and is independent from keyboard rebinding
 
 Core also exposes 18 `nagi.text.*` Action ID constants for cursor movement,
 selection extension, select all, deletion, line-break insertion, undo, and
@@ -157,12 +161,31 @@ reach the root defaults. Row activation takes target-to-root precedence and
 shares selection-then-activation results with raw left-button input. Disabled
 or empty-filter palettes expose disabled-pass-through descriptors
 
+Modal declares `nagi.dismiss` at its root with exact unmodified Escape as its
+default. A missing dismissal handler makes the descriptor
+disabled-pass-through. Child handling retains target-to-root precedence, and
+the Modal does not add an implicit stop-at-scope boundary; applications may
+attach that boundary explicitly without stopping raw ancestor routing
+
+Paginator declares previous, next, first, and last at its stable root in both
+dot and numeric modes. Every previous or next fallback moves exactly one page,
+boundary actions consume without a message, and unselected dots retain a raw
+left-button path independent from keyboard rebinding. Disabled and empty
+Paginator descriptors are disabled-pass-through
+
+FilePicker declares activation, four single-item selection actions, two page
+selection actions, and navigation back at its selected-entry root. Page
+movement uses viewport height or ten entries without a viewport. Activation and
+back become disabled-pass-through when their callbacks are absent. Visible
+non-selected rows retain raw selection-then-open pointer handling independent
+from keyboard rebinding
+
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
-List, Table, Tree, TextArea, and Command Palette have not yet migrated. See the
-[scoped key-map specification](../spec/keymap.md) for the complete dispatch,
-matching, override, conflict, and notation contract
+List, Table, Tree, TextArea, Command Palette, Modal, Paginator, and FilePicker
+have not yet migrated. See the [scoped key-map specification](../spec/keymap.md)
+for the complete dispatch, matching, override, conflict, and notation contract
 
 ## Effects and subscriptions
 
@@ -198,7 +221,8 @@ Standard widgets use public Core composition and the public Unicode text API
   pagination, and a `Length` viewport
 - Button exposes `nagi.activate` with unmodified Enter and Space defaults and a
   separately routed left-button press
-- Modal centers a bordered focus and routing scope with optional Escape dismiss
+- Modal centers a bordered focus and routing scope and declares a root-owned,
+  rebindable dismissal action without imposing an ancestor-action boundary
 - Progress renders bounded determinate completion without integer overflow
 - Spinner renders an application-clock-driven stable frame cycle
 - Scrollbar renders overflow-safe vertical or horizontal viewport geometry
@@ -222,10 +246,14 @@ Standard widgets use public Core composition and the public Unicode text API
   actions and row-owned activation over filtered stable command IDs
 - Sparkline, BarChart, and Chart provide bounded, deterministic cell graphics
 - Help renders compact or aligned manual or resolved-action key bindings
-- Paginator provides controlled dot or numeric page navigation
-- FilePicker navigates inert application-supplied entry metadata without
+- Paginator provides controlled dot or numeric page navigation through the
+  same root-owned, rebindable selection actions
+- FilePicker navigates inert application-supplied entry metadata through
+  root-owned activation, entry and page selection, and back actions without
   performing filesystem I/O
-- Calendar provides a controlled proleptic Gregorian month grid
+- Calendar provides a controlled proleptic Gregorian month grid with
+  independently rebindable day, week, month, and displayed-month-boundary
+  selection actions owned by the active date
 
 The widget galleries survey the complete standard library. The dashboard,
 filtered list, file browser, multi-pane log viewer, and form validation examples

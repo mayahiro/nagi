@@ -75,8 +75,17 @@ spinner ticks, and modal visibility
   restricted to its subtree
 - Modal content is centered and enclosed by the public Border primitive
 - A non-empty title is the first row inside the border
-- An optional Escape handler emits one dismissal message. Other events continue
-  through normal child-to-root routing
+- The Modal root declares the standard `nagi.dismiss` semantic action with the
+  label `Dismiss`. Its default binding is exact unmodified Escape, and initial
+  and explicit repeat events emit one dismissal message when a handler exists
+- An active KeyMap scope replaces or removes the complete `nagi.dismiss`
+  binding list. Rebinding or unbinding does not fall back to raw Escape handling
+- Without a dismissal handler, the descriptor is `disabled-pass-through` and
+  normal child-to-root routing continues
+- Child actions, Core handling, and raw handlers precede the Modal root action.
+  A Modal does not implicitly stop outer semantic action propagation; an
+  application may attach a `stop-at-scope` KeyScope when that boundary is
+  required, without stopping raw ancestor routing
 - Visibility remains application state; dismissing does not mutate runtime
   state directly
 
@@ -359,11 +368,23 @@ spinner ticks, and modal visibility
 - Dot mode uses `●` for the selected page and `○` for other pages. An optional
   indicator limit centers a deterministic page window where possible; zero
   shows every page. Numeric mode renders one-based current and total values
-- Left, Up, and PageUp move one page backward; Right, Down, and PageDown move
-  one page forward; Home and End choose the boundary pages. Movement never
-  wraps and boundary no-ops are consumed without duplicate messages
-- Dot pointer activation emits the original zero-based page and retains the
-  Paginator root as the stable focus ID
+- An enabled non-empty Paginator root declares, in order,
+  `nagi.selection.previous`, `nagi.selection.next`, `nagi.selection.first`, and
+  `nagi.selection.last`. The previous action has ordered Left, Up, and PageUp
+  defaults; next has Right, Down, and PageDown; first and last have Home and End
+- Every default is exact unmodified and accepts initial and explicit repeat
+  events. An active KeyMap scope replaces or removes each complete action
+  binding list without falling back to raw keyboard handling
+- Every previous or next binding moves exactly one page. Movement never wraps,
+  and boundary no-ops remain enabled and consume without duplicate messages
+- Dot and numeric modes expose the same root action group. Neither the root nor
+  an indicator declares activation because Enter and Space are not Paginator
+  controls
+- Left-button press on an unselected dot remains a raw pointer path, emits the
+  original zero-based page, and retains the Paginator root as the stable focus
+  ID. Pointer input is independent from keyboard rebinding
+- A disabled or empty Paginator is not focusable and exposes the four root
+  descriptors as `disabled-pass-through`
 
 ## FilePicker
 
@@ -373,11 +394,34 @@ spinner ticks, and modal visibility
 - Hidden entries are omitted unless explicitly shown. Filtering, viewport
   windows, selection normalization, and callbacks preserve original entry
   indices
-- Up, Down, Home, and End navigate without wrapping. PageUp and PageDown move
-  by viewport height, or ten entries when no viewport exists. Right and
-  activation request open; Left and Backspace request navigation to the parent
-- The root ID remains the stable focus target as the selection-following
-  viewport moves. Directory rows use `▸ ` and file rows use two spaces
+- An enabled FilePicker with visible entries declares, in order,
+  `nagi.activate`, `nagi.selection.previous`, `nagi.selection.next`,
+  `nagi.selection.first`, `nagi.selection.last`,
+  `nagi.selection.previous-page`, `nagi.selection.next-page`, and
+  `nagi.navigation.back` at its stable root
+- Activate has ordered Enter, Space, and Right defaults. Previous, next, first,
+  and last use Up, Down, Home, and End. Previous page and next page use PageUp
+  and PageDown. Back has ordered Left and Backspace defaults
+- Every default is exact unmodified and accepts initial and explicit repeat
+  events. An active KeyMap scope replaces or removes each complete action
+  binding list without falling back to raw keyboard handling
+- Previous and next move one visible entry without wrapping. Page actions move
+  by viewport height, or by at most ten visible entries when no viewport exists.
+  Boundary no-ops remain enabled, consume without a message, and retain root
+  focus
+- Activate is enabled only when an open callback exists and emits the selected
+  original entry index. Back is enabled only when its callback exists. The six
+  selection actions remain independently enabled while selection is available
+- The selected entry wrapper owns the root ID and action group as the
+  selection-following viewport moves. Non-selected rows remain raw pointer-only
+  targets and do not duplicate keyboard actions
+- Left-button press on the selected entry retains root focus and requests open
+  when available. Press on a non-selected entry emits its original-index
+  selection followed by an open request when available. Pointer handling is
+  independent from keyboard rebinding
+- A disabled picker or one without visible entries is not focusable and exposes
+  all eight root descriptors as `disabled-pass-through`. Directory rows use
+  `▸ ` and file rows use two spaces
 
 ## Calendar
 
@@ -385,13 +429,35 @@ spinner ticks, and modal visibility
   clamps constructed dates, day movement, and month movement to that range
 - The month grid contains a centered `YYYY-MM` header, weekday headings, and
   six seven-day rows. Monday is the default first column; Sunday is optional.
-  Adjacent-month dates are hidden by default and may be shown and activated
-- Left and Right move one day, Up and Down move seven days, PageUp and PageDown
-  move one month while clamping the day, and Home and End choose the displayed
-  month's first and final day
+  Adjacent-month dates are hidden by default and may be shown and activated.
+  Cells beyond the supported year range remain blank
+- An enabled Calendar declares, in order, `nagi.activate`,
+  `nagi.selection.previous-day`, `nagi.selection.next-day`,
+  `nagi.selection.previous-week`, `nagi.selection.next-week`,
+  `nagi.selection.previous-month`, `nagi.selection.next-month`,
+  `nagi.selection.first-day-of-month`, and
+  `nagi.selection.last-day-of-month` at its stable root
+- Activate has ordered Enter and Space defaults. Previous and next day use Left
+  and Right, previous and next week use Up and Down, previous and next month use
+  PageUp and PageDown, and displayed-month boundaries use Home and End
+- Every default is exact unmodified and accepts initial and explicit repeat
+  events. An active KeyMap scope replaces or removes each complete action
+  binding list without falling back to raw keyboard handling
+- Day actions move one day, week actions move seven days, month actions move one
+  month while clamping the day, and month-boundary actions choose the displayed
+  month's first or final day. Supported-range and already-selected boundary
+  no-ops remain enabled, consume without a message, and retain root focus
 - A selected date outside the displayed month normalizes visually and for key
   movement to the first displayed day. Applications normally rebuild the
   Calendar with the month received from selection callbacks
+- The selected date wrapper owns the root ID and action group. Non-selected
+  visible dates remain raw left-button-only targets and do not duplicate
+  keyboard actions. Pointer handling is independent from keyboard rebinding
+- Activation and a left-button press on the selected date consume and retain
+  root focus without a message. A left-button press on another visible date
+  emits that date and requests root focus
+- A disabled Calendar is not focusable and exposes all nine root descriptors as
+  `disabled-pass-through`
 - Date arithmetic handles Gregorian leap-year rules, including common and leap
   centuries, without locale, timezone, clock, or external date dependencies
 

@@ -203,16 +203,38 @@ It also reserves `nagi.selection.previous`, `nagi.selection.next`,
 widget owns its ordered default bindings according to its orientation and
 existing input contract
 
+`nagi.selection.previous-page` and `nagi.selection.next-page`, with the English
+labels `Previous page` and `Next page`, identify viewport-scale selection
+movement independently from single-item movement
+
+Calendar-scale selection uses `nagi.selection.previous-day`,
+`nagi.selection.next-day`, `nagi.selection.previous-week`,
+`nagi.selection.next-week`, `nagi.selection.previous-month`, and
+`nagi.selection.next-month`, with the English labels `Previous day`, `Next
+day`, `Previous week`, `Next week`, `Previous month`, and `Next month`.
+`nagi.selection.first-day-of-month` and
+`nagi.selection.last-day-of-month`, labeled `First day of month` and `Last day
+of month`, identify displayed-month boundaries independently from generic
+collection boundaries
+
+`nagi.navigation.back`, with the English label `Back`, identifies navigation
+from the current location to its logical parent or predecessor
+
 `nagi.collapse` and `nagi.expand`, with the English labels `Collapse` and
 `Expand`, identify disclosure operations independently from a particular tree
 or business model
 
-Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, and Command Palette
-declare `nagi.activate` for keyboard activation. Select declares all five
-actions under one owner. Each enabled Tabs item owns one activation action,
-while the Tabs root owns the four selection actions with Left, Right, Home, and
-End defaults. This two-level ownership allows the same stroke in an item and
-root group; target-to-root route precedence selects the item action first
+`nagi.dismiss`, with the English label `Dismiss`, identifies dismissal of a
+transient surface. Its default is exact unmodified Escape and accepts explicit
+repeat events
+
+Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, Command Palette,
+FilePicker, and Calendar declare `nagi.activate` for keyboard activation.
+Select declares all five actions under one owner. Each enabled Tabs item owns
+one activation action, while the Tabs root owns the four selection actions with
+Left, Right, Home, and End defaults. This two-level ownership allows the same
+stroke in an item and root group; target-to-root route precedence selects the
+item action first
 
 Enabled non-empty List and Table roots each declare activation followed by the
 four selection actions. Their navigation defaults are Up, Down, Home, and End.
@@ -220,12 +242,39 @@ The same root action set is used for eager and virtualized content, including an
 off-screen selected-item proxy. Rows retain only raw pointer selection and do
 not duplicate action descriptors for off-screen items
 
+An enabled non-empty Paginator root declares the four selection actions without
+activation. Previous has ordered Left, Up, and PageUp defaults; next has Right,
+Down, and PageDown; first and last have Home and End. Every previous or next
+binding moves exactly one page. Dot and numeric modes expose the same owner and
+action order, while unselected dots retain a separate raw left-button path
+
+An enabled FilePicker with visible entries declares activation, the four
+single-item selection actions, previous page, next page, and navigation back at
+its selected-entry root. Defaults are Enter, Space, and Right for activation;
+Up, Down, Home, and End for single-item selection; PageUp and PageDown for page
+selection; and Left followed by Backspace for back. Activation and back are
+disabled-pass-through when their callbacks are absent. Visible non-selected
+entries retain only raw left-button selection and activation
+
+An enabled Calendar declares activation followed by previous and next day,
+previous and next week, previous and next month, and the first and last day of
+the displayed month at its selected-date root. Defaults are Enter and Space,
+Left, Right, Up, Down, PageUp, PageDown, Home, and End in that order. Calendar
+activation and boundary no-ops consume and retain root focus without emitting a
+selection message. Non-selected dates retain only raw left-button selection
+
 An enabled non-empty Tree root declares activation, the four vertical
 selection actions, collapse, and expand under one owner. Defaults are Enter and
 Space, Up, Down, Home, End, Left, and Right. Collapse closes an expanded branch
 or selects its nearest visible ancestor. Expand opens a collapsed branch or
 selects its first visible child. Full and viewport layouts expose the same one
 root action group; visible rows retain only raw pointer activation
+
+A Modal root declares dismissal. The action is enabled when a dismissal
+handler exists and disabled-pass-through otherwise. Modal routing does not
+implicitly create a `stop-at-scope` boundary; an application may attach one
+when outer semantic actions must be excluded while raw ancestor routing remains
+available
 
 An enabled TextArea declares all 18 text actions under its focus-owning root.
 Its defaults are exact unmodified movement, deletion, and Enter keys; six

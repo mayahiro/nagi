@@ -94,14 +94,23 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |
 | Selection first Action ID | `SELECTION_FIRST_ACTION_ID` | `widget.SelectionFirstActionID` |
 | Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
+| Selection previous-page Action ID | `SELECTION_PREVIOUS_PAGE_ACTION_ID` | `widget.SelectionPreviousPageActionID` |
+| Selection next-page Action ID | `SELECTION_NEXT_PAGE_ACTION_ID` | `widget.SelectionNextPageActionID` |
+| Calendar day Action IDs | `SELECTION_PREVIOUS_DAY_ACTION_ID` / `SELECTION_NEXT_DAY_ACTION_ID` | `widget.SelectionPreviousDayActionID` / `widget.SelectionNextDayActionID` |
+| Calendar week Action IDs | `SELECTION_PREVIOUS_WEEK_ACTION_ID` / `SELECTION_NEXT_WEEK_ACTION_ID` | `widget.SelectionPreviousWeekActionID` / `widget.SelectionNextWeekActionID` |
+| Calendar month Action IDs | `SELECTION_PREVIOUS_MONTH_ACTION_ID` / `SELECTION_NEXT_MONTH_ACTION_ID` | `widget.SelectionPreviousMonthActionID` / `widget.SelectionNextMonthActionID` |
+| Calendar month-boundary Action IDs | `SELECTION_FIRST_DAY_OF_MONTH_ACTION_ID` / `SELECTION_LAST_DAY_OF_MONTH_ACTION_ID` | `widget.SelectionFirstDayOfMonthActionID` / `widget.SelectionLastDayOfMonthActionID` |
+| Navigation back Action ID | `NAVIGATION_BACK_ACTION_ID` | `widget.NavigationBackActionID` |
 | Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
 | Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
+| Dismiss Action ID | `DISMISS_ACTION_ID` | `widget.DismissActionID` |
 | Text cursor Action IDs | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection-extension Action IDs | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
 | Text deletion Action IDs | `TEXT_DELETE_*_ACTION_ID` | `tui.TextDelete*ActionID` |
 | Text line-break, undo, and redo Action IDs | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
 | Standard activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
+| Standard dismiss descriptor | `dismiss_action_descriptor` | `widget.DismissActionDescriptor` |
 | Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
 | Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
 | Radio action descriptor | `Radio::action_descriptor` | `Radio.ActionDescriptor` |
@@ -114,6 +123,10 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | TextArea action descriptors | `TextArea::action_descriptors` | `TextArea.ActionDescriptors` |
 | Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
 | Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
+| Modal action descriptor | `Modal::action_descriptor` | `Modal.ActionDescriptor` |
+| Paginator action descriptors | `Paginator::action_descriptors` | `Paginator.ActionDescriptors` |
+| FilePicker action descriptors | `FilePicker::action_descriptors` | `FilePicker.ActionDescriptors` |
+| Calendar action descriptors | `Calendar::action_descriptors` | `Calendar.ActionDescriptors` |
 | Resolved-action Help | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
 
 Rust carries Character and Function values inside `KeyCode`. Go uses the
@@ -131,8 +144,15 @@ the Command Palette root declare the four shared selection Action IDs with
 widget-owned default bindings. Tree also declares the shared collapse and
 expand Action IDs. TextArea declares the 18 Core `nagi.text.*` operations under
 its root while retaining Text and Paste as raw editing input. Command Palette
-retains query TextInput handling before its ancestor root actions. Rust wraps
-route conflicts in `RuntimeError`; Go returns the structured conflict directly
+retains query TextInput handling before its ancestor root actions. Modal
+declares the shared `nagi.dismiss` action at its root and leaves an outer-action
+propagation boundary opt-in. Paginator declares the four shared selection
+actions without activation and gives previous and next three ordered fallback
+keys each. FilePicker declares activation, all six shared selection actions,
+and navigation back at its root with callback-sensitive availability. Calendar
+declares activation and eight calendar-scale selection actions at its active
+date root. Rust wraps route conflicts in `RuntimeError`; Go returns the
+structured conflict directly
 
 ## Standard widgets
 

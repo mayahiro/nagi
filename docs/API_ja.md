@@ -82,15 +82,19 @@ actionとbinding順序を維持し、Help-hidden actionを除外して、unavail
 
 既存の手書き`HelpBinding`も引き続き利用できます
 
-標準Widget packageは`nagi.activate`、4個の`nagi.selection.*` operation、`nagi.collapse`、`nagi.expand`を表すconstantを公開します
+標準Widget packageは`nagi.activate`、entry単位4個とpage単位2個の`nagi.selection.*` operation、`nagi.navigation.back`、`nagi.collapse`、`nagi.expand`、`nagi.dismiss`を表すconstantを公開します
 
 Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Tree、Command Paletteはunmodified EnterとSpaceをdefaultに持つactivationを宣言します
 
 Selectは単一ownerで4個のselection actionを宣言し、Tabs rootはLeft、Right、Home、End、List、Table、Tree、Command Palette rootはUp、Down、Home、Endをdefaultに持つ同じactionを宣言します
 
+Paginatorはactivationを持たず同じ4 actionを宣言し、previousはLeft、Up、PageUp、nextはRight、Down、PageDownをdefaultにします
+
 ListとTableはeagerとvirtualized contentで同じ単一root action groupを使用します
 
 TreeはLeftとRightをdefaultに持つcollapseとexpandを追加し、fullとviewport layoutで同じ単一root action groupを使用します
+
+FilePickerはRightをactivation fallbackへ追加し、page単位selectionとnavigation backも宣言します
 
 Action IDを共有する場合もdefault bindingは各Widgetが所有し、active scopeから各binding list全体を置換または削除できます
 
@@ -112,9 +116,29 @@ row activationはtarget-to-root順序でroot activationより先に処理され�
 
 disabledまたはfilter結果が空のpaletteはDisabledPassThrough descriptorを公開します
 
+Modalはrootで`nagi.dismiss`を宣言し、修飾なしEscapeだけをdefaultにします
+
+dismiss handlerがない場合はDisabledPassThrough descriptorになります
+
+child handlingはtarget-to-root precedenceを維持し、Modalは暗黙のstop-at-scope境界を追加しません
+
+applicationはraw ancestor routingを止めずにこの境界を明示的にattachできます
+
+Paginatorはdotとnumeric modeの安定したrootでprevious、next、first、lastを宣言します
+
+previousとnextの各fallbackは常に1 page移動し、boundary actionはMessageなしでconsumeします
+
+非selected dotはkeyboard rebindから独立したraw左button経路を維持し、disabledまたはemptyのdescriptorはDisabledPassThroughになります
+
+FilePickerはselected entry rootでactivation、entry単位4個とpage単位2個のselection action、navigation backを宣言します
+
+page移動量はviewport height、viewportがない場合は10 entryです
+
+openまたはback callbackがない場合は対応actionだけがDisabledPassThroughになり、visibleな非selected rowはkeyboard rebindから独立したrawのselect後open pointer経路を維持します
+
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、TextArea、Command Palette以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、TextArea、Command Palette、Modal、Paginator、FilePicker以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -146,7 +170,7 @@ Subscriptionは安定key付きの長期sourceを表します
 
 - Listはroot所有のactivationとvertical selection actionを持つ1個のcomposite Tab stopとして動作し、raw item pointer target、filter、window、pagination、`Length` viewportを使用する
 - Buttonはunmodified EnterとSpaceをdefaultに持つ`nagi.activate`と、別routeの左button pressでactivateする
-- Modalはborder付きのfocusとrouting scopeを中央配置し、任意でEscape dismissを扱う
+- Modalはborder付きのfocusとrouting scopeを中央配置し、ancestor action境界を強制せずroot所有のrebind可能なdismissal actionを宣言する
 - Progressはinteger overflowなしで上限付きdeterminate progressを描画する
 - Spinnerはapplication clockで進める安定したframe cycleを描画する
 - Scrollbarはoverflowを避けてverticalまたはhorizontalのviewport geometryを描画する
@@ -159,9 +183,9 @@ Subscriptionは安定key付きの長期sourceを表します
 - Command Paletteはfilterされた安定したcommand IDに対するcontrolled query、root所有vertical action、row所有activationを組み合わせる
 - Sparkline、BarChart、Chartは上限付きで決定的なCell graphicsを提供する
 - Helpは手書きまたはresolved action由来のkey bindingをcompactまたはaligned形式で表示する
-- Paginatorはdotまたはnumeric形式のcontrolled page navigationを提供する
-- FilePickerはfilesystem I/Oを行わずapplication suppliedの不活性entry metadataをnavigateする
-- Calendarはcontrolledなproleptic Gregorian month gridを提供する
+- Paginatorは同じroot所有のrebind可能なselection actionを通じてdotまたはnumeric形式のcontrolled page navigationを提供する
+- FilePickerはfilesystem I/Oを行わずroot所有のactivation、entryとpage selection、back actionを通じてapplication suppliedの不活性entry metadataをnavigateする
+- Calendarはactive dateが所有する個別にrebind可能なday、week、month、表示月境界selection actionを持つcontrolledなproleptic Gregorian month gridを提供する
 
 Widget galleryでは標準library全体を一覧できます。Dashboard、filter付きList、file browser、multi-pane log viewer、form validationのexampleでは、同じpublic NodeとWidgetをapplication形式のlayoutへ構成する方法を確認できます
 
