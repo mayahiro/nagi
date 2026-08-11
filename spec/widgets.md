@@ -286,6 +286,24 @@ spinner ticks, and modal visibility
   corresponding handler exists. TextAreaHistory is bounded application-owned
   history: content changes create steps, cursor and selection changes do not,
   and a divergent edit clears redo
+- A TextArea root declares 18 semantic text actions in this order: cursor left,
+  right, up, down, line start, and line end; selection extension for the same
+  six directions; select all; delete backward and forward; insert line break;
+  undo; and redo. The stable IDs are the corresponding `nagi.text.*` Core
+  Action IDs
+- Default bindings are exact unmodified Left, Right, Up, Down, Home, End,
+  Backspace, Delete, and Enter; the six corresponding Shift-modified movement
+  keys; Control-A; Control-Z; and Control-Y followed by Control-Shift-Z for
+  redo. All defaults accept explicit repeat events
+- Movement and deletion remain enabled at a boundary so a handled no-op is
+  consumed. Undo and redo are disabled-pass-through when their corresponding
+  callback is absent. Every action is disabled-pass-through when TextArea is
+  disabled
+- Text and Paste remain raw editing input after local action resolution. A
+  KeyMap may therefore bind a single-scalar Text event to an action before raw
+  insertion, while Paste always remains one edit and never invokes an action
+- Rebinding replaces, and an empty replacement removes, the complete binding
+  list without falling back to the former raw keyboard shortcut
 
 ## Sparkline
 
@@ -391,6 +409,17 @@ spinner ticks, and modal visibility
   command. Activating a command row may emit selection followed by activation
 - An empty result renders a configurable notice and exposes no command focus
   target
+- The palette root declares `nagi.activate` followed by the four vertical
+  `nagi.selection.*` actions. Each visible command row separately declares
+  `nagi.activate`, so row activation has target-to-root precedence over root
+  activation. Defaults accept explicit repeat and use exact modifiers
+- Query Text and unmodified Home or End are consumed by the local Core
+  TextInput before ancestor root actions. Plain-character bindings on the root
+  therefore do not replace query editing, while bindings ignored by TextInput
+  can be rebound normally
+- A disabled palette or an empty filter result exposes root and command action
+  descriptors as disabled-pass-through. Left-button row activation remains raw
+  pointer handling and is unaffected by keyboard rebinding
 
 ## Bounds and text
 

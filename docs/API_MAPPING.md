@@ -96,6 +96,11 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
 | Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
 | Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
+| Text cursor Action IDs | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
+| Text selection-extension Action IDs | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
+| Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
+| Text deletion Action IDs | `TEXT_DELETE_*_ACTION_ID` | `tui.TextDelete*ActionID` |
+| Text line-break, undo, and redo Action IDs | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
 | Standard activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
 | Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
 | Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
@@ -106,6 +111,9 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | List action descriptors | `List::action_descriptors` | `List.ActionDescriptors` |
 | Table action descriptors | `Table::action_descriptors` | `Table.ActionDescriptors` |
 | Tree action descriptors | `Tree::action_descriptors` | `Tree.ActionDescriptors` |
+| TextArea action descriptors | `TextArea::action_descriptors` | `TextArea.ActionDescriptors` |
+| Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
+| Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
 | Resolved-action Help | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
 
 Rust carries Character and Function values inside `KeyCode`. Go uses the
@@ -117,11 +125,14 @@ semantics
 The pure resolver remains available independently. Both Runtime implementations
 also attach owner groups and scopes to semantic Nodes, resolve the active route,
 and expose that exact projection to Help and test consumers. Button, Checkbox,
-Radio, Select, each Tabs item, List, Table, and Tree declare the shared
-`nagi.activate` action. Select, the Tabs root, List, Table, and Tree declare the
-four shared selection Action IDs with widget-owned default bindings. Tree also
-declares the shared collapse and expand Action IDs. Rust wraps route conflicts
-in `RuntimeError`; Go returns the structured conflict directly
+Radio, Select, each Tabs item, List, Table, Tree, and Command Palette declare
+the shared `nagi.activate` action. Select, the Tabs root, List, Table, Tree, and
+the Command Palette root declare the four shared selection Action IDs with
+widget-owned default bindings. Tree also declares the shared collapse and
+expand Action IDs. TextArea declares the 18 Core `nagi.text.*` operations under
+its root while retaining Text and Paste as raw editing input. Command Palette
+retains query TextInput handling before its ancestor root actions. Rust wraps
+route conflicts in `RuntimeError`; Go returns the structured conflict directly
 
 ## Standard widgets
 

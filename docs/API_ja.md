@@ -84,9 +84,9 @@ actionとbinding順序を維持し、Help-hidden actionを除外して、unavail
 
 標準Widget packageは`nagi.activate`、4個の`nagi.selection.*` operation、`nagi.collapse`、`nagi.expand`を表すconstantを公開します
 
-Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Treeはunmodified EnterとSpaceをdefaultに持つactivationを宣言します
+Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Tree、Command Paletteはunmodified EnterとSpaceをdefaultに持つactivationを宣言します
 
-Selectは単一ownerで4個のselection actionを宣言し、Tabs rootはLeft、Right、Home、End、List、Table、Tree rootはUp、Down、Home、Endをdefaultに持つ同じactionを宣言します
+Selectは単一ownerで4個のselection actionを宣言し、Tabs rootはLeft、Right、Home、End、List、Table、Tree、Command Palette rootはUp、Down、Home、Endをdefaultに持つ同じactionを宣言します
 
 ListとTableはeagerとvirtualized contentで同じ単一root action groupを使用します
 
@@ -96,9 +96,25 @@ Action IDを共有する場合もdefault bindingは各Widgetが所有し、activ
 
 左button pressはraw pointer handlingに残り、keyboard rebindの影響を受けません
 
+Coreはcursor移動、selection extension、select all、削除、改行挿入、undo、redoに対応する18個の`nagi.text.*` Action ID constantも公開します
+
+TextAreaは既存のdefault keyとexplicit Repeat挙動を持つこれらのactionをfocus所有rootで宣言します
+
+boundaryでの移動と削除はEnabledのままMessageなしでconsumeし、undoとredoは対応callbackがない場合にDisabledPassThroughになります
+
+TextとPasteはlocal action解決後のraw editing inputとして残り、Pasteはactionを起動しません
+
+Command Paletteはrootでactivationとvertical selection、表示中の各command rowでactivationを宣言します
+
+queryのTextInput editingはancestor root actionより先にText、Home、Endをlocalでconsumeし、Enter、Up、Downはroot defaultへ届きます
+
+row activationはtarget-to-root順序でroot activationより先に処理され、raw左button入力と同じselect後activateのresultを使います
+
+disabledまたはfilter結果が空のpaletteはDisabledPassThrough descriptorを公開します
+
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、TextArea、Command Palette以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -139,8 +155,8 @@ Subscriptionは安定key付きの長期sourceを表します
 - Selectは共有Action IDを通じてWidget所有のactivationとselection defaultを公開し、wrapするactivationとboundary consumeを維持する
 - Tableはeagerとvirtualized bodyで同じroot action setを持つ1個のcomposite Tab stopとして動作し、columnと任意のbody viewportを`Length`でsizeし、headerを固定してkeyboard selectionへ追従する
 - Treeはroot所有のactivation、vertical selection、collapse、expand actionを持つ1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
-- TextAreaはselection、horizontal scroll、application所有のundoとredo historyを使い、extended grapheme境界でmultiline textを編集する
-- Command Paletteは安定したcommand IDに対するcontrolled query、filter、navigation、activationを組み合わせる
+- TextAreaはselection、horizontal scroll、application所有のundoとredo history、binding list全体をrebindできるroot所有semantic action setを使い、extended grapheme境界でmultiline textを編集する
+- Command Paletteはfilterされた安定したcommand IDに対するcontrolled query、root所有vertical action、row所有activationを組み合わせる
 - Sparkline、BarChart、Chartは上限付きで決定的なCell graphicsを提供する
 - Helpは手書きまたはresolved action由来のkey bindingをcompactまたはaligned形式で表示する
 - Paginatorはdotまたはnumeric形式のcontrolled page navigationを提供する

@@ -130,20 +130,37 @@ available
 
 The standard widget packages expose constants for `nagi.activate`, the four
 `nagi.selection.*` operations, `nagi.collapse`, and `nagi.expand`. Button,
-Checkbox, Radio, Select, each Tabs item, List, Table, and Tree declare activation
-with unmodified Enter and Space defaults. Select declares all four selection
-actions under its single owner. The Tabs root declares them with Left, Right,
-Home, and End defaults. List, Table, and Tree roots declare them with Up, Down,
-Home, and End defaults. Tree adds collapse and expand with Left and Right and
-uses the same single root action group in full and viewport layouts. Defaults
-belong to each widget even when the Action ID is shared. An active scope may
-replace or remove each complete binding list. Left-button press remains raw
-pointer handling and is independent from keyboard rebinding
+Checkbox, Radio, Select, each Tabs item, List, Table, Tree, and Command Palette
+declare activation with unmodified Enter and Space defaults. Select declares
+all four selection actions under its single owner. The Tabs root declares them
+with Left, Right, Home, and End defaults. List, Table, Tree, and Command Palette
+roots declare them with Up, Down, Home, and End defaults. Tree adds collapse
+and expand with Left and Right and uses the same single root action group in
+full and viewport layouts. Defaults belong to each widget even when the Action
+ID is shared. An active scope may replace or remove each complete binding list.
+Left-button press remains raw pointer handling and is independent from keyboard
+rebinding
+
+Core also exposes 18 `nagi.text.*` Action ID constants for cursor movement,
+selection extension, select all, deletion, line-break insertion, undo, and
+redo. TextArea declares them under its focus-owning root with its existing
+keyboard defaults and explicit-repeat behavior. Boundary movement and deletion
+remain enabled and consume without a message. Undo and redo are
+disabled-pass-through when their callbacks are absent. Text and Paste remain
+raw editing input after local action resolution, and Paste never invokes an
+action
+
+Command Palette declares activation plus vertical selection at its root and
+activation on each visible command row. Query TextInput editing consumes Text,
+Home, and End locally before the ancestor root actions; Enter, Up, and Down
+reach the root defaults. Row activation takes target-to-root precedence and
+shares selection-then-activation results with raw left-button input. Disabled
+or empty-filter palettes expose disabled-pass-through descriptors
 
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
-List, Table, and Tree have not yet migrated. See the
+List, Table, Tree, TextArea, and Command Palette have not yet migrated. See the
 [scoped key-map specification](../spec/keymap.md) for the complete dispatch,
 matching, override, conflict, and notation contract
 
@@ -199,9 +216,10 @@ Standard widgets use public Core composition and the public Unicode text API
   application-owned expansion state, reusable `TreeState`, and
   selection-following viewports
 - TextArea edits multiline text at extended grapheme boundaries with selection,
-  horizontal scrolling, and application-owned undo and redo history
-- Command Palette combines controlled query input, filtering, navigation, and
-  activation over stable command IDs
+  horizontal scrolling, application-owned undo and redo history, and a
+  root-owned semantic action set whose complete key lists can be rebound
+- Command Palette combines controlled query input with root-owned vertical
+  actions and row-owned activation over filtered stable command IDs
 - Sparkline, BarChart, and Chart provide bounded, deterministic cell graphics
 - Help renders compact or aligned manual or resolved-action key bindings
 - Paginator provides controlled dot or numeric page navigation

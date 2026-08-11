@@ -187,6 +187,12 @@ tree rebuilding replaces the action index and cache as one frame transition.
 Trees that declare no actions bypass action resolution and keep existing Core,
 raw `OnEvent`, widget, and terminal `mapEvent` behavior
 
+Core reserves generic `nagi.text.*` Action IDs for cursor movement left,
+right, up, down, to line start, and to line end; selection extension in the
+same six directions; select all; backward and forward deletion; line-break
+insertion; undo; and redo. Rust exports `TEXT_*_ACTION_ID` constants and Go
+exports the corresponding `Text*ActionID` constants
+
 The standard widget package reserves `nagi.activate` for activation with the
 English label `Activate`. Its ordered defaults are unmodified Enter and Space,
 both accepting explicit repeat events
@@ -201,12 +207,12 @@ existing input contract
 `Expand`, identify disclosure operations independently from a particular tree
 or business model
 
-Button, Checkbox, Radio, Select, Tabs, List, Table, and Tree declare
-`nagi.activate` for keyboard activation. Select declares all five actions under
-one owner. Each enabled Tabs item owns one activation action, while the Tabs
-root owns the four selection actions with Left, Right, Home, and End defaults.
-This two-level ownership allows the same stroke in an item and root group;
-target-to-root route precedence selects the item action first
+Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, and Command Palette
+declare `nagi.activate` for keyboard activation. Select declares all five
+actions under one owner. Each enabled Tabs item owns one activation action,
+while the Tabs root owns the four selection actions with Left, Right, Home, and
+End defaults. This two-level ownership allows the same stroke in an item and
+root group; target-to-root route precedence selects the item action first
 
 Enabled non-empty List and Table roots each declare activation followed by the
 four selection actions. Their navigation defaults are Up, Down, Home, and End.
@@ -221,13 +227,35 @@ or selects its nearest visible ancestor. Expand opens a collapsed branch or
 selects its first visible child. Full and viewport layouts expose the same one
 root action group; visible rows retain only raw pointer activation
 
+An enabled TextArea declares all 18 text actions under its focus-owning root.
+Its defaults are exact unmodified movement, deletion, and Enter keys; six
+Shift-modified selection-extension keys; Control-A; Control-Z; and Control-Y
+followed by Control-Shift-Z for redo. All defaults accept explicit repeat
+events. Movement and deletion stay enabled at boundaries to preserve
+consume-without-message behavior. Undo and redo are disabled-pass-through when
+their callback is absent. Text and Paste continue through raw editing only when
+no local action matches; Paste cannot match an action
+
+An enabled Command Palette with at least one filtered command declares
+activation followed by the four vertical selection actions under its root.
+Each visible command row separately declares activation. The query remains a
+Core TextInput: local text editing and unmodified Home or End consume before
+the ancestor root action, while Enter, Up, and Down reach the root defaults.
+At row focus, target-to-root precedence selects the row activation before the
+root activation. Row keyboard and raw left-button activation both emit a
+selection first when needed and then activation, using original command
+indices
+
 An active KeyMap scope may replace or remove any complete keyboard binding
 list. Disabled instances and empty Selects, Tabs, Lists, Tables, or Trees expose
-their descriptors as `disabled-pass-through`. Left-button press remains raw
-pointer handling and is not changed by a keyboard rebind. Each widget retains
-its own controlled Message behavior
+their descriptors as `disabled-pass-through`; disabled TextAreas do the same
+for all text actions. Disabled Command Palettes and palettes with no filtered
+command expose both root and command descriptors as `disabled-pass-through`.
+Left-button press remains raw pointer handling and is not changed by a keyboard
+rebind. Each widget retains its own controlled Message behavior
 
 Tab focus traversal remains a Runtime Core shortcut before action routing in
 this migration. A Tab binding cannot override traversal yet. Standard widgets
-other than Button, Checkbox, Radio, Select, Tabs, List, Table, and Tree have not
-been migrated and retain their existing raw key handling
+other than Button, Checkbox, Radio, Select, Tabs, List, Table, Tree, TextArea,
+and Command Palette have not been migrated and retain their existing raw key
+handling

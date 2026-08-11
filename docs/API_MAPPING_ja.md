@@ -88,6 +88,11 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
 | Collapse Action ID | `COLLAPSE_ACTION_ID` | `widget.CollapseActionID` |
 | Expand Action ID | `EXPAND_ACTION_ID` | `widget.ExpandActionID` |
+| Text cursor Action ID | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
+| Text selection extension Action ID | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
+| Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
+| Text deletion Action ID | `TEXT_DELETE_*_ACTION_ID` | `tui.TextDelete*ActionID` |
+| Text line break、undo、redo Action ID | `TEXT_INSERT_LINE_BREAK_ACTION_ID` / `TEXT_UNDO_ACTION_ID` / `TEXT_REDO_ACTION_ID` | `tui.TextInsertLineBreakActionID` / `tui.TextUndoActionID` / `tui.TextRedoActionID` |
 | 標準activate descriptor | `activate_action_descriptor` | `widget.ActivateActionDescriptor` |
 | Button action descriptor | `Button::action_descriptor` | `Button.ActionDescriptor` |
 | Checkbox action descriptor | `Checkbox::action_descriptor` | `Checkbox.ActionDescriptor` |
@@ -98,6 +103,9 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | List action descriptors | `List::action_descriptors` | `List.ActionDescriptors` |
 | Table action descriptors | `Table::action_descriptors` | `Table.ActionDescriptors` |
 | Tree action descriptors | `Tree::action_descriptors` | `Tree.ActionDescriptors` |
+| TextArea action descriptors | `TextArea::action_descriptors` | `TextArea.ActionDescriptors` |
+| Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
+| Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
 | Resolved actionからのHelp | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
 
 RustはCharacterとFunctionの値を`KeyCode`内に保持します
@@ -110,11 +118,15 @@ pure resolverは独立したAPIとして引き続き利用できます
 
 両Runtime実装はowner groupとscopeをsemantic Nodeへattachし、active routeをresolveして、そのprojectionをHelpとtest consumerへ公開します
 
-Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Treeは共有`nagi.activate` actionを宣言します
+Button、Checkbox、Radio、Select、Tabsの各item、List、Table、Tree、Command Paletteは共有`nagi.activate` actionを宣言します
 
-Select、Tabs root、List、Table、TreeはWidget所有のdefault bindingを持つ4個の共有selection Action IDも宣言します
+Select、Tabs root、List、Table、Tree、Command Palette rootはWidget所有のdefault bindingを持つ4個の共有selection Action IDも宣言します
 
 Treeは共有collapseとexpand Action IDも宣言します
+
+TextAreaは18個のCore `nagi.text.*` operationをrootで宣言し、TextとPasteをraw editing inputとして維持します
+
+Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
 
 Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを直接返します
 
