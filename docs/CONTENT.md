@@ -45,6 +45,10 @@ Stable element IDs and opaque revisions let an adapter retain identity while
 replacing a changed root or subtree. Cloning a Rust Content value or copying a
 Go Content value shares immutable backing storage
 
+Go slice accessors return defensive copies. `HasRole`, `HasClass`,
+`ChildCount`, and `Child` provide allocation-free membership and indexed reads
+for renderers while preserving immutable ownership
+
 ## Projection and validation
 
 `semantic_text` in Rust and `ProjectSemanticText` in Go traverse the tree from
@@ -67,6 +71,10 @@ Content carries structure and meaning but no terminal Color, Style, Length,
 focus target, event handler, or viewport state. A terminal presentation layer
 may resolve roles and classes into backend-specific layout and computed style,
 then project the result into ordinary TUI nodes
+
+Nagi's current [Terminal Presentation Rules](PRESENTATION.md) define the
+deterministic rule-resolution half of that boundary. Content-to-Node projection
+remains a separate contract
 
 Markdown, ANSI, Help, Diagnostic, JSON, Diff, and application domain models
 remain source adapters or renderers. They may produce Content without becoming

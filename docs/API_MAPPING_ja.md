@@ -9,6 +9,7 @@ Nagiは外部から観測できるContent、TUI、CLIの挙動を揃えながら
 | 責務 | Rust | Go |
 | --- | --- | --- |
 | Source-neutral Content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
+| Terminal Presentation Rules | `nagi-tui` | `github.com/mayahiro/nagitui-go` |
 | Core runtimeとNode | `nagi-tui` | `github.com/mayahiro/nagitui-go` |
 | Unicode text | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | VT codec、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
@@ -40,6 +41,9 @@ Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonical
 | Opaque revision | `Element::with_revision` | `Element.WithRevision` |
 | Semantic role | `Role::new` / `Element::with_roles` | `content.NewRole` / `Element.WithRoles` |
 | Presentation class | `Class::new` / `Element::with_classes` | `content.NewClass` / `Element.WithClasses` |
+| Role membership | `Element::roles().contains(...)` | `Element.HasRole(...)` |
+| Class membership | `Element::classes().contains(...)` | `Element.HasClass(...)` |
+| Index指定child read | `Element::children()` | `Element.ChildCount()` / `Element.Child(index)` |
 | Application annotation | `AnnotationId::new` / `Element::with_annotation` | `content.NewAnnotationID` / `Element.WithAnnotation` |
 | Semantic boundary | `SemanticBoundary` / `Element::with_boundary` | `content.SemanticBoundary` / `Element.WithBoundary` |
 | Identifier failure | `IdentifierError` / `IdentifierErrorKind` | `content.IdentifierError` / `IdentifierErrorKind` |
@@ -58,6 +62,37 @@ Slice accessorはRustでimmutable sliceを返し、Goでdefensive copyを返し�
 Goのzero `Content`はempty Text、zero `Element`はempty Inlineです
 
 Goのmodifier errorはinvalidなzero-value identifierと未知のnumeric boundaryを拒否し、Rustではvalidated identifierとclosed enumにより同じ状態を表現できません
+
+## Terminal Presentation Rules
+
+| 用途 | Rust | Go |
+| --- | --- | --- |
+| State token | `PresentationState::new` / `from_bytes` | `tui.NewPresentationState` / `NewPresentationStateBytes` |
+| Universal selector | `PresentationSelector::Any` | `tui.AnyPresentationSelector()` |
+| Exact Role selector | `PresentationSelector::Role(role)` | `tui.RolePresentationSelector(role)` |
+| Exact Class selector | `PresentationSelector::Class(class)` | `tui.ClassPresentationSelector(class)` |
+| 3状態property | `DeclarationValue<T>` | `tui.DeclarationValue[T]` |
+| Concrete property | `DeclarationValue::Set(value)` | `tui.SetDeclarationValue(value)` |
+| Initial property | `DeclarationValue::Initial` | `tui.InitialDeclarationValue[T]()` |
+| Text declaration | `TextStyleDeclaration` | `tui.TextStyleDeclaration` |
+| Layoutとtext declaration | `PresentationDeclaration` | `tui.PresentationDeclaration` |
+| Visual separator declaration | `with_visual_separator` / `visual_separator` | `WithVisualSeparator` / `VisualSeparator` |
+| Display | `PresentationDisplay` | `tui.PresentationDisplay` |
+| 順序付きRule | `PresentationRule::new` | `tui.NewPresentationRule` |
+| Required State | `PresentationRule::with_required_states` | `PresentationRule.Requiring` |
+| Immutable Sheet | `PresentationSheet::new` | `tui.NewPresentationSheet` |
+| Resolution | `PresentationSheet::resolve` | `PresentationSheet.Resolve` |
+| Computed result | `ComputedPresentation` | `tui.ComputedPresentation` |
+
+両実装は`element`、inherited Style、active Stateの順で解決します
+
+Rule orderだけをcascade priorityとし、Text Style fieldはinheritし、layout fieldはinheritしません
+
+ResultはvalueでありNodeを生成しません
+
+Rustのcomputed resultはconcreteなvisual separatorをSheetからborrowします
+
+Goのcomputed resultはimmutableなstring storageをvalueとして保持します
 
 ## Core Node
 

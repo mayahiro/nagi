@@ -12,6 +12,7 @@ for complete method signatures
 | Responsibility | Rust | Go |
 | --- | --- | --- |
 | Source-neutral content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
+| Terminal Presentation Rules | `nagi-tui` | `github.com/mayahiro/nagitui-go` |
 | Core runtime and nodes | `nagi-tui` | `github.com/mayahiro/nagitui-go` |
 | Unicode text | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | VT codec, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
@@ -44,6 +45,9 @@ Geometry and Style types for application-facing APIs
 | Opaque revision | `Element::with_revision` | `Element.WithRevision` |
 | Semantic role | `Role::new` / `Element::with_roles` | `content.NewRole` / `Element.WithRoles` |
 | Presentation class | `Class::new` / `Element::with_classes` | `content.NewClass` / `Element.WithClasses` |
+| Role membership | `Element::roles().contains(...)` | `Element.HasRole(...)` |
+| Class membership | `Element::classes().contains(...)` | `Element.HasClass(...)` |
+| Indexed child read | `Element::children()` | `Element.ChildCount()` / `Element.Child(index)` |
 | Application annotation | `AnnotationId::new` / `Element::with_annotation` | `content.NewAnnotationID` / `Element.WithAnnotation` |
 | Semantic boundary | `SemanticBoundary` / `Element::with_boundary` | `content.SemanticBoundary` / `Element.WithBoundary` |
 | Identifier failure | `IdentifierError` / `IdentifierErrorKind` | `content.IdentifierError` / `IdentifierErrorKind` |
@@ -61,6 +65,34 @@ in Go. Go defines zero `Content` as empty Text and zero `Element` as empty
 Inline. Go modifier errors reject invalid zero-value identifiers and unknown
 numeric boundaries; Rust validated identifiers and closed enums make those
 states unrepresentable
+
+## Terminal Presentation Rules
+
+| Purpose | Rust | Go |
+| --- | --- | --- |
+| State token | `PresentationState::new` / `from_bytes` | `tui.NewPresentationState` / `NewPresentationStateBytes` |
+| Universal selector | `PresentationSelector::Any` | `tui.AnyPresentationSelector()` |
+| Exact Role selector | `PresentationSelector::Role(role)` | `tui.RolePresentationSelector(role)` |
+| Exact Class selector | `PresentationSelector::Class(class)` | `tui.ClassPresentationSelector(class)` |
+| Three-state property | `DeclarationValue<T>` | `tui.DeclarationValue[T]` |
+| Concrete property | `DeclarationValue::Set(value)` | `tui.SetDeclarationValue(value)` |
+| Initial property | `DeclarationValue::Initial` | `tui.InitialDeclarationValue[T]()` |
+| Text declaration | `TextStyleDeclaration` | `tui.TextStyleDeclaration` |
+| Layout and text declaration | `PresentationDeclaration` | `tui.PresentationDeclaration` |
+| Visual separator declaration | `with_visual_separator` / `visual_separator` | `WithVisualSeparator` / `VisualSeparator` |
+| Display | `PresentationDisplay` | `tui.PresentationDisplay` |
+| Ordered rule | `PresentationRule::new` | `tui.NewPresentationRule` |
+| Required states | `PresentationRule::with_required_states` | `PresentationRule.Requiring` |
+| Immutable sheet | `PresentationSheet::new` | `tui.NewPresentationSheet` |
+| Resolution | `PresentationSheet::resolve` | `PresentationSheet.Resolve` |
+| Computed result | `ComputedPresentation` | `tui.ComputedPresentation` |
+
+Both implementations resolve `(element, inherited Style, active States)` in
+that order. Rule order is the only cascade priority. Text Style fields inherit;
+layout fields do not. The result is a value and does not create a Node
+
+Rust computed results borrow a concrete visual separator from the Sheet. Go
+computed results retain the immutable string storage as a value
 
 ## Core nodes
 

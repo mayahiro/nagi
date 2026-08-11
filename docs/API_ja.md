@@ -9,6 +9,8 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 | 責務 | Rust | Go |
 | --- | --- | --- |
 | Application、runtime、layout、event、Effect、Subscription | `nagi-tui` | `github.com/mayahiro/nagitui-go`の`tui` package |
+| Source-neutral structured Content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
+| Terminal Presentation Rules | `nagi-tui` | `github.com/mayahiro/nagitui-go`の`tui` package |
 | Unicode graphemeと端末幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input／output、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry、Cell、Surface、composition、snapshot | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
@@ -18,6 +20,22 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 Unix terminal bindingはprivateな実装詳細として維持します
 
 `nagi-tui`とGoの`tui` packageはapplicationから使いやすくするためcanonicalなGeometry型とterminal Style型を再公開します。SurfaceはStyle型を複製せず、共有Go moduleはTUI moduleへ依存しません
+
+## Terminal Presentation Rules
+
+`PresentationSheet`はsource-neutral Contentに対するCSS相当のterminal backendです
+
+順序付き`PresentationRule`は全element、exact Role、exact Classのいずれかを表す`PresentationSelector`と、任意のopenな`PresentationState` tokenのall-of条件を使用します
+
+`DeclarationValue`は各textとlayout propertyでUnspecified、Set、Initialを区別します
+
+Rustの`PresentationSheet::resolve`とGoの`PresentationSheet.Resolve`はmatching ruleをsource orderで適用し、`ComputedPresentation`を返します
+
+Text Style fieldはcallerが渡すStyleからinheritし、display、Length、gap、visual separator、wrap、alignmentはinheritしません
+
+Rule resolutionはVT Style mergeを使わず、Content変更、Node生成、Element ID mapping、annotation activationを行いません
+
+完全な境界は[Terminal Presentation guide](PRESENTATION_ja.md)を参照してください
 
 ## Application lifecycle
 

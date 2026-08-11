@@ -48,6 +48,10 @@ Stable element IDとopaque revisionにより、adapterは変更されたrootま�
 
 RustのContent cloneとGoのContent copyはimmutableなbacking storageを共有します
 
+Goのslice accessorはdefensive copyを返します
+
+`HasRole`、`HasClass`、`ChildCount`、`Child`はimmutableなownershipを維持しながらrendererへallocation-freeなmembershipとindex readを提供します
+
 ## Projectionとvalidation
 
 Rustの`semantic_text`とGoの`ProjectSemanticText`はtreeを左から右へtraverseし、正規化済みUTF-8とannotated elementのhalf-open byte rangeを返します
@@ -70,6 +74,10 @@ Constructorはwhole-treeへhidden limitを適用しません
 Contentは構造と意味を保持しますが、terminal Color、Style、Length、focus target、event handler、viewport stateを保持しません
 
 Terminal presentation層はroleとclassをbackend固有のlayoutとcomputed styleへ解決し、その結果を通常のTUI Nodeへprojectできます
+
+現在のNagiでは[Terminal Presentation Rules](PRESENTATION_ja.md)がこの境界の決定的なrule resolutionを定義します
+
+ContentからNodeへのprojectionは別契約として維持します
 
 Markdown、ANSI、Help、Diagnostic、JSON、Diff、application domain modelはsource adapterまたはrendererとして維持します
 

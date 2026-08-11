@@ -17,6 +17,7 @@ strength
 - [Layout](layout.md)
 - [Core nodes](core-nodes.md)
 - [Source-neutral content](content.md)
+- [Terminal presentation rules](presentation.md)
 - [Unicode and terminal text](text.md)
 - [Cell surfaces](surface.md)
 - [VT input](vt-input.md)

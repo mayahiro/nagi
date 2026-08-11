@@ -11,6 +11,8 @@ nodes from `view`, and receive messages sequentially through `update`
 | Responsibility | Rust | Go |
 | --- | --- | --- |
 | Application, runtime, layout, events, effects, subscriptions | `nagi-tui` | `github.com/mayahiro/nagitui-go` package `tui` |
+| Source-neutral structured content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
+| Terminal Presentation Rules | `nagi-tui` | `github.com/mayahiro/nagitui-go` package `tui` |
 | Unicode graphemes and terminal width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input/output, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry, Cells, surfaces, composition, snapshots | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
@@ -22,6 +24,24 @@ Unix terminal bindings remain private implementation details
 `nagi-tui` and Go package `tui` re-export the canonical Geometry and terminal
 Style types for application convenience. Surface does not define a duplicate
 Style type, and the shared Go module does not depend on the TUI module
+
+## Terminal Presentation Rules
+
+`PresentationSheet` is the CSS-like terminal backend for source-neutral
+Content. Its ordered `PresentationRule` values use an exact universal, Role,
+or Class `PresentationSelector` plus an optional all-of set of open
+`PresentationState` tokens
+
+`DeclarationValue` distinguishes Unspecified, Set, and Initial for every text
+and layout property. `PresentationSheet::resolve` in Rust and
+`PresentationSheet.Resolve` in Go apply matching rules in source order and
+return `ComputedPresentation`. Text Style fields inherit from the Style passed
+by the caller; display, Length, gap, visual separator, wrap, and alignment do
+not inherit
+
+Rule resolution does not use VT Style merging, mutate Content, create Nodes,
+map Element IDs, or activate annotations. See the
+[Terminal Presentation guide](PRESENTATION.md) for the complete boundary
 
 ## Application lifecycle
 
