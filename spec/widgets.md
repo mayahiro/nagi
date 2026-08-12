@@ -485,9 +485,9 @@ lifetime
 
 ## SelectableText
 
-- SelectableText is a controlled keyboard-selection view over one semantic
-  UTF-8 document. The application owns its cursor, optional selection anchor,
-  and the meaning and destination of copy requests
+- SelectableText is a controlled keyboard-and-pointer selection view over one
+  semantic UTF-8 document. The application owns its cursor, optional selection
+  anchor, and the meaning and destination of copy requests
 - Content is immutable ordered TextSpan data plus the concatenated semantic
   text. Clones share that storage. Go replaces invalid UTF-8 before calculating
   offsets; Rust text is valid UTF-8 by type
@@ -522,6 +522,28 @@ lifetime
 - Selection extension preserves an existing anchor. When selection is empty,
   it preserves the cursor before the first extension as the new anchor.
   Select-all sets the anchor to zero and cursor to the document length
+- Enabled left-button press focuses the root, captures pointer routing under
+  its stable Node ID, and collapses at the leading boundary of the hit
+  grapheme. Shift-press extends from the existing selection anchor, or from the
+  current cursor when no selection exists. Extension before the anchor uses
+  the grapheme start and extension after it uses the grapheme end
+- Left-button Move changes selection only while the root owns capture and uses
+  the same directional grapheme boundary. Left-button Release consumes and
+  releases capture without emitting duplicate state. A terminal application
+  that needs drag movement MUST enable button-motion tracking rather than
+  press-only tracking
+- Pointer hit resolution uses ParagraphOptions, the Runtime WidthProfile,
+  explicit line breaks, alignment, wrapping, clipping, and the current scrolled
+  Node position. A captured drag outside the visible text resolves to the
+  applicable visual line or document boundary
+- At a visible edge, each captured Move MAY request one-Cell movement from the
+  nearest ancestor ScrollViewport. The controlled selection Message precedes
+  an optional ScrollViewport callback Message. No timer is started, so a
+  stationary pointer does not continue scrolling
+- Disabled content, movement or release without capture, non-left buttons, and
+  wheel input do not start or change pointer selection. Selection remains
+  within one SelectableText document; multi-Node, double-click, and
+  triple-click selection units are outside this component
 - Copy-selection is enabled only with an application callback, copyable
   content, and a non-empty selection. Copy-document also requires a non-empty
   document. Otherwise the corresponding action is disabled-pass-through
@@ -534,8 +556,6 @@ lifetime
 - Caller span styles are preserved. Selection defaults to reverse, focus to an
   underline overlay, and disabled content to dim. ParagraphOptions controls
   wrapping and alignment without changing selection or copy text
-- Pointer selection, pointer capture, viewport auto-scroll, and selection
-  across multiple Nodes are outside this widget contract
 
 ## Sparkline
 

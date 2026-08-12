@@ -336,6 +336,7 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Selectable text content | `SelectableTextContent::plain` / `styled` | `widget.NewPlainSelectableTextContent` / `NewSelectableTextContent` |
 | Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
 | Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |
+| Pointer selection | enabledな`SelectableText`へ組み込み | enabledな`widget.SelectableText`へ組み込み |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |
@@ -365,6 +366,12 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Eventをignore | `EventResult::ignored()` | `IgnoreResult[M]()` |
 | Eventをconsume | `EventResult::consumed()` | `ConsumeResult[M]()` |
 | 1個のMessageをemit | `EventResult::message(value)` | `MessageResult(value)` |
+| Geometry-aware pointer handler | `Node::on_pointer_event` | `Node.OnPointerEvent` |
+| Pointer Event geometry | `PointerEventContext` | `PointerEventContext` |
+| Paragraph UTF-8 hit | `PointerEventContext::text_hit` / `TextHit` | `PointerEventContext.TextHit` / `TextHit` |
+| 最も近いpointer viewport | `PointerEventContext::viewport` / `PointerViewport` | `PointerEventContext.Viewport` / `PointerViewport` |
+| Edge scroll導出 | `PointerEventContext::edge_scroll` | `PointerEventContext.EdgeScroll` |
+| Event-local scroll request | `EventResult::scroll_to` | `EventResult.ScrollTo` |
 | Global ignore action | `EventAction::Ignore` | `IgnoreAction[M]()` |
 | Global exit action | `EventAction::Exit` | `ExitAction[M]()` |
 | Effectなし | `Effect::none()` | `NoneEffect[M]()` |

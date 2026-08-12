@@ -350,6 +350,46 @@ language-native string owned by the application. The portable limit keeps this
 transient work bounded. Ordinary Confirm processing is below one microsecond in
 both implementations on the reference machine, before terminal I/O
 
+## Pointer text-hit purpose
+
+This benchmark isolates one warmed geometry-aware pointer Move routed to a
+captured Paragraph over a 100,000-byte, no-wrap ASCII document. The pointer is
+at the final document Cell, so the measured path includes target-to-root
+routing, Node-local geometry, Paragraph layout-cache lookup, UTF-8 hit lookup,
+and handler dispatch. Application update, view reconstruction, rendering,
+terminal I/O, and viewport callbacks are intentionally excluded
+
+Paragraph units, layout entries, and Runtime route capacity are populated
+before measurement. Text hit uses precomputed logical Cell positions and a
+binary search within the resolved visual line. On the 64-bit reference builds,
+the common per-grapheme record remains bounded to 32 bytes. Pointer use lazily
+adds one four-byte logical Cell position per grapheme and shares document bases
+per styled span. Independent regression tests guard the common record size and
+run 1,000 warmed dispatches under allocation tracking
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui --bench pointer_selection
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkPointerTextHit100K$' -benchmem -benchtime=1s -count=3 .
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the reference environment above
+
+| Implementation | Document bytes | Median time per Move | Allocations per Move | Allocated bytes per Move |
+| --- | ---: | ---: | ---: | ---: |
+| Rust | 100,000 | 214 ns | 0 | 0 |
+| Go | 100,000 | 210 ns | 0 | 0 |
+
+These numbers characterize warmed pointer routing and text hit lookup, not the
+cost of rebuilding styled selection spans after a controlled-state Message.
+The zero-allocation result prevents document length from adding transient
+memory pressure during a drag
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and
@@ -381,6 +421,13 @@ ordered visible or secret input modes. Unix backend tests cover bounded line
 draining, cancellation while waiting without input, complete terminal-state
 restoration after Secret success, and restoration during stack unwinding. Go
 also injects a restoration failure and verifies that it is returned
+
+SelectableText pointer fixtures share left press, Shift extension, capture
+across controlled view rebuilds, release, disabled and non-left pass-through,
+word wrapping, CRLF and empty lines, alignment, wide and combining graphemes,
+CJK width, clipped drag, and vertical and horizontal edge scrolling. The long
+Paragraph allocation tests verify that a warmed 100,000-byte hit lookup and
+event route allocate no transient memory in either implementation
 
 The text implementations retain their materialized APIs while exposing
 streaming grapheme and wrapped-line APIs for allocation-sensitive paths. Shared

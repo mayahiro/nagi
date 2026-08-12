@@ -86,11 +86,11 @@ Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、
 
 Stateful、focusable、event受信Nodeにはapplication定義の安定した`NodeId`が必要です。IDはview再構築後も維持し、collection内の位置だけから導出してはいけません。Duplicate IDはruntime errorです
 
-Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
+Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、1個のviewport offset、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
 
 Rustの`Node::cursor_anchor`とGoの`CursorAnchor`はhorizontal layout幅を消費せず、stable ownerがfocusを持つ間だけtyped Surface cursorを設定します。Caret文字を描かないため後続textを移動せず、terminal IME位置は描画cursorへ追従します
 
-Rustの`Node::block_unhandled_events`とGoの`Node.BlockUnhandledEvents`はidentified Nodeへopt-inのhard boundaryを追加します。そのNodeのlocal action、Core handling、raw handlerがEventをconsumeしなかった場合、ancestor raw handlerまたはterminal fallback mappingへ届く前にboundaryがconsumeします。Defaultはsoft boundaryのままです
+Rustの`Node::block_unhandled_events`とGoの`Node.BlockUnhandledEvents`はidentified Nodeへopt-inのhard boundaryを追加します。そのNodeのlocal action、Core handling、pointer handler、raw handlerがEventをconsumeしなかった場合、ancestor raw handlerまたはterminal fallback mappingへ届く前にboundaryがconsumeします。Defaultはsoft boundaryのままです
 
 Rustの`Node::modal_with_focus`とGoの`ModalWithFocus`はdeclarativeなModal entryとreturn policyを追加します。Entryは最初のfocusable descendant、stable target、focusなしから選び、closeは以前のfocus、stable target、focusなしから選びます。既存Modal constructorのdefaultはFirstとPreviousです。Application stateによる消滅、nested Modal、重ねたsibling Modalも同じLIFO lifecycleを使用します。Rustの`Node::focus_fallback`とGoの`Node.FocusFallback`はfocused subtreeが消える場合に通常のdeterministic reconciliationより先にavailableなstable targetを選べます
 
@@ -112,7 +112,7 @@ Rustの`ActionId`とGoの`ActionID`はterminal keyと独立して操作を識別
 
 Rustの`Node::on_actions`とGoの`Node.OnActions`は順序付きowner groupをattachし、Rustの`Node::with_key_scope`とGoの`Node.WithKeyScope`はoverrideとpropagation scopeをattachします
 
-Runtimeはactiveなtarget-to-root routeをNodeDeclared action、CoreSemantic action、non-key Core handling、raw handler、ancestorの順で評価します
+Runtimeはactiveなtarget-to-root routeをNodeDeclared action、CoreSemantic action、non-key Core handling、geometry-aware pointer handler、raw handler、ancestorの順で評価します
 
 同じownerの等しいbindingではNodeDeclaredを別precedenceのCoreSemanticより先に評価します
 
@@ -179,6 +179,14 @@ TextとPasteはlocal action解決後のraw editing inputとして残り、Paste�
 SelectableTextはgrapheme、word、logical line、documentの移動、対応するselection extension、select all、copy selection、copy documentからなる19 operationのdocument subsetを宣言します
 
 Contentとselection stateはcontrolledかつgrapheme境界へ揃えられます。Copy actionはsource ID、semantic text、kind、元document上のUTF-8 byte rangeを持つownedなApplication Messageを発行します。ApplicationはそのMessageを`Effect::set_clipboard`または`SetClipboardEffect`へ変換できます。Runtime driverはcoalesceされた最新`ClipboardRequest`を参照またはtakeできます。標準terminal runnerはdefaultでrequestを破棄し、`TerminalClipboard::Osc52`または`TerminalClipboardOSC52`を明示した場合だけtypedなwrite-only OSC 52を出力します。Hidden spanがある場合は両copy actionを無効にします
+
+`Node::on_pointer_event`とGoの`Node.OnPointerEvent`はraw `on_event`または`OnEvent`を置換せずmouse専用handlerを追加します
+
+`PointerEventContext`はsignedなNode-local geometry、clip、Runtime width profile、capture所有状態、最も近いancestor viewport、Paragraphの`TextHit` UTF-8境界を渡します
+
+`edge_scroll`と`EdgeScroll`は受信したMove Eventごとに最大1 Cellの移動を導出し、handlerは`EventResult::scroll_to`または`EventResult.ScrollTo`で適用します
+
+明示Messageは変更されたviewportのcallback Messageより先にqueueされます
 
 ComposerはTextAreaへcontrolled history recall、submit validity、1行から6行までの自動高さ、任意のvalidation content、UTF-8 byte数またはgrapheme数による挿入制限を加え、messageの意味や永続化は所有しません
 
@@ -270,7 +278,7 @@ Active Streamは長期稼働を前提とし、generationがactiveな間の正常
 - Treeはroot所有のactivation、vertical selection、collapse、expand actionを持つ1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
 - TextAreaはselection、no-wrapまたはopt-in soft-wrap visual line、preferred-column navigation、任意のcaret追従viewport、application所有のundoとredo history、binding list全体をrebindできるroot所有semantic action setを使い、extended grapheme境界でmultiline textを編集する
 - Composerはmessageの意味や永続化を所有せず、TextAreaへcontrolled submit、history recall、挿入制限、自動row境界、application提供のvalidation contentを加える
-- SelectableTextはimmutableなstyled contentとApplication所有のgrapheme境界に揃えたkeyboard selectionを表示し、clipboard I/Oを行わずsemanticなselectionまたはdocument copy requestを発行する
+- SelectableTextはimmutableなstyled contentとApplication所有のgrapheme境界に揃えたkeyboardおよび左drag selectionを表示し、controlled view再構築をまたぐcaptureと最寄りviewport端のscroll requestを行い、clipboard I/Oを行わずsemanticなselectionまたはdocument copy requestを発行する
 - VirtualFeedはdefaultで末尾追従するflexibleなVirtualFlowへ、Application制御のcentered empty、pinned loading-beforeとloading-after、bottom-end unread-indicator slotを構成する
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
 - ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する

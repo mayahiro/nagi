@@ -26,8 +26,10 @@ The harnesses provide equivalent observable behavior for
 - Composer submission, line-break rebinding, controlled history recall, length
   limits, automatic height, validation placement, and viewport following
 - SelectableText grapheme, word, logical-line, and document movement,
-  controlled selection, copy-request availability and payloads, rebinding,
-  repeat policy, and style overlays
+  controlled keyboard and pointer selection, capture across controlled view
+  rebuilds, width-aware paragraph hit testing, viewport edge auto-scroll,
+  copy-request availability and payloads, rebinding, repeat policy, and style
+  overlays
 - Modal first, target, none, nested, replacement, and return-focus lifecycle
   across application-driven view changes
 - Disclosure state-dependent actions, rebinding, pointer toggling, collapsed

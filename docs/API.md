@@ -137,9 +137,9 @@ stable `NodeId`. IDs must survive rebuilding and must not be derived only from a
 collection position. Duplicate IDs are runtime errors
 
 Event handlers return composable results that may emit messages, consume the
-event, change focus, capture or release the pointer, and request redraw. The
-public focus-style modifier can overlay a style while any identified Node owns
-focus without changing its layout or routing
+event, change focus, capture or release the pointer, request one viewport
+offset, and request redraw. The public focus-style modifier can overlay a style
+while any identified Node owns focus without changing its layout or routing
 
 `Node::cursor_anchor` in Rust and `CursorAnchor` in Go occupy no horizontal
 layout width and set the typed Surface cursor while their stable owner has
@@ -148,8 +148,9 @@ terminal IME placement follows the rendered cursor
 
 `Node::block_unhandled_events` in Rust and `Node.BlockUnhandledEvents` in Go
 add an opt-in hard boundary to an identified Node. If its local action, Core,
-and raw handling all leave an Event unconsumed, the boundary consumes it before
-ancestor raw handlers or terminal fallback mapping. The default remains soft
+pointer, and raw handling all leave an Event unconsumed, the boundary consumes
+it before ancestor raw handlers or terminal fallback mapping. The default
+remains soft
 
 `Node::modal_with_focus` in Rust and `ModalWithFocus` in Go add declarative
 modal entry and return policies. Entry selects the first focusable descendant,
@@ -206,13 +207,23 @@ strings, and reports structured duplicate or ambiguous binding conflicts
 `Node::on_actions` and Go `Node.OnActions` attach an ordered owner group;
 `Node::with_key_scope` and Go `Node.WithKeyScope` attach an override and
 propagation scope. Runtime evaluates the active target-to-root route in
-Node-declared action, Core semantic action, non-key Core handling, raw handler,
-then ancestor order. An equal Node-declared binding is evaluated before the
-separate Core semantic group at the same owner. Ignored action results and
-disabled-pass-through bindings continue routing, while disabled-consume
-bindings consume without calling a handler. A disabled-consume binding also
-blocks an explicit repeat of an initial-only stroke; enabled and
-disabled-pass-through matching still enforce the binding repeat policy
+Node-declared action, Core semantic action, non-key Core handling,
+geometry-aware pointer handler, raw handler, then ancestor order. An equal
+Node-declared binding is evaluated before the separate Core semantic group at
+the same owner. Ignored action results and disabled-pass-through bindings
+continue routing, while disabled-consume bindings consume without calling a
+handler. A disabled-consume binding also blocks an explicit repeat of an
+initial-only stroke; enabled and disabled-pass-through matching still enforce
+the binding repeat policy
+
+`Node::on_pointer_event` and Go `Node.OnPointerEvent` add a mouse-only handler
+without replacing raw `on_event` or `OnEvent`. `PointerEventContext` supplies
+signed Node-local geometry, clipping, the Runtime width profile, capture
+ownership, the nearest ancestor viewport, and `TextHit` UTF-8 boundaries for a
+Paragraph. `edge_scroll` and `EdgeScroll` derive at most one Cell of movement
+per received Move Event. Handlers apply it with `EventResult::scroll_to` or
+`EventResult.ScrollTo`; explicit Messages are queued before a changed
+viewport's callback Message
 
 `stop-at-scope` omits outer ancestor Node-declared and Core semantic action
 groups without stopping raw event routing, wheel scrolling, or root-to-target
@@ -421,8 +432,10 @@ Standard widgets use public Core composition and the public Unicode text API
   row bounds, and application-provided validation content over TextArea without
   owning message meaning or persistence
 - SelectableText displays immutable styled content with application-owned,
-  grapheme-aligned keyboard selection and emits semantic selection or document
-  copy requests without performing clipboard I/O
+  grapheme-aligned keyboard and left-drag selection, captures a drag across
+  controlled view rebuilds, requests nearest-viewport edge scrolling, and
+  emits semantic selection or document copy requests without performing
+  clipboard I/O
 - VirtualFeed composes a flexible VirtualFlow that follows the end by default,
   with application-controlled centered empty, pinned loading-before and
   loading-after, and bottom-end unread-indicator slots

@@ -342,6 +342,7 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Selectable text content | `SelectableTextContent::plain` / `styled` | `widget.NewPlainSelectableTextContent` / `NewSelectableTextContent` |
 | Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
 | Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |
+| Pointer selection | Built into enabled `SelectableText` | Built into enabled `widget.SelectableText` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |
@@ -374,6 +375,12 @@ contract; Rust uses unsigned indices
 | Ignore event | `EventResult::ignored()` | `IgnoreResult[M]()` |
 | Consume event | `EventResult::consumed()` | `ConsumeResult[M]()` |
 | Emit one Message | `EventResult::message(value)` | `MessageResult(value)` |
+| Geometry-aware pointer handler | `Node::on_pointer_event` | `Node.OnPointerEvent` |
+| Pointer event geometry | `PointerEventContext` | `PointerEventContext` |
+| Paragraph UTF-8 hit | `PointerEventContext::text_hit` / `TextHit` | `PointerEventContext.TextHit` / `TextHit` |
+| Nearest pointer viewport | `PointerEventContext::viewport` / `PointerViewport` | `PointerEventContext.Viewport` / `PointerViewport` |
+| Derive edge scroll | `PointerEventContext::edge_scroll` | `PointerEventContext.EdgeScroll` |
+| Event-local scroll request | `EventResult::scroll_to` | `EventResult.ScrollTo` |
 | Global ignore action | `EventAction::Ignore` | `IgnoreAction[M]()` |
 | Global exit action | `EventAction::Exit` | `ExitAction[M]()` |
 | No Effect | `Effect::none()` | `NoneEffect[M]()` |
