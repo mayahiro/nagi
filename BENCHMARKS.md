@@ -437,6 +437,64 @@ performs one O(1) indexed selection lookup. The component is not a
 variable-height candidate virtualizer, and it still builds the configured
 visible row count on each controlled view
 
+## JSONInspector purpose
+
+These benchmarks separate immutable JSON document preparation from bounded
+JSONInspector view construction
+
+- The document path validates and indexes one Array containing 99,999 Number
+  values, then produces its deterministic compact serialization. The typed
+  source value is built before measurement, and no JSON parser is involved
+- The inspector path selects the midpoint of a root Array, keeps the root
+  expanded, and constructs eight visible rows. It compares documents containing
+  9 and 100,000 total values
+- Inspector documents, selection state, and path indexes are prepared before
+  measurement. The measured path clones shared immutable storage, resolves the
+  visible range, and builds the controlled semantic Node
+- Both paths exclude Runtime preparation, rendering, terminal I/O, clipboard
+  effects, and application update
+
+Rust reports the median of 12 document constructions and the median of 12
+samples containing 10,000 inspector constructions each. Go reports the median
+of three `testing` runs, with five document constructions or 10,000 inspector
+constructions per run, and includes standard allocation metrics. The Rust
+widget crate forbids unsafe code, so these benchmarks do not replace its global
+allocator
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui-widgets --bench json_inspector
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkJSONDocument100K$' -benchmem -benchtime=5x -count=3 ./widget
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkJSONInspectorViewport$' -benchmem -benchtime=10000x -count=3 ./widget
+```
+
+The root `make bench` command includes both paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the reference environment above
+
+| Implementation | Path | Total values | Visible rows | Median time | Allocations | Allocated bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | document preparation | 100,000 | not applicable | 14.324 ms | not measured | not measured |
+| Go | document preparation | 100,000 | not applicable | 7.361 ms | 100,260 | 16,886,233 |
+| Rust | inspector construction | 9 | 8 | 4,747 ns | not measured | not measured |
+| Rust | inspector construction | 100,000 | 8 | 6,250 ns | not measured | not measured |
+| Go | inspector construction | 9 | 8 | 6,390 ns | 57 | 13,720 |
+| Go | inspector construction | 100,000 | 8 | 7,950 ns | 65 | 13,762 |
+
+The inspector constructs only the resolved visible rows rather than scanning or
+projecting the complete expanded document. Moving from 9 to 100,000 values adds
+no proportional view-construction time or Go allocation. The small fixed
+difference includes formatting the longer selected Array index
+
+Document preparation is intentionally linear in source size and owns a compact
+serialization, a preorder record per value, and a path index for O(1) lookup.
+Number tokens and Boolean spellings are read from the owned serialization rather
+than duplicated in every index record. Configurable node, depth, decoded-string,
+and serialized-byte limits bound accepted resource use before indexing
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and
@@ -459,6 +517,16 @@ shared storage after copy, O(1) indexed selection, exact visible-row builder
 bounds, and zero candidate-row builds for loading and empty notices. The Go
 placement regression additionally verifies zero allocations for 1,000 warmed
 AnchoredOverlay geometry resolutions
+
+JSONInspector tests share typed-document and controlled-interaction fixtures
+across Rust and Go. They cover all JSON scalar kinds, escaped paths, deterministic
+compact serialization, duplicate-key rejection, resource limits, selection
+normalization, collapse and expansion, hidden descendants, repeat handling,
+pointer activation, syntax styles, truncated previews, and complete copy
+payloads. Runtime tests verify action routing, controlled state messages,
+repeat consumption, pointer activation, and copy callback behavior.
+Bounded-view tests verify that inspector row construction depends on the
+configured viewport rather than the complete expanded document
 
 Content projection shares 15 rendering and failure fixtures across Rust and
 Go. They cover inline style inheritance, Paragraph wrapping and alignment,

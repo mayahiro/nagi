@@ -15,7 +15,7 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 | Unicode graphemeと端末幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input／output、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry、Cell、Surface、composition、snapshot | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| 27個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| 29個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual timeと決定的application操作 | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindingはprivateな実装詳細として維持します
@@ -200,6 +200,8 @@ SuggestionPopupはapplication supplied contentをgeneric AnchoredOverlayで包�
 
 対応する[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/suggestion_popup/README.md)と[Go example](../nagitui-go/examples/suggestion-popup/README.md)はcancellableなlatest-result searchをApplicationへ維持します
 
+JsonInspectorはtextをparseしたり第三者JSON valueへ依存したりせず、typed immutable JSONを受け取ります。`JsonDocument`は上限付きsource resourceを一度検証し、object順序とnumber表記を保持してstableなJSON Pointer pathをindex化します。Controlled WidgetはselectionとexpansionをApplicationへ維持し、指定時はselection追従のbounded windowだけを構築し、表示上のStringとNumber previewだけを省略します。Copy callbackはselected compact value全体を保持します。詳細は[JSON inspector仕様](../spec/json-inspector.md)、[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/json_inspector/README.md)、[Go example](../nagitui-go/examples/json-inspector/README.md)を参照してください
+
 Command Paletteはrootでactivationとvertical selection、表示中の各command rowでactivationを宣言します
 
 queryのTextInput editingはancestor root actionより先にText、Home、Endをlocalでconsumeし、Enter、Up、Downはroot defaultへ届きます
@@ -236,7 +238,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SuggestionPopup、SelectableText、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -286,6 +288,7 @@ Active Streamは長期稼働を前提とし、generationがactiveな間の正常
 - Composerはmessageの意味や永続化を所有せず、TextAreaへcontrolled submit、history recall、挿入制限、自動row境界、application提供のvalidation contentを加える
 - SuggestionPopupはapplication所有candidateとasync stateへgeneric anchored placement、bounded row構築、controlled selection、keyboard action、focusを維持するpointer activationを組み合わせる
 - SelectableTextはimmutableなstyled contentとApplication所有のgrapheme境界に揃えたkeyboardおよび左drag selectionを表示し、controlled view再構築をまたぐcaptureと最寄りviewport端のscroll requestを行い、clipboard I/Oを行わずsemanticなselectionまたはdocument copy requestを発行する
+- JsonInspectorはApplication所有のselectionとexpansion、上限付きvisible row構築、grapheme境界を保つscalar preview、完全なselected valueのcopy requestを使ってimmutableなtyped JSONを表示し、parser、schema validation、redaction、clipboard policy、domain上の意味をcomponent外に維持する
 - VirtualFeedはdefaultで末尾追従するflexibleなVirtualFlowへ、Application制御のcentered empty、pinned loading-beforeとloading-after、bottom-end unread-indicator slotを構成する
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
 - ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する
@@ -315,6 +318,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
+| JSON inspector | `cargo run -p nagi-tui-widgets --example json_inspector` | `go run ./examples/json-inspector` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |

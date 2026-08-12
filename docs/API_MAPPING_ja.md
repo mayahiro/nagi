@@ -211,6 +211,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Composer submit Action ID | `COMPOSER_SUBMIT_ACTION_ID` | `widget.ComposerSubmitActionID` |
 | History recall Action ID | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
 | Suggestion Action ID | `SUGGESTION_ACCEPT_ACTION_ID` / `SUGGESTION_DISMISS_ACTION_ID` | `widget.SuggestionAcceptActionID` / `widget.SuggestionDismissActionID` |
+| Inspector copy Action ID | `INSPECTOR_COPY_ACTION_ID` | `widget.InspectorCopyActionID` |
 | Text cursor Action ID | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection extension Action ID | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -242,6 +243,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Suggestion visible window | `SuggestionPopup::visible_rows` | `SuggestionPopup.VisibleRows` |
 | Suggestion配置 | `SuggestionPopup::placement` | `SuggestionPopup.Placement` |
 | SelectableText action descriptor | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
+| JsonInspector action descriptor | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -285,6 +287,8 @@ Composerは同じrootで継承したtext actionより先にsubmitと2個のhisto
 
 SelectableTextは1個のfocusable rootで19個のCore text selectionとcopy operationを宣言します
 
+JsonInspectorは1個のfocusable rootでactivation、4個のvertical selection operation、collapse、expand、complete-value copyを宣言します
+
 Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
 
 Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします。Dialogは`nagi.confirm`の後に`nagi.dismiss`を宣言し、両roleを明示的なaction IDへmapして各actionで既存Button activationを使用します
@@ -314,6 +318,7 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | Composer | `Composer::new` | `widget.NewComposer` |
 | SuggestionPopup | `SuggestionPopup::new` | `widget.NewSuggestionPopup` |
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
+| JsonInspector | `JsonInspector::new` | `widget.NewJSONInspector` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -349,6 +354,14 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
 | Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |
 | Pointer selection | enabledな`SelectableText`へ組み込み | enabledな`widget.SelectableText`へ組み込み |
+| Typed JSON value | `JsonValue` constructor | `widget.NewJSON*` constructor |
+| 検証済みJSON number | `JsonNumber::new` | `widget.NewJSONNumber` |
+| 順序付きobject member | `JsonMember::new` | `widget.NewJSONMember` |
+| Immutable JSON document | `JsonDocument::new` / `with_limits` | `widget.NewJSONDocument` / `NewJSONDocumentWithLimits` |
+| JSON document limit | `JsonDocumentLimits` | `widget.JSONDocumentLimits` |
+| JSON Pointer | `JsonPointer::new` | `widget.NewJSONPointer` |
+| JSON inspector state | `JsonInspectorState::new` | `widget.NewJSONInspectorState` |
+| JSON copy request | `JsonInspectorCopyRequest` | `widget.JSONInspectorCopyRequest` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

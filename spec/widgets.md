@@ -530,6 +530,22 @@ lifetime
   variable-height large-scale virtualization should use a specialized
   application view rather than this bounded row window
 
+## JsonInspector
+
+- JsonInspector is an optional source adapter and controlled standard widget,
+  not a Core Node or source-neutral Content kind
+- Typed immutable JSON values preserve object order and number spelling, reject
+  duplicate object keys, and build one resource-bounded preorder document index
+- Selection and branch expansion stay in the application. The widget constructs
+  either all visible rows or one bounded selection-following window
+- String and Number previews truncate only at extended grapheme boundaries.
+  Copy requests always contain the complete compact selected value and perform
+  no clipboard I/O
+- Parser choice, schema validation, sensitive-value redaction, clipboard policy,
+  and domain meaning stay outside the component
+- The complete source, resource, interaction, styling, and copy contract is in
+  [JSON inspector](json-inspector.md)
+
 ## SelectableText
 
 - SelectableText is a controlled keyboard-and-pointer selection view over one

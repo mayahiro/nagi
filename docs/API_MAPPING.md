@@ -216,6 +216,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Composer submit Action ID | `COMPOSER_SUBMIT_ACTION_ID` | `widget.ComposerSubmitActionID` |
 | History recall Action IDs | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
 | Suggestion Action IDs | `SUGGESTION_ACCEPT_ACTION_ID` / `SUGGESTION_DISMISS_ACTION_ID` | `widget.SuggestionAcceptActionID` / `widget.SuggestionDismissActionID` |
+| Inspector copy Action ID | `INSPECTOR_COPY_ACTION_ID` | `widget.InspectorCopyActionID` |
 | Text cursor Action IDs | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection-extension Action IDs | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -247,6 +248,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Suggestion visible window | `SuggestionPopup::visible_rows` | `SuggestionPopup.VisibleRows` |
 | Suggestion placement | `SuggestionPopup::placement` | `SuggestionPopup.Placement` |
 | SelectableText action descriptors | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
+| JsonInspector action descriptors | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -285,7 +287,9 @@ expand Action IDs. TextArea declares the 18 Core `nagi.text.*` operations under
 its root while retaining Text and Paste as raw editing input. Composer declares
 submit and both history operations before those inherited text actions under
 the same root. SelectableText declares its 19 Core text selection and copy
-operations at one focusable root. Command Palette retains query TextInput handling before its
+operations at one focusable root. JsonInspector declares activation, four
+vertical selection operations, collapse, expand, and complete-value copy at one
+focusable root. Command Palette retains query TextInput handling before its
 ancestor root actions. Modal declares the shared `nagi.dismiss` action at its
 root and leaves an outer-action propagation boundary opt-in. Dialog declares
 `nagi.confirm` followed by `nagi.dismiss`, maps both roles to explicit action
@@ -315,6 +319,7 @@ structured conflict directly
 | Composer | `Composer::new` | `widget.NewComposer` |
 | SuggestionPopup | `SuggestionPopup::new` | `widget.NewSuggestionPopup` |
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
+| JsonInspector | `JsonInspector::new` | `widget.NewJSONInspector` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -355,6 +360,14 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
 | Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |
 | Pointer selection | Built into enabled `SelectableText` | Built into enabled `widget.SelectableText` |
+| Typed JSON value | `JsonValue` constructors | `widget.NewJSON*` constructors |
+| Validated JSON number | `JsonNumber::new` | `widget.NewJSONNumber` |
+| Ordered object member | `JsonMember::new` | `widget.NewJSONMember` |
+| Immutable JSON document | `JsonDocument::new` / `with_limits` | `widget.NewJSONDocument` / `NewJSONDocumentWithLimits` |
+| JSON document limits | `JsonDocumentLimits` | `widget.JSONDocumentLimits` |
+| JSON Pointer | `JsonPointer::new` | `widget.NewJSONPointer` |
+| JSON inspector state | `JsonInspectorState::new` | `widget.NewJSONInspectorState` |
+| JSON copy request | `JsonInspectorCopyRequest` | `widget.JSONInspectorCopyRequest` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

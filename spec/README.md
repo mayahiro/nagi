@@ -19,6 +19,7 @@ strength
 - [Source-neutral content](content.md)
 - [Terminal presentation rules](presentation.md)
 - [Content to TUI Node projection](content-node-projection.md)
+- [JSON inspector](json-inspector.md)
 - [Unicode and terminal text](text.md)
 - [Cell surfaces](surface.md)
 - [VT input](vt-input.md)

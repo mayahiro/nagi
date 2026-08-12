@@ -17,7 +17,7 @@ nodes from `view`, and receive messages sequentially through `update`
 | Unicode graphemes and terminal width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input/output, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry, Cells, surfaces, composition, snapshots | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| Twenty-seven standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| Twenty-nine standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual time and deterministic application driving | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindings remain private implementation details
@@ -333,6 +333,17 @@ The matching [Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/suggesti
 and [Go example](../nagitui-go/examples/suggestion-popup/README.md) keep
 cancellable latest-result search in the application
 
+JsonInspector receives typed immutable JSON rather than parsing text or
+depending on a third-party JSON value. `JsonDocument` validates bounded source
+resources once, preserves object order and number spelling, and indexes stable
+JSON Pointer paths. The controlled widget keeps selection and expansion in the
+application, constructs a bounded selection-following window when requested,
+and truncates only displayed String and Number previews. Copy callbacks retain
+the complete selected compact value. See the
+[JSON inspector specification](../spec/json-inspector.md) and matching
+[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/json_inspector/README.md)
+and [Go example](../nagitui-go/examples/json-inspector/README.md)
+
 Command Palette declares activation plus vertical selection at its root and
 activation on each visible command row. Query TextInput editing consumes Text,
 Home, and End locally before the ancestor root actions; Enter, Up, and Down
@@ -382,7 +393,7 @@ Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
 List, Table, Tree, Disclosure, TextArea, Composer, SuggestionPopup, SelectableText,
-Command Palette, Modal,
+JsonInspector, Command Palette, Modal,
 Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
 migrated. See the
 [scoped key-map specification](../spec/keymap.md) for the complete dispatch,
@@ -465,6 +476,11 @@ Standard widgets use public Core composition and the public Unicode text API
   controlled view rebuilds, requests nearest-viewport edge scrolling, and
   emits semantic selection or document copy requests without performing
   clipboard I/O
+- JsonInspector displays immutable typed JSON with application-owned selection
+  and expansion, bounded visible-row construction, grapheme-safe scalar
+  previews, and complete selected-value copy requests. Parsing, schema
+  validation, redaction, clipboard policy, and domain meaning stay outside the
+  component
 - VirtualFeed composes a flexible VirtualFlow that follows the end by default,
   with application-controlled centered empty, pinned loading-before and
   loading-after, and bottom-end unread-indicator slots
@@ -520,6 +536,7 @@ terminal
 | Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
+| JSON inspector | `cargo run -p nagi-tui-widgets --example json_inspector` | `go run ./examples/json-inspector` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |
