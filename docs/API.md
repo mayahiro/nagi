@@ -71,7 +71,8 @@ concurrently, but their results enter the bounded runtime queue before another
 update runs. When one terminal read decodes multiple Events, Nagi completes
 routing, fallback mapping, input-derived updates, and semantic-tree refresh for
 each Event before routing the next one. Surface rendering alone is coalesced
-across the input batch
+across the input batch. A terminal-suspending Effect discards later Events from
+that decoded batch before the runner gives the ordinary terminal to the task
 
 `RuntimeConfig` and `TerminalOptions` select one Nagi Text `WidthProfile` for
 the Runtime lifetime. Core measurement, wrapping, drawing, hit geometry, and
@@ -101,6 +102,14 @@ that path returns `ctx.Err()` after restoring the terminal. The caller context
 is also the parent of Effect and Stream contexts, preserving its values,
 deadline, cancellation, and cancellation cause. Manually driven Go runtimes can
 use `NewRuntimeContext` or `NewRuntimeWithClockContext` for the same behavior
+
+An application can return `Effect::suspend_terminal` or
+`SuspendTerminalEffect` for one blocking, application-owned operation that
+needs the ordinary terminal, such as an editor or interactive shell. The
+standard runner restores the original terminal and leaves the alternate screen
+before running the task on its driver thread. It then resumes configured modes,
+re-reads size, discards incomplete pre-suspension input, and forces a full
+redraw. Nagi does not select or interpret the external operation
 
 When an update handles a Message without changing anything read by `view`, it
 can return `Effect::none().without_redraw()` in Rust or
@@ -440,6 +449,8 @@ Effects represent one-shot work
   commands and do not start worker threads or goroutines
 - `SetClipboard` retains at most the latest pending semantic UTF-8 text,
   independently of view dirtiness
+- `SuspendTerminal` runs one application-owned blocking task on the terminal
+  driver thread between full-screen suspend and resume boundaries
 - `Run` starts anonymous work
 - `Latest` replaces keyed work and suppresses stale results
 - `Cancel` and scoped cancellation request cooperative termination
@@ -448,8 +459,9 @@ Effects represent one-shot work
 - `without_redraw` and `WithoutRedraw` suppress only the frame that an
   otherwise-clean runtime would request for the current update
 
-Go context-aware Runtime and terminal entry points derive Effect contexts from
-the caller context. Runtime close still requests cooperative child cancellation
+Go context-aware Runtime and terminal entry points derive worker, terminal-task,
+and Stream contexts from the caller context. Runtime close still requests
+cooperative child cancellation
 
 Subscriptions represent long-lived stable-key sources
 
@@ -599,6 +611,7 @@ terminal
 | Code view | `cargo run -p nagi-tui-widgets --example code_view` | `go run ./examples/code-view` |
 | Diff view | `cargo run -p nagi-tui-widgets --example diff_view` | `go run ./examples/diff-view` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
+| Terminal suspend and resume | `cargo run -p nagi-tui --example terminal_suspend` | `go run ./examples/terminal-suspend` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
@@ -614,5 +627,6 @@ limitations
 
 Terminal restoration is best effort on normal return, error, and panic paths.
 Application-driven exit renders the final dirty view before restoration.
-Process abort, nested sessions, suspend and resume, and `/dev/tty` acquisition
-are not supported
+Application-requested temporary terminal suspension is supported. Process
+abort, nested sessions, job-control suspension of the Nagi process, and
+`/dev/tty` acquisition are not supported

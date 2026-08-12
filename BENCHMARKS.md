@@ -684,6 +684,53 @@ virtual construction. StatusBar construction is linear in configured slot
 count. ToastRegion retains and scans configured records linearly but invokes at
 most the visible-limit body builders
 
+## Terminal task round-trip purpose
+
+This benchmark measures one warmed application-requested terminal task from
+the initial Message through Effect scheduling, synchronous execution on the
+Runtime driver, result delivery, and the final application update. The task
+returns immediately and the application declares no Subscriptions
+
+The measured path excludes terminal mode changes, VT lifecycle writes,
+terminal-size queries, input decoding, rendering, external-process execution,
+and user interaction. Those costs depend on the terminal, operating system,
+and application-selected operation. The benchmark therefore isolates Nagi's
+framework CPU and transient-memory cost rather than the duration of a real
+suspended terminal session
+
+Rust reports the median of 12 samples containing 10,000 round trips each and
+tracks allocation count, allocated bytes, peak additional live bytes, and
+retained bytes. Go reports the median of three one-second `testing` runs with
+standard allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui --bench terminal_task
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkTerminalTaskRoundTrip$' -benchmem -benchtime=1s -count=3 .
+```
+
+The root `make bench` command includes both paths
+
+### Reference results
+
+Results recorded on 2026-08-13 in the reference environment above
+
+| Implementation | Median time per round trip | Allocations | Allocated bytes | Peak additional live bytes | Retained bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | 385 ns | 1 | 24 | 24 | 0 |
+| Go | 359.6 ns | 4 | 200 | not measured | not measured |
+
+The Rust allocation owns the cooperative cancellation state for the pending
+task. The Go path derives a cancellable `context.Context` from the Runtime's
+parent context and accounts for its cancellation state. Empty Subscription
+polls and ready-Message transfer do not allocate intermediate maximum-capacity
+buffers. Both implementations keep task queues and Runtime message storage
+warmed across calls
+
+These values are directional framework baselines, not estimates of editor,
+shell, browser, authentication, or other application-selected work
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and
@@ -749,6 +796,13 @@ available if a later build fails
 Runtime tests also cover reusable terminal frame storage, empty output for an
 unchanged frame, allocation-preserving append encoding, explicit no-redraw
 Effects, and Batch wake-up coalescing until its delivery boundary
+
+Terminal task regression tests cover Sequence and Batch ordering, panic
+recovery, scoped cancellation, repeated cancellation without stale queue
+growth, parent-context inheritance, decoder reset, full redraw invalidation,
+and Unix suspend/resume failure recovery. Allocation checks keep the warmed
+Rust round trip at one cancellation-state allocation and the Go path at no more
+than four allocations
 
 These checks cover CPU and memory structure for the virtualized path and the
 state transitions around terminal I/O and event-loop wake-ups. They do not

@@ -452,13 +452,21 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | Clipboard Effect | `Effect::set_clipboard(text)` | `SetClipboardEffect[M](text)` |
+| Terminal suspend Effect | `Effect::suspend_terminal(task)` | `SuspendTerminalEffect[M](task)` |
 | Clipboard request | `ClipboardRequest` | `ClipboardRequest` |
 | Pending clipboard request | `Runtime::pending_clipboard_request` | `Runtime.PendingClipboardRequest` |
 | Clipboard requestのtake | `Runtime::take_clipboard_request` | `Runtime.TakeClipboardRequest` |
 | Test harnessのclipboard request | `Harness::pending_clipboard_request` / `take_clipboard_request` | `Harness.PendingClipboardRequest` / `TakeClipboardRequest` |
+| Pending terminal task | `Runtime::pending_terminal_tasks` | `Runtime.PendingTerminalTasks` |
+| Terminal taskを1個実行 | `Runtime::run_terminal_task` | `Runtime.RunTerminalTask` |
+| Terminal diff baselineをinvalidate | `Runtime::invalidate_terminal_surface` | `Runtime.InvalidateTerminalSurface` |
+| Test harnessのterminal task | `Harness::pending_terminal_tasks` / `run_terminal_task` | `Harness.PendingTerminalTasks` / `RunTerminalTask` |
+| 未完terminal inputを破棄 | `TimedInputDecoder::reset` | `TimedInputDecoder.Reset` |
 | Subscriptionなし | `Subscription::none()` | `NoneSubscription[M]()` |
 
-両terminal runnerは1個のinput chunkからdecodeした各Eventをrouteしてupdateへ適用してから次のEventを処理し、renderだけをcoalesceします。幅計算を行うWidgetは`ViewContext`からRuntime profileを明示的に受け取り、Core Nodeは同じprofileを自動的に使用します
+両terminal runnerは1個のinput chunkからdecodeした各Eventをrouteしてupdateへ適用してから次のEventを処理し、renderだけをcoalesceします。Terminal suspend Effectが生じた場合は通常terminalをtaskへ渡す前に同じchunkの後続decode済みEventを破棄します。幅計算を行うWidgetは`ViewContext`からRuntime profileを明示的に受け取り、Core Nodeは同じprofileを自動的に使用します
+
+標準terminal runnerはoriginal terminalを復元してalternate screenを離れてからterminal taskを1個ずつ実行します。Resumeでは設定済みmodeへ戻り、sizeを読み、未完inputをresetし、diff baselineをinvalidateして再描画します。Manual Runtime driverは同等の境界を所有します
 
 Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendEncoded`です。Caller所有bufferへ`encode`と`Encode`が生成するbyteと同一の内容を追記します
 

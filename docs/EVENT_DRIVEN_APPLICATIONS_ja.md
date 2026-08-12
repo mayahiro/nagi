@@ -14,6 +14,7 @@ Runtimeを独自のpolling loopやrender loopで囲みません
 | --- | --- |
 | Terminal input、resize、wait、wake-up、render timing | Nagi terminal runner |
 | One-shot asynchronous work | Effect |
+| 通常terminalを必要とする1個のblocking operation | SuspendTerminal Effectとterminal runner |
 | Process outputなどの長期external input | Stream Subscription |
 | Uptimeなどのclock-driven state | Every Subscription |
 | Model変更 | Applicationの逐次update |
@@ -32,9 +33,12 @@ terminal input --------------------/                         |
 
 1回のterminal readから複数のUnicodeまたはkey Eventがdecodeされる場合があります。Nagiは1個のEventから生じるroutingと全updateを完了してから次のEventをrouteするため、controlled Widgetは常に最新stateから再構築されます。Input batch全体でcoalesceするのは結果のrenderだけです
 
+1個のEventがterminal suspendを要求した場合、同じreadからdecode済みの後続Eventは破棄します。Runnerは通常terminalを復元し、Application所有taskをdriver threadで実行し、full-screen sessionを再開し、未完inputをresetしてfull redrawを強制します
+
 ## Lifetimeに応じたsource選択
 
 - Initまたはupdateから開始する有限workにはEffectを使う
+- Interactive editor、shell、認証UIなど通常terminalを必要とする有限blocking workだけにSuspendTerminal Effectを使う
 - 新しいrequestが古いworkを不要にする場合はkey付きLatest Effectを使う
 - 長時間blockまたはcallbackを待つsourceにはStream Subscriptionを使う
 - Clockによって実際に変化するstateだけにEvery Subscriptionを使う
@@ -58,7 +62,7 @@ Uptimeは最新値だけが必要なためLatest配送に適しています
 Subscriptions宣言からsourceを削除すると、Nagiはそのgenerationをcancelし、block中のsendをwakeし、updateへ入っていない値を破棄します
 Producerはcancellationまたはclosed sinkを検出したらreturnし、detached threadやgoroutineを残しません
 
-Goのterminalとcontext-aware Runtime entry pointはcaller contextからEffectとStream contextをderiveします。Process adapterとtrace codeはvalue、deadline、cancellation、cancel causeをそのまま利用でき、Runtime closeでも各active childへcancellationを要求します
+Goのterminalとcontext-aware Runtime entry pointはcaller contextからworker、terminal task、Stream contextをderiveします。Process adapterとtrace codeはvalue、deadline、cancellation、cancel causeをそのまま利用でき、Runtime closeでも各active childへcancellationを要求します
 
 ## Lifecycle notice
 
@@ -87,6 +91,8 @@ Runtimeはpending requestを最新1件だけ保持するため、custom driver�
 標準terminal runnerはdirectかつwrite-onlyのOSC 52を明示的に有効化しない限りrequestを破棄します
 Copy Messageが表示中のapplication stateを変更しない場合はClipboard Effectへ`without_redraw`または`WithoutRedraw`を組み合わせます
 
+`SuspendTerminal`もworkerを起動しません。Terminal driverがraw modeとalternate screenを安全に離れられるまでpendingのまま保持します。既存workerとStreamはdriver taskがblockしている間も上限付きdelivery contractを維持しますが、Application updateとrenderはtask return後に再開します。Task自身がprocess statusまたはdomain errorをMessageへ変換します
+
 ## 第2のUI loopを避ける
 
 標準的なfull-screen terminal applicationでは次のpatternを避けます
@@ -99,7 +105,7 @@ Copy Messageが表示中のapplication stateを変更しない場合はClipboard
 - 欠落できないrecordにLatest配送を使う
 
 Terminal以外のhostへNagiを組み込む場合はRuntimeの手動driveが必要になることがあります
-その場合はhost loopがterminal runnerと同じ責務を所有し、固定周期pollingではなく実際のreadinessまたはdeadlineを待ちます
+その場合はhost loopがterminal runnerと同じ責務を所有し、固定周期pollingではなく実際のreadinessまたはdeadlineを待ちます。Pending terminal taskを実行するmanual driverは独自の安全なsuspend／resume境界を用意し、復帰後にRuntime terminal surfaceをinvalidateする必要があります
 
 ## 実行可能なreference
 
@@ -111,10 +117,17 @@ Terminal以外のhostへNagiを組み込む場合はRuntimeの手動driveが必�
 - [Go source](../nagitui-go/examples/log-viewer/main.go):
   `go run ./examples/log-viewer`
 
+対応するterminal suspend exampleはApplicationが選択したinteractive shellを実行し、shell終了後に再開します
+
+- [Rust source](../nagi-rs/crates/nagi-tui/examples/terminal_suspend/main.rs):
+  `cargo run -p nagi-tui --example terminal_suspend`
+- [Go source](../nagitui-go/examples/terminal-suspend/main.go):
+  `go run ./examples/terminal-suspend`
+
 Exampleを自己完結させるためsimulated producerはtimerを使います
 Productではproducer本体だけをblocking process-output readerへ置き換え、application lifecycleとrenderの所有関係は維持します
 
 ## Test
 
 `nagi-tui-test`またはGoの`tuitest`をvirtual timeとcontrolled Effect／Subscription sourceと組み合わせます
-Application testでsleepせず、Messageとdeadlineを明示的にdriveします。Controlled editorでは複数scalar inputを1個のchunkとして渡し、Event単位updateとrender coalescingを同時に確認します
+Application testでsleepせず、Messageとdeadlineを明示的にdriveします。Controlled editorでは複数scalar inputを1個のchunkとして渡し、Event単位updateとrender coalescingを同時に確認します。Harnessのterminal task methodを使うと、real terminalを変更せずresume、pending input破棄、result delivery、full redrawを再現できます

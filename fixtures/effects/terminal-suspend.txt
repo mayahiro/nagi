@@ -1,0 +1,5 @@
+nagi-fixture-v1	effect-terminal-suspend
+sequence	mode=sequence	pending=1,1,0	expected=first,second	panics=0	cancellations=0
+batch	mode=batch	pending=2,1,0	expected=first,second	panics=0	cancellations=0
+panic-sequence	mode=panic-sequence	pending=1,0	expected=recovered	panics=1	cancellations=0
+scoped-cancel	mode=scoped-cancel	pending=0	expected=-	panics=0	cancellations=1

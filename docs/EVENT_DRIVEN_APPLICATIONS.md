@@ -17,6 +17,7 @@ owner
 | --- | --- |
 | Terminal input, resize, waiting, wake-up, and render timing | Nagi terminal runner |
 | One-shot asynchronous work | Effect |
+| One blocking operation requiring the ordinary terminal | SuspendTerminal Effect and terminal runner |
 | Long-lived external input such as process output | Stream subscription |
 | Clock-driven state such as uptime | Every subscription |
 | Model mutation | Sequential application update |
@@ -40,9 +41,16 @@ routing and every input-derived update for one Event before routing the next,
 so controlled widgets always rebuild from the latest state. Only the resulting
 render is coalesced across that input batch
 
+If one Event requests terminal suspension, later Events already decoded from
+the same read are discarded. The runner restores the ordinary terminal, runs
+the application-owned task on its driver thread, resumes the full-screen
+session, resets incomplete input, and forces a full redraw
+
 ## Choose the source by lifetime
 
 - Use an Effect for finite work started by init or update
+- Use a SuspendTerminal Effect only for finite blocking work that requires the
+  ordinary terminal, such as an interactive editor, shell, or authentication UI
 - Use a keyed Latest Effect when a newer request makes older work stale
 - Use a Stream subscription for a long-lived blocking or callback source
 - Use an Every subscription only for state that actually changes on a clock
@@ -69,10 +77,11 @@ wake blocked sends, and discard values that have not entered update. A producer
 must return after cancellation or a closed sink. Do not leave detached worker
 threads or goroutines behind
 
-Go terminal and context-aware Runtime entry points derive Effect and Stream
-contexts from the caller context. Values, deadlines, cancellation, and
-cancellation causes therefore remain available to process adapters and tracing
-code. Runtime close still requests cancellation for each active child
+Go terminal and context-aware Runtime entry points derive worker,
+terminal-task, and Stream contexts from the caller context. Values, deadlines,
+cancellation, and cancellation causes therefore remain available to process
+adapters and tracing code. Runtime close still requests cancellation for each
+active child
 
 ## Lifecycle notices
 
@@ -113,6 +122,12 @@ write-only OSC 52 is explicitly enabled. When a copy Message changes no visible
 application state, combine the Clipboard Effect with `without_redraw` or
 `WithoutRedraw`
 
+`SuspendTerminal` does not start a worker either. It remains pending until the
+terminal driver can safely leave raw mode and the alternate screen. Existing
+workers and Streams continue using their bounded delivery contracts while the
+driver task blocks, but application update and rendering resume only after that
+task returns. The task maps its own process status or domain error to a Message
+
 ## Avoid a second UI loop
 
 Avoid these patterns in a standard full-screen terminal application
@@ -126,7 +141,10 @@ Avoid these patterns in a standard full-screen terminal application
 
 Embedding Nagi in a non-terminal host can require manual Runtime driving. In
 that case the host loop owns the same responsibilities as the terminal runner
-and should wait on real readiness or deadlines rather than poll at a fixed rate
+and should wait on real readiness or deadlines rather than poll at a fixed
+rate. A manual driver that executes a pending terminal task must establish its
+own safe suspend/resume boundary and invalidate the Runtime terminal surface
+afterwards
 
 ## Runnable reference
 
@@ -139,6 +157,14 @@ repository root
 - [Go source](../nagitui-go/examples/log-viewer/main.go):
   `go run ./examples/log-viewer`
 
+The matching terminal-suspension examples run an application-selected
+interactive shell and resume after it exits
+
+- [Rust source](../nagi-rs/crates/nagi-tui/examples/terminal_suspend/main.rs):
+  `cargo run -p nagi-tui --example terminal_suspend`
+- [Go source](../nagitui-go/examples/terminal-suspend/main.go):
+  `go run ./examples/terminal-suspend`
+
 The simulated producer uses a timer so the example needs no external process.
 A product adapter should replace only that producer body with its blocking
 process-output reader; the application lifecycle and render ownership stay the
@@ -149,4 +175,6 @@ same
 Use `nagi-tui-test` or Go `tuitest` with virtual time and controlled Effect or
 Subscription sources. Drive Messages and deadlines explicitly instead of
 sleeping in application tests. Feed multi-scalar input as one chunk when testing
-controlled editors so per-Event updates and render coalescing are both covered
+controlled editors so per-Event updates and render coalescing are both covered.
+Use the harness terminal-task method to simulate resume, pending-input discard,
+result delivery, and full redraw without changing a real terminal

@@ -59,7 +59,7 @@ Applicationは4個のoperationを実装します
 3. `subscriptions`は現在の安定key付き長期sourceを宣言する
 4. `view`はapplication stateと現在のterminal `Size`および`WidthProfile`を持つ`ViewContext`からsemantic Node treeを再構築する
 
-`update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります。1回のterminal readから複数Eventがdecodeされた場合も、各Eventのrouting、fallback mapping、入力由来update、semantic tree更新を完了してから次のEventを処理し、Surface描画だけをbatch全体でcoalesceします
+`update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります。1回のterminal readから複数Eventがdecodeされた場合も、各Eventのrouting、fallback mapping、入力由来update、semantic tree更新を完了してから次のEventを処理し、Surface描画だけをbatch全体でcoalesceします。Terminal suspend Effectが生じた場合は通常terminalをtaskへ渡す前に同じdecode batchの後続Eventを破棄します
 
 `RuntimeConfig`と`TerminalOptions`はRuntime lifetime全体で使用するNagi Textの`WidthProfile`を1個選択します。Coreのmeasure、wrap、draw、hit geometry、cursor配置は自動的に同じprofileを使います。幅計算を行うWidgetはRustの`width_profile`とGoの`WidthProfile`を提供するため、RuntimeがModern以外を使う場合は`ViewContext`の値を渡します。Custom overrideは同じgraphemeに対してRuntime lifetime中に安定した幅を返す必要があります
 
@@ -71,6 +71,8 @@ Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgeneric�
 Production terminal applicationにおけるprocess output、timer、wake-up、renderの所有関係は[event-driven application architecture](EVENT_DRIVEN_APPLICATIONS_ja.md)を参照してください
 
 Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します。Caller contextはEffectとStream contextの親にもなり、value、deadline、cancellation、cancel causeを維持します。手動driveするGo Runtimeでは`NewRuntimeContext`または`NewRuntimeWithClockContext`を使用できます
+
+Applicationは通常terminalを必要とするeditorやinteractive shellなどのblocking operationに`Effect::suspend_terminal`または`SuspendTerminalEffect`を返せます。標準runnerはdriver threadでtaskを実行する前にoriginal terminalを復元してalternate screenを離れ、終了後に設定済みmodeを再開し、sizeを再取得し、suspend前の未完inputを破棄してfull redrawを強制します。Nagiは外部operationの選択や意味付けを行いません
 
 Messageを処理しても`view`が参照する内容が変わらない場合、Rustでは`Effect::none().without_redraw()`、Goでは`tui.NoneEffect[Message]().WithoutRedraw()`を返せます。後続Effectの処理とSubscriptionの再調整は継続します。Modifierは`update`が返す最外側のEffectへ適用し、既存のdirty stateと同期UI commandは必要なframeを生成します
 
@@ -254,6 +256,7 @@ Effectはone-shot workを表します
 
 - `Exit`、`Focus`、`ScrollTo`、`SetClipboard`はRuntimeが同期適用するUI commandで、worker threadやgoroutineを起動しない
 - `SetClipboard`はviewのdirty状態と独立して、pendingなsemantic UTF-8 textを最新1件だけ保持する
+- `SuspendTerminal`はfull-screen suspendとresumeの間にApplication所有のblocking taskをterminal driver threadで1個実行する
 - `Run`は匿名workを開始する
 - `Latest`はkey付きworkを置換してstale resultを抑止する
 - `Cancel`とscope cancelは協調的な終了を要求する
@@ -261,7 +264,7 @@ Effectはone-shot workを表します
 - `Batch`はchildを並行実行し、`Sequence`は順番に実行する
 - `without_redraw`と`WithoutRedraw`は、現在のupdateだけでotherwise-cleanなruntimeへ要求されるframeを抑止する
 
-Goのcontext-aware Runtimeとterminal entry pointはcaller contextからEffect contextをderiveし、Runtime closeでも各childへ協調的cancellationを要求します
+Goのcontext-aware Runtimeとterminal entry pointはcaller contextからworker、terminal task、Stream contextをderiveし、Runtime closeでも各childへ協調的cancellationを要求します
 
 Subscriptionは安定key付きの長期sourceを表します
 
@@ -318,7 +321,7 @@ Widget galleryでは標準library全体を一覧できます。Variable-height f
 
 ## Testing
 
-Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisorとRuntime notice diagnostic、解決済みScrollStateとVirtualFlowState、activeなresolved action group、application終了要求の検査を提供します。Input helperは1個のbyte chunkから複数Eventをdecodeする場合もEvent単位のcontrolled state更新を維持し、結果のrenderだけをcoalesceします
+Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、pending terminal taskの実行、supervisorとRuntime notice diagnostic、解決済みScrollStateとVirtualFlowState、activeなresolved action group、application終了要求の検査を提供します。Terminal task helperは未完inputを破棄してfull redrawを生成します。Input helperは1個のbyte chunkから複数Eventをdecodeする場合もEvent単位のcontrolled state更新を維持し、結果のrenderだけをcoalesceします
 
 Application testではreal sleepやterminal timingへ依存しないようにvirtual timeとcontrolled async sourceを使用してください
 
@@ -335,6 +338,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Code view | `cargo run -p nagi-tui-widgets --example code_view` | `go run ./examples/code-view` |
 | Diff view | `cargo run -p nagi-tui-widgets --example diff_view` | `go run ./examples/diff-view` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
+| Terminal suspendとresume | `cargo run -p nagi-tui --example terminal_suspend` | `go run ./examples/terminal-suspend` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |
 | Widget gallery | `cargo run -p nagi-tui-widgets --example widget_gallery` | `go run ./examples/widget-gallery` |
@@ -347,4 +351,4 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 
 各example directoryには用途、操作方法、制約を説明するREADMEがあります
 
-Terminal restoreは正常return、error、panic経路でbest effortとして行います。Applicationからの終了では、復元前に最後のdirty viewを描画します。Process abort、nested session、suspendとresume、`/dev/tty`取得には対応していません
+Terminal restoreは正常return、error、panic経路でbest effortとして行います。Applicationが要求する一時的なterminal suspendには対応します。Applicationからの終了では、復元前に最後のdirty viewを描画します。Process abort、nested session、Nagi processのjob-control suspend、`/dev/tty`取得には対応していません

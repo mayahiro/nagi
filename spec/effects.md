@@ -3,9 +3,9 @@
 ## Effects
 
 The effect algebra contains `None`, `Exit`, `Focus`, `ScrollTo`,
-`SetClipboard`, `Run`, `Latest`, `Cancel`, `Scoped`, `CancelScope`, `After`,
-`Batch`, and `Sequence`. Debounce is composed from `Latest` and `After` unless
-evidence requires another primitive
+`SetClipboard`, `SuspendTerminal`, `Run`, `Latest`, `Cancel`, `Scoped`,
+`CancelScope`, `After`, `Batch`, and `Sequence`. Debounce is composed from
+`Latest` and `After` unless evidence requires another primitive
 
 `Exit`, `Focus`, `ScrollTo`, and `SetClipboard` are synchronous UI commands
 applied by the Runtime. They MUST NOT start a worker thread or goroutine.
@@ -23,11 +23,28 @@ is disabled and encodes it as typed OSC 52 output only when explicitly enabled.
 Clipboard reads, raw terminal sequences, redaction policy, and OS-specific
 clipboard commands are not part of this Effect
 
-Rust tasks use standard threads and cooperative cancellation. Go tasks use
-goroutines and `context.Context`. A Go context-aware Runtime derives Effect and
-Stream contexts from its caller so values, deadlines, cancellation, and
-cancellation causes are retained. Closing the Runtime still cancels each active
-child. Neither implementation embeds a general network or async runtime
+`SuspendTerminal` retains one blocking task for execution by a Runtime driver.
+The standard full-screen terminal runner restores the original terminal mode
+and leaves its alternate screen before running the task on the driver thread,
+then resumes the full-screen session after it returns. The task selects no
+editor, shell, browser, process, or domain error policy in Nagi; it only receives
+the same cooperative cancellation value as a normal task and returns one
+application Message. A custom Runtime driver MUST provide an equivalent safe
+boundary before calling the public terminal-task execution method
+
+Terminal tasks run one at a time and do not occupy asynchronous worker slots.
+They remain pending until a driver executes them. `Scoped` cancellation can
+remove a terminal task that has not started. A terminal task completes its
+enclosing `Batch` or `Sequence` only after it returns or its panic is recovered,
+so a later Sequence child never starts early
+
+Rust `Run` tasks use standard threads and cooperative cancellation. Go `Run`
+tasks use goroutines and `context.Context`. Terminal tasks instead execute on
+the Runtime driver's current thread or goroutine. A Go context-aware Runtime
+derives worker, terminal-task, and Stream contexts from its caller so values,
+deadlines, cancellation, and cancellation causes are retained. Closing the
+Runtime still cancels each active child. Neither implementation embeds a
+general network or async runtime
 
 `Run` starts an anonymous one-shot task. `Latest` starts a keyed task. `Cancel`
 targets the current Latest generation for its key. `Scoped` associates all
@@ -47,10 +64,10 @@ for that update. An already-dirty runtime stays dirty. Synchronous `Exit`,
 `SetClipboard` does not independently dirty the view, but is flushed at the
 next terminal scheduling boundary even when no frame is produced
 
-Concurrent task execution is bounded by runtime configuration. Cancellation
-does not free a worker slot until a running task returns. Task panics are caught
-at the task boundary, suppress their result, and advance enclosing Batch or
-Sequence completion
+Concurrent worker-task execution is bounded by runtime configuration.
+Cancellation does not free a worker slot until a running task returns. Worker
+and terminal task panics are caught at their execution boundary, suppress their
+result, and advance enclosing Batch or Sequence completion
 
 ## Latest-result guarantee
 
@@ -115,9 +132,9 @@ Notice kinds are Effect panic, Effect worker spawn failure, active Stream
 return, Stream panic, and Stream worker spawn failure. Go worker primitives do
 not currently report spawn failure, but the kind remains shared across the
 public model. A Latest Effect notice contains its Task key and generation; an
-anonymous Run notice has no task identity. Every Stream notice contains its
-Subscription key and generation. Panic payloads and stack traces are not
-retained
+anonymous Run or SuspendTerminal notice has no task identity. Every Stream
+notice contains its Subscription key and generation. Panic payloads and stack
+traces are not retained
 
 A Stream that returns while its generation remains active emits the active
 Stream return notice because Stream is a long-lived source. Returning after the

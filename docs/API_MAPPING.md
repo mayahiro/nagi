@@ -461,16 +461,28 @@ contract; Rust uses unsigned indices
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | Clipboard Effect | `Effect::set_clipboard(text)` | `SetClipboardEffect[M](text)` |
+| Terminal-suspending Effect | `Effect::suspend_terminal(task)` | `SuspendTerminalEffect[M](task)` |
 | Clipboard request | `ClipboardRequest` | `ClipboardRequest` |
 | Pending clipboard request | `Runtime::pending_clipboard_request` | `Runtime.PendingClipboardRequest` |
 | Take clipboard request | `Runtime::take_clipboard_request` | `Runtime.TakeClipboardRequest` |
 | Test-harness clipboard request | `Harness::pending_clipboard_request` / `take_clipboard_request` | `Harness.PendingClipboardRequest` / `TakeClipboardRequest` |
+| Pending terminal tasks | `Runtime::pending_terminal_tasks` | `Runtime.PendingTerminalTasks` |
+| Run one terminal task | `Runtime::run_terminal_task` | `Runtime.RunTerminalTask` |
+| Invalidate terminal diff baseline | `Runtime::invalidate_terminal_surface` | `Runtime.InvalidateTerminalSurface` |
+| Test-harness terminal task | `Harness::pending_terminal_tasks` / `run_terminal_task` | `Harness.PendingTerminalTasks` / `RunTerminalTask` |
+| Discard incomplete terminal input | `TimedInputDecoder::reset` | `TimedInputDecoder.Reset` |
 | No Subscription | `Subscription::none()` | `NoneSubscription[M]()` |
 
-Both terminal runners route and apply every Event decoded from one input chunk
-before routing the next Event, then coalesce only the render. Width-sensitive
-widgets receive the Runtime profile explicitly from `ViewContext`; Core nodes
-use it automatically
+Both terminal runners route and apply each Event decoded from one input chunk
+before routing the next Event, then coalesce only the render. A terminal-
+suspending Effect discards later decoded Events from that chunk before handing
+the ordinary terminal to the task. Width-sensitive widgets receive the Runtime
+profile explicitly from `ViewContext`; Core nodes use it automatically
+
+The standard terminal runners execute each terminal task only after restoring
+the original terminal and leaving the alternate screen. Resume re-enters the
+configured modes, reads size, resets incomplete input, invalidates the diff
+baseline, and redraws. Manual Runtime drivers own the equivalent boundary
 
 The allocation-sensitive VT append APIs are `nagi_vt::append_encoded` and
 `vt.AppendEncoded`. They append exactly the bytes produced by `encode` and

@@ -32,6 +32,32 @@ and alternate-screen lifecycle
 - Resize signals are coalesced into a Boolean pending state. A newly opened
   session reports one initial resize so layout establishes its starting size
 
+## Temporary suspension
+
+An application can request a temporary full-screen suspension through the
+generic terminal-suspending Effect. Nagi does not select or launch a particular
+editor, shell, browser, authentication flow, or other child process
+
+- Before the task starts, the terminal runner disables known mouse modes,
+  focus reporting, and bracketed paste, resets style, shows the cursor, leaves
+  the alternate screen, and restores the original terminal attributes
+- Resize signaling and Runtime ownership remain active while suspended.
+  Existing Effect workers, Subscription producers, clocks, bounded queues, and
+  cancellation contexts continue their normal lifecycle, but application
+  updates and rendering wait because the terminal driver thread is occupied
+- After the task returns or its panic is recovered, the runner re-enters raw
+  mode and its configured alternate-screen, cursor, bracketed-paste, focus, and
+  optional mouse modes. It reads the current terminal size, discards incomplete
+  pre-suspension input, invalidates the surface-diff baseline, and performs a
+  full redraw at the next frame boundary
+- If one decoded input chunk requested suspension, remaining decoded Events
+  from that chunk are discarded instead of being routed into the resumed view
+- A suspension failure prevents the task from starting. A resume failure is a
+  terminal-loop error; the task result is not delivered to application update
+  and final restoration remains best effort
+- Suspension and resume operations are idempotent at the session boundary.
+  Process abort and operating-system termination still cannot be recovered
+
 ## Restoration
 
 Normal exit, error exit, and panic unwinding perform best-effort restoration
@@ -45,8 +71,8 @@ API, also restores the session before returning its cancellation result
   original terminal attributes, and releases resize signaling
 - Restoration is idempotent and continues after an individual cleanup failure,
   returning the first error when the language runtime permits it
-- Process abort, `SIGKILL`, power loss, `/dev/tty` acquisition, suspend/resume,
-  and nested sessions are not supported
+- Process abort, `SIGKILL`, power loss, `/dev/tty` acquisition, job-control
+  suspension of the Nagi process, and nested sessions are not supported
 
 ## Supported systems and errors
 

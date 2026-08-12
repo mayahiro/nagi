@@ -11,6 +11,10 @@
   routing, terminal fallback mapping, input-derived Message updates, and
   semantic-tree rebuilding before the next Event is routed. Only Surface
   rendering is coalesced across the decoded batch
+- If an Event requests a terminal-suspending Effect, the runner completes that
+  Event's updates, discards later Events already decoded from the same read,
+  runs the terminal suspension boundary, and resumes with a fresh decoder and
+  full-redraw baseline
 - Polling asynchronous Effect and Subscription sources occurs at the normal
   scheduling boundary rather than between Events from the same decoded input
   batch
