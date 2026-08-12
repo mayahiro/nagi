@@ -19,6 +19,7 @@ preservation
 | --- | --- | --- |
 | Command graph, parser, and runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` package `cli` |
 | Shell completion generation and protocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| Lightweight interactive prompts | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | Process-free application tests | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -168,6 +169,50 @@ policy. Bash uses no-space behavior for every candidate, and Fish uses its
 native default because neither public adapter surface can represent arbitrary
 per-candidate suffix behavior
 
+## Lightweight interactive prompts
+
+Prompt is an optional layer outside CLI Core. Rust crate `nagi-cli-prompt` and
+Go package `prompt` provide line-oriented Confirm, Select, Input, and Secret
+requests without entering a full-screen TUI or owning application policy
+
+`Prompter` executes requests through an injected I/O boundary. Rust uses
+`PromptIo`; Go uses `prompt.IO`. Both boundaries report terminal availability,
+write and flush prompt text, and return a bounded complete line together with
+its visible or secret input mode. This makes transcript, cancellation,
+oversized-input, and Secret-mode tests deterministic without changing a real
+terminal
+
+The process implementations use standard input and standard error by default,
+leaving standard output for command results. Prompt requires terminal input
+and output before writing. An application may explicitly allow non-terminal
+Confirm, Select, and Input requests, but Secret always requires a terminal.
+Rust uses `ProcessIo::default`; Go uses `prompt.NewProcess` or
+`prompt.NewProcessIO`
+
+Every request receives the caller's cancellation source. Pass a CLI handler's
+`Context::cancellation` or `Context.Cancellation` so process SIGINT becomes a
+structured Prompt cancellation. End of input before a response, an ETX-only
+line, and an Escape-only line are also cancellation. The Unix process reader checks
+cancellation while waiting for input without a permanently running task
+
+Confirm accepts ASCII yes/no forms and supports an explicit default. Select
+renders one-based ordered choices and returns a zero-based index. Input and
+Secret preserve surrounding spaces, while Confirm and Select trim ASCII spaces
+and tabs. Invalid UTF-8 response runs become U+FFFD. The default response limit
+is 65,536 bytes and the default Select limit is 1,000 choices; both are
+configurable
+
+Secret clears terminal `ECHO` and `ECHONL` only for the bounded canonical line
+read, then restores the complete saved state on success, failure,
+cancellation, oversized input, and stack unwinding. Returned Secret values are
+ordinary strings and are not memory-zeroized by Prompt. Applications still own
+credential handling, validation, authorization, approval policy, and retries
+beyond the portable input rules
+
+See the [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt/README.md)
+and [Go Prompt example](../nagicli-go/examples/prompt/README.md) for complete
+handler integration
+
 ## Structured Help
 
 `Command::help_document` and `Command.HelpDocument` return a renderer-independent
@@ -299,17 +344,20 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
+[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
 [Go basic example](../nagicli-go/examples/basic/main.go),
 [Go subcommand example](../nagicli-go/examples/subcommands/main.go),
 [Go staged-adoption example](../nagicli-go/examples/staged/main.go), and
-[Go completion example](../nagicli-go/examples/completion/main.go) as complete
+[Go completion example](../nagicli-go/examples/completion/main.go), and
+[Go Prompt example](../nagicli-go/examples/prompt/main.go) as complete
 entry points
 
 ## Limitations
 
 The core does not load configuration files, run interactive prompts, or
 integrate a TUI. Shell-specific generation and protocol I/O remain in the
-optional completion package or crate. Long-running handlers and completion
+optional completion package or crate, and interactive terminal I/O remains in
+the optional Prompt package or crate. Long-running handlers and completion
 providers must poll their injected cancellation source and stop cooperatively
 
 The portable graph does not model arbitrary invocation grammars or

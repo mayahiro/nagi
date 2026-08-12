@@ -230,6 +230,68 @@ removes shell quote delimiters and escapes lexically without evaluating
 expansions. It shell-quotes returned insertion values. The Zsh adapter uses
 `PREFIX` and delegates insertion quoting to compsys.
 
+## Lightweight interactive prompts
+
+Interactive prompts are an optional package or crate layered above CLI Core.
+CLI Core MUST NOT depend on the prompt component. The component is line
+oriented and MUST NOT enter an alternate screen, enable raw input, or own
+application concepts such as tools, providers, credentials, or approval
+policy.
+
+The component provides Confirm, Select, Input, and Secret requests. A process
+backend reads standard input and writes prompts to standard error so standard
+output remains available for command results. An injected I/O interface MUST
+expose terminal detection, complete writes, flush, bounded line reads, visible
+or secret input mode, end of input, cancellation, and input-too-long outcomes.
+Tests and embedded applications MAY implement that interface without accessing
+the process terminal.
+
+By default, a prompt requires both its input and output to be terminals and
+returns Not Terminal before writing when either is not. An application MAY
+explicitly allow non-terminal Confirm, Select, and Input requests. Secret MUST
+always require a terminal because a generic stream cannot guarantee that user
+input is hidden. Terminal detection is an observed backend property and MUST
+NOT be inferred from environment variables.
+
+The Unix process backend targets the same Linux and macOS architectures as CLI
+process integration. Secret input MUST derive terminal attributes with
+`tcgetattr`, clear `ECHO` and `ECHONL`, apply the modified attributes, and
+restore the complete saved attributes after success, end of input,
+cancellation, oversized input, I/O failure, or stack unwinding. The backend
+keeps canonical input and signal processing enabled. It writes one newline
+after each secret read because the terminal does not echo that line ending.
+
+A caller supplies its cancellation source to every request. Cancellation is
+checked before output, around each line read, and while the Unix process
+backend waits for input. The process backend MUST use an input-wait timeout no
+greater than 100 milliseconds and MUST NOT keep a permanently running task.
+End of input before any response byte, an input line containing only ASCII ETX,
+and a line containing only Escape are also Cancellation. Cancellation and other
+failures MUST NOT return a partial value.
+
+Prompt metadata MUST be valid UTF-8 and MUST NOT contain Unicode control
+characters. Messages, rendered Input defaults, and Select choice labels MUST
+be non-empty. Select MUST contain at least one choice, choice order is
+significant, and returned indices are zero-based even though displayed indices
+are one-based. A default Select index MUST name an existing choice. Confirm
+accepts ASCII `y`, `yes`, `n`, and `no` case-insensitively. Confirm and Select
+trim surrounding ASCII spaces and tabs; Input and Secret preserve them.
+
+An empty response selects an explicit default. Without a default, Confirm and
+Select repeat after an invalid response. Required Input without a default and
+required Secret repeat after an empty response. Invalid responses repeat
+without an implicit attempt budget. Each read is limited to 65,536 bytes by
+default, excluding one LF and an immediately preceding CR. A caller MAY lower
+or raise that non-zero limit. The default maximum Select choice count is 1,000
+and MAY also be configured to a non-zero value. An oversized line is drained
+through its line ending and returns Input Too Long rather than retrying.
+
+Input bytes are normalized to valid UTF-8 by replacing each maximal invalid
+byte run with one U+FFFD. The normalized value is returned to the application;
+Prompt never interprets it as a command, path, credential, or policy decision.
+Secret values use ordinary language-native strings and the component does not
+claim memory zeroization after return.
+
 ## Options and values
 
 An option has one of three kinds:
@@ -487,4 +549,5 @@ Nagi CLI APIs.
 
 Rust and Go read the same `nagi-fixture-v1` suites under `fixtures/cli`.
 Fixture values use canonical escapes, and expected raw values use uppercase
-hexadecimal so invalid UTF-8 remains comparable.
+hexadecimal so invalid UTF-8 remains comparable. Prompt fixtures also compare
+the exact transcript and ordered visible or secret read modes.

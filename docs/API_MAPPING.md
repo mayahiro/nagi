@@ -21,6 +21,7 @@ for complete method signatures
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
 | CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| CLI lightweight prompts | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 The Rust `nagi-tui` facade and Go `tui` package re-export the canonical
@@ -442,6 +443,16 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
 | Shell script generation | `nagi_cli_completion::generate` | `completion.Generate` |
 | Reserved protocol handling | `nagi_cli_completion::handle` | `completion.Handle` |
+| Prompt executor | `Prompter` | `prompt.Prompter` |
+| Confirm request | `Confirm` / `Prompter::confirm` | `prompt.Confirm` / `Prompter.Confirm` |
+| Select request | `Select` / `Prompter::select` | `prompt.Select` / `Prompter.Select` |
+| Visible input request | `Input` / `Prompter::input` | `prompt.Input` / `Prompter.Input` |
+| Secret input request | `Secret` / `Prompter::secret` | `prompt.Secret` / `Prompter.Secret` |
+| Injected prompt I/O | `PromptIo` | `prompt.IO` |
+| Unix process prompt I/O | `ProcessIo::default` | `prompt.NewProcessIO` / `prompt.NewProcess` |
+| Prompt terminal policy | `TerminalPolicy` | `prompt.TerminalPolicy` |
+| Prompt resource limits | `Limits` | `prompt.Limits` |
+| Prompt failure | `PromptError` / `PromptErrorKind` | `prompt.Error` / `prompt.ErrorKind` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rust stores raw platform values as `OsString` and typed parser results behind
@@ -455,6 +466,14 @@ path, and call only the provider attached to the active value target. Rust
 completion candidates contain valid UTF-8 by construction; Go validates UTF-8
 before returning a result. The shell layers remain separate from the command
 runtime and intercept their reserved protocol before normal dispatch
+
+Both Prompt implementations keep terminal I/O outside CLI Core and accept the
+caller's cancellation source per request. Rust uses a closed `ReadResult` enum;
+Go uses `ReadResult` plus `ReadResultKind` so an injected implementation can
+return the same Line, End Of File, Input Too Long, or Canceled outcome. Rust
+`Limits::default` and Go's zero `prompt.Limits` select the portable limits.
+Secret values are ordinary `String` or `string` values in both implementations
+and are not memory-zeroized by Prompt
 
 These representation differences do not change parsing, structured Help, or
 Diagnostic semantics. Each implementation applies the same default Runtime

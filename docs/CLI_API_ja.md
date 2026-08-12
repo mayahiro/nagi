@@ -16,6 +16,7 @@ Nagi CLIは外部から観測できるcommand semanticsを揃えたnative Rust A
 | --- | --- | --- |
 | Command Graph、parser、runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go`の`cli` package |
 | Shell completion生成とprotocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| 軽量interactive prompt | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | Processなしのapplication test | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -182,6 +183,52 @@ Bashは全candidateをno-spaceとして扱い、Fishはnative defaultを使用�
 
 どちらもpublic adapter surfaceで任意のcandidate単位suffixを表現できません
 
+## 軽量interactive prompt
+
+PromptはCLI Core外の任意layerです
+
+Rustの`nagi-cli-prompt` crateとGoの`prompt` packageは全画面TUIへ入らず、application policyを所有しない行指向のConfirm、Select、Input、Secretを提供します
+
+`Prompter`は注入可能なI/O境界を通してrequestを実行します
+
+Rustは`PromptIo`、Goは`prompt.IO`を使い、両方ともterminalの有無、prompt textのwriteとflush、visibleまたはsecret modeを指定した上限付きの完全な1行を扱います
+
+この境界により、実terminalを変更せずtranscript、cancellation、長すぎるinput、Secret modeを決定的にtestできます
+
+Process実装はdefaultで標準inputと標準errorを使い、command result向けに標準outputを空けます
+
+Promptは出力前にinputとoutputのterminal接続を要求します
+
+ApplicationはConfirm、Select、Inputに限って非terminalを明示的に許可できますが、Secretは常にterminalを要求します
+
+Rustは`ProcessIo::default`、Goは`prompt.NewProcess`または`prompt.NewProcessIO`を使います
+
+全requestはcallerのcancellation sourceを受け取ります
+
+CLI handlerの`Context::cancellation`または`Context.Cancellation`を渡すと、process SIGINTをstructured Prompt cancellationとして扱えます
+
+Response byteを読む前のEnd of input、ETXだけの行、Escapeだけの行もcancellationです
+
+Unix process readerは常駐taskを作らず、input待機中もcancellationを確認します
+
+ConfirmはASCIIのyes／no表現と明示的defaultを扱います
+
+Selectは1始まりの順序付きchoiceを表示し、0始まりのindexを返します
+
+InputとSecretは前後のspaceを保持し、ConfirmとSelectはASCII spaceとtabをtrimします
+
+不正UTF-8 responseの各runはU+FFFDになります
+
+既定のresponse上限は65,536 byte、Select上限は1,000 choiceで、どちらも設定できます
+
+Secretは上限付きcanonical line readの間だけterminalの`ECHO`と`ECHONL`を解除し、成功、失敗、cancellation、長すぎるinput、stack unwindingの全経路で保存済みstate全体を復元します
+
+返されたSecret valueは通常のstringであり、Promptはmemory zeroizationを保証しません
+
+Credential管理、validation、authorization、approval policy、portable input ruleを超えるretryはApplicationが所有します
+
+完全なhandler統合は[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt/README.md)と[Go Prompt example](../nagicli-go/examples/prompt/README.md)を参照してください
+
 ## Structured Help
 
 `Command::help_document`と`Command.HelpDocument`はrendererに依存しないHelp Documentを返します
@@ -307,11 +354,13 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)を参照してください
 
 ## 制約
 
 Coreは設定file読み込み、interactive prompt、TUI統合を行いません
+
+Interactive terminal I/Oは任意のPrompt packageまたはcrateに留まります
 
 Shell固有の生成とprotocol I/Oは任意のcompletion packageまたはcrateに留まります
 

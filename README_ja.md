@@ -13,7 +13,7 @@ NagiはRustとGoにネイティブ実装を持つ端末application基盤のfamil
 | [`nagi-rs`](nagi-rs/README_ja.md) | RustのContent、Text、VT、Surface、TUI、CLI、Widget、test supportの全crate | 1個のCargo workspaceで協調versioning |
 | [`nagi-go`](nagi-go/README_ja.md) | Goの共有`content`、`text`、`vt` package | `github.com/mayahiro/nagi-go` |
 | [`nagitui-go`](nagitui-go/README_ja.md) | GoのSurface、TUI runtime、Widget、TUI Test | `github.com/mayahiro/nagitui-go` |
-| [`nagicli-go`](nagicli-go/README_ja.md) | GoのCommand Graph、parser、runtime、shell completion、CLI Test | `github.com/mayahiro/nagicli-go` |
+| [`nagicli-go`](nagicli-go/README_ja.md) | GoのCommand Graph、parser、runtime、shell completion、軽量prompt、CLI Test | `github.com/mayahiro/nagicli-go` |
 
 このrepositoryは4個の実装repositoryをsubmoduleとして調整し、言語非依存の仕様とconformance fixtureを所有します
 
@@ -29,7 +29,7 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 
 共有RustとGo基盤はimmutableなsource-neutral Content、Unicode対応Text、typed VT codecを提供します。既存のNagi TUI実装はimmutableなTerminal Presentation Rules、上限付きContentからNodeへのprojection、native runtime、Cell Surface、決定的test harness、27個の標準Widget、大規模content向けvirtual ScrollViewportとstableな可変高VirtualFeedを追加します
 
-Nagi CLIはRustとGoのnative Command Graph、localと継承Option、command-local typed value scope、portable option groupとvalidator、制御可能なHelp-only Usage Variantを持つstructured deterministic Help、target付きsemantic Diagnostic、段階実行runtime policy、協調的SIGINT cancellation、handlerを含まないimmutable completion engine、Bash、Zsh、Fish、PowerShell generator、processなしのtest driver、対応するexampleを提供します
+Nagi CLIはRustとGoのnative Command Graph、localと継承Option、command-local typed value scope、portable option groupとvalidator、制御可能なHelp-only Usage Variantを持つstructured deterministic Help、target付きsemantic Diagnostic、段階実行runtime policy、協調的SIGINT cancellation、handlerを含まないimmutable completion engine、Bash、Zsh、Fish、PowerShell generator、任意の行指向prompt、processなしのtest driver、対応するexampleを提供します
 
 ## 利用例と契約
 

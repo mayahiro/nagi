@@ -248,6 +248,52 @@ implementation. Short-run elapsed values vary, while the stable property is
 that resolution does not scan or allocate for candidates from unrelated
 branches. Rust releases every result with zero retained bytes
 
+## CLI Prompt purpose
+
+This benchmark measures the CPU and transient allocation of one Prompt request
+through deterministic injected I/O. It excludes terminal syscalls, user think
+time, blocking input, and output device latency
+
+Two paths are measured
+
+- Confirm writes `Proceed? [y/n] ` and parses the visible response `yes`
+- Input writes `Value: `, copies and normalizes a valid UTF-8 response at the
+  default 65,536-byte limit, and returns the complete string
+
+Request definitions, cancellation sources, and injected response storage are
+constructed before measurement. Each result is dropped within its measured
+request. Rust reports the median of 12 groups, using 1,000 Confirm requests or
+100 large Input requests per group with a benchmark-only allocation counter.
+Go reports the median of three reports over 100 requests with standard
+`testing` allocation metrics. Neither path creates a task, performs terminal
+I/O, or retains a Prompt session after the request
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli-prompt --bench prompt
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkPrompt(Confirm|Input64KiB)$' -benchmem -benchtime=100x -count=3 ./prompt
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the same reference environment
+
+| Implementation | Request | Median time | Allocations | Allocated bytes |
+| --- | --- | ---: | ---: | ---: |
+| Rust | Confirm | 128 ns | 4 | 30 |
+| Rust | Input at 65,536 bytes | 4,598 ns | 3 | 131,080 |
+| Go | Confirm | 145 ns | 3 | 32 |
+| Go | Input at 65,536 bytes | 50,818 ns | 3 | 131,082 |
+
+The large-input paths allocate approximately twice the configured byte limit:
+the injected boundary owns one byte buffer and UTF-8 normalization returns the
+language-native string owned by the application. The portable limit keeps this
+transient work bounded. Ordinary Confirm processing is below one microsecond in
+both implementations on the reference machine, before terminal I/O
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and
@@ -273,6 +319,12 @@ non-mapping, and all structured resource failures. Go additionally compares
 retained heap after two 512-projection windows with a 1 MiB runtime-noise
 tolerance. The Rust projection benchmark reports zero retained bytes for both
 paths
+
+Prompt tests share exact transcripts, returned values, error categories, and
+ordered visible or secret input modes. Unix backend tests cover bounded line
+draining, cancellation while waiting without input, complete terminal-state
+restoration after Secret success, and restoration during stack unwinding. Go
+also injects a restoration failure and verifies that it is returned
 
 The text implementations retain their materialized APIs while exposing
 streaming grapheme and wrapped-line APIs for allocation-sensitive paths. Shared

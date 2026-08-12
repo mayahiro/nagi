@@ -1,0 +1,22 @@
+nagi-fixture-v1	cli-prompt
+confirm-yes	kind=confirm	terminal=yes	message=Proceed?	default=yes	required=no	choices=	input=y\n	limit=65536	expected=bool:true	output=Proceed? [Y/n] 	modes=visible
+confirm-default-no	kind=confirm	terminal=yes	message=Proceed?	default=no	required=no	choices=	input=\n	limit=65536	expected=bool:false	output=Proceed? [y/N] 	modes=visible
+confirm-repeat	kind=confirm	terminal=yes	message=Proceed?	default=-	required=no	choices=	input=maybe\n NO \n	limit=65536	expected=bool:false	output=Proceed? [y/n] Enter yes or no\nProceed? [y/n] 	modes=visible,visible
+confirm-ascii-only	kind=confirm	terminal=yes	message=Proceed?	default=-	required=no	choices=	input=yeſ\nyes\n	limit=65536	expected=bool:true	output=Proceed? [y/n] Enter yes or no\nProceed? [y/n] 	modes=visible,visible
+select-second	kind=select	terminal=yes	message=Profile	default=-	required=no	choices=Local|Production	input=2\n	limit=65536	expected=index:1	output=Profile\n  1) Local\n  2) Production\nSelect [1-2]: 	modes=visible
+select-default	kind=select	terminal=yes	message=Profile	default=1	required=no	choices=Local|Production	input=\n	limit=65536	expected=index:1	output=Profile\n  1) Local\n  2) Production\nSelect [1-2, default 2]: 	modes=visible
+select-repeat	kind=select	terminal=yes	message=Profile	default=-	required=no	choices=Local|Production	input=0\n3\n1\n	limit=65536	expected=index:0	output=Profile\n  1) Local\n  2) Production\nSelect [1-2]: Enter a number from 1 to 2\nSelect [1-2]: Enter a number from 1 to 2\nSelect [1-2]: 	modes=visible,visible,visible
+select-ascii-digits-only	kind=select	terminal=yes	message=Profile	default=-	required=no	choices=Local|Production	input=+1\n1\n	limit=65536	expected=index:0	output=Profile\n  1) Local\n  2) Production\nSelect [1-2]: Enter a number from 1 to 2\nSelect [1-2]: 	modes=visible,visible
+input-unicode	kind=input	terminal=yes	message=Name	default=-	required=no	choices=	input= 日本 \n	limit=65536	expected=text: 日本 	output=Name: 	modes=visible
+input-default	kind=input	terminal=yes	message=Name	default=guest	required=no	choices=	input=\n	limit=65536	expected=text:guest	output=Name [guest]: 	modes=visible
+input-required	kind=input	terminal=yes	message=Name	default=-	required=yes	choices=	input=\nNagi\n	limit=65536	expected=text:Nagi	output=Name: A value is required\nName: 	modes=visible,visible
+input-crlf	kind=input	terminal=yes	message=Name	default=-	required=no	choices=	input=Nagi\r\n	limit=65536	expected=text:Nagi	output=Name: 	modes=visible
+input-invalid-utf8	kind=input	terminal=yes	message=Name	default=-	required=no	choices=	input=\xFF\xFEA\n	limit=65536	expected=text:�A	output=Name: 	modes=visible
+secret-value	kind=secret	terminal=yes	message=Token	default=-	required=no	choices=	input=s3cr3t\n	limit=65536	expected=text:s3cr3t	output=Token: \n	modes=secret
+secret-required	kind=secret	terminal=yes	message=Token	default=-	required=yes	choices=	input=\nvalue\n	limit=65536	expected=text:value	output=Token: \nA value is required\nToken: \n	modes=secret,secret
+cancel-etx	kind=input	terminal=yes	message=Name	default=-	required=no	choices=	input=\x03\n	limit=65536	expected=error:cancelled	output=Name: 	modes=visible
+cancel-escape	kind=confirm	terminal=yes	message=Proceed?	default=-	required=no	choices=	input=\x1B\n	limit=65536	expected=error:cancelled	output=Proceed? [y/n] 	modes=visible
+cancel-eof	kind=select	terminal=yes	message=Profile	default=-	required=no	choices=Local|Production	input=	limit=65536	expected=error:cancelled	output=Profile\n  1) Local\n  2) Production\nSelect [1-2]: 	modes=visible
+not-terminal	kind=confirm	terminal=no	message=Proceed?	default=yes	required=no	choices=	input=y\n	limit=65536	expected=error:not-terminal	output=	modes=
+input-too-long	kind=input	terminal=yes	message=Name	default=-	required=no	choices=	input=abcd\n	limit=3	expected=error:input-too-long	output=Name: 	modes=visible
+input-at-limit	kind=input	terminal=yes	message=Name	default=-	required=no	choices=	input=abc\n	limit=3	expected=text:abc	output=Name: 	modes=visible

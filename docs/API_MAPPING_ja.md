@@ -18,6 +18,7 @@ Nagiは外部から観測できるContent、TUI、CLIの挙動を揃えながら
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
 | CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| CLI軽量prompt | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonicalなGeometry型とStyle型を再公開します
@@ -425,6 +426,16 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
 | Shell script生成 | `nagi_cli_completion::generate` | `completion.Generate` |
 | 予約protocol処理 | `nagi_cli_completion::handle` | `completion.Handle` |
+| Prompt実行 | `Prompter` | `prompt.Prompter` |
+| Confirm request | `Confirm` / `Prompter::confirm` | `prompt.Confirm` / `Prompter.Confirm` |
+| Select request | `Select` / `Prompter::select` | `prompt.Select` / `Prompter.Select` |
+| Visible input request | `Input` / `Prompter::input` | `prompt.Input` / `Prompter.Input` |
+| Secret input request | `Secret` / `Prompter::secret` | `prompt.Secret` / `Prompter.Secret` |
+| 注入可能なPrompt I/O | `PromptIo` | `prompt.IO` |
+| Unix process Prompt I/O | `ProcessIo::default` | `prompt.NewProcessIO` / `prompt.NewProcess` |
+| Prompt terminal policy | `TerminalPolicy` | `prompt.TerminalPolicy` |
+| Prompt resource上限 | `Limits` | `prompt.Limits` |
+| Prompt failure | `PromptError` / `PromptErrorKind` | `prompt.Error` / `prompt.ErrorKind` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
@@ -440,6 +451,14 @@ Rust cancellationはatomic token、Go cancellationは`context.Context`を使用�
 Rustのcompletion candidateは構造上valid UTF-8であり、Goはresultを返す前にUTF-8を検証します
 
 Shell層はcommand runtimeから分離され、通常dispatchより前に予約protocolを処理します
+
+両Prompt実装はterminal I/OをCLI Core外に保ち、requestごとにcallerのcancellation sourceを受け取ります
+
+Rustはclosedな`ReadResult` enum、Goは`ReadResult`と`ReadResultKind`を使い、注入実装が同じLine、End Of File、Input Too Long、Canceledを返せるようにします
+
+Rustの`Limits::default`とGoのzero `prompt.Limits`はportableな既定上限を選択します
+
+Secret valueは両実装とも通常の`String`または`string`であり、Promptはmemory zeroizationを行いません
 
 これらの表現差はparsing、structured Help、Diagnostic semanticsを変更しません
 
