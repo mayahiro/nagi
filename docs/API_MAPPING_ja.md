@@ -197,8 +197,10 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |
 | Selection first Action ID | `SELECTION_FIRST_ACTION_ID` | `widget.SelectionFirstActionID` |
 | Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
+| Selection extension Action ID | `SELECTION_EXTEND_*_ACTION_ID` | `widget.SelectionExtend*ActionID` |
 | Selection previous page Action ID | `SELECTION_PREVIOUS_PAGE_ACTION_ID` | `widget.SelectionPreviousPageActionID` |
 | Selection next page Action ID | `SELECTION_NEXT_PAGE_ACTION_ID` | `widget.SelectionNextPageActionID` |
+| Horizontal scroll Action ID | `HORIZONTAL_SCROLL_PREVIOUS_ACTION_ID` / `HORIZONTAL_SCROLL_NEXT_ACTION_ID` | `widget.HorizontalScrollPreviousActionID` / `widget.HorizontalScrollNextActionID` |
 | Calendar day Action ID | `SELECTION_PREVIOUS_DAY_ACTION_ID` / `SELECTION_NEXT_DAY_ACTION_ID` | `widget.SelectionPreviousDayActionID` / `widget.SelectionNextDayActionID` |
 | Calendar week Action ID | `SELECTION_PREVIOUS_WEEK_ACTION_ID` / `SELECTION_NEXT_WEEK_ACTION_ID` | `widget.SelectionPreviousWeekActionID` / `widget.SelectionNextWeekActionID` |
 | Calendar month Action ID | `SELECTION_PREVIOUS_MONTH_ACTION_ID` / `SELECTION_NEXT_MONTH_ACTION_ID` | `widget.SelectionPreviousMonthActionID` / `widget.SelectionNextMonthActionID` |
@@ -244,6 +246,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Suggestion配置 | `SuggestionPopup::placement` | `SuggestionPopup.Placement` |
 | SelectableText action descriptor | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | JsonInspector action descriptor | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
+| CodeView action descriptor | `CodeView::action_descriptors` | `CodeView.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -289,6 +292,8 @@ SelectableTextは1個のfocusable rootで19個のCore text selectionとcopy oper
 
 JsonInspectorは1個のfocusable rootでactivation、4個のvertical selection operation、collapse、expand、complete-value copyを宣言します
 
+CodeViewは1個のfocusable rootで4個の行selection operation、4個のselection extension、2個のhorizontal scroll operation、select all、copy selection、copy documentを宣言します
+
 Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
 
 Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします。Dialogは`nagi.confirm`の後に`nagi.dismiss`を宣言し、両roleを明示的なaction IDへmapして各actionで既存Button activationを使用します
@@ -319,6 +324,7 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | SuggestionPopup | `SuggestionPopup::new` | `widget.NewSuggestionPopup` |
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | JsonInspector | `JsonInspector::new` | `widget.NewJSONInspector` |
+| CodeView | `CodeView::new` | `widget.NewCodeView` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -362,6 +368,13 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | JSON Pointer | `JsonPointer::new` | `widget.NewJSONPointer` |
 | JSON inspector state | `JsonInspectorState::new` | `widget.NewJSONInspectorState` |
 | JSON copy request | `JsonInspectorCopyRequest` | `widget.JSONInspectorCopyRequest` |
+| Styled code line | `CodeLine::plain` / `styled` | `widget.NewCodeLine` / `NewStyledCodeLine` |
+| Immutable code document | `CodeDocument::new` / `new_with_limits` | `widget.NewCodeDocument` / `NewCodeDocumentWithLimits` |
+| Code document行byte範囲 | `CodeDocument::byte_range_for_lines` | `CodeDocument.ByteRangeForLines` |
+| Terminal code layout | `CodeLayout::new` / `new_with_limits` | `widget.NewCodeLayout` / `NewCodeLayoutWithLimits` |
+| Code layout memo | `CodeLayoutCache::resolve` | `widget.CodeLayoutCache.Resolve` |
+| Code view state | `CodeViewState::new` / `with_selection` | `widget.NewCodeViewState` / `NewCodeViewStateWithSelection` |
+| Code copy request | `CodeCopyRequest` / `CodeCopyKind` | `widget.CodeCopyRequest` / `CodeCopyKind` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

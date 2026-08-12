@@ -20,6 +20,7 @@ strength
 - [Terminal presentation rules](presentation.md)
 - [Content to TUI Node projection](content-node-projection.md)
 - [JSON inspector](json-inspector.md)
+- [Code view](code-view.md)
 - [Unicode and terminal text](text.md)
 - [Cell surfaces](surface.md)
 - [VT input](vt-input.md)

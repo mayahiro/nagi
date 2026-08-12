@@ -1,0 +1,15 @@
+nagi-fixture-v1	widget-code-view
+normalize-high	cursor=9	anchor=0	offset=99	wrap=false	action=normalize	step=4	expected-cursor=3	expected-anchor=0	expected-offset=4	expected-copy=-	expected-lines=0:4	expected-copy-lines=-	expected-bytes=-
+next	cursor=1	anchor=-	offset=0	wrap=false	action=next	step=4	expected-cursor=2	expected-anchor=-	expected-offset=0	expected-copy=-	expected-lines=2:3	expected-copy-lines=-	expected-bytes=-
+next-boundary	cursor=3	anchor=-	offset=0	wrap=false	action=next	step=4	expected-cursor=3	expected-anchor=-	expected-offset=0	expected-copy=-	expected-lines=3:4	expected-copy-lines=-	expected-bytes=-
+previous-collapses	cursor=2	anchor=0	offset=0	wrap=false	action=previous	step=4	expected-cursor=1	expected-anchor=-	expected-offset=0	expected-copy=-	expected-lines=1:2	expected-copy-lines=-	expected-bytes=-
+extend-next	cursor=1	anchor=-	offset=0	wrap=false	action=extend-next	step=4	expected-cursor=2	expected-anchor=1	expected-offset=0	expected-copy=-	expected-lines=1:3	expected-copy-lines=-	expected-bytes=-
+extend-first	cursor=2	anchor=1	offset=0	wrap=false	action=extend-first	step=4	expected-cursor=0	expected-anchor=1	expected-offset=0	expected-copy=-	expected-lines=0:2	expected-copy-lines=-	expected-bytes=-
+select-all	cursor=1	anchor=-	offset=0	wrap=false	action=select-all	step=4	expected-cursor=3	expected-anchor=0	expected-offset=0	expected-copy=-	expected-lines=0:4	expected-copy-lines=-	expected-bytes=-
+horizontal-next	cursor=0	anchor=-	offset=0	wrap=false	action=horizontal-next	step=3	expected-cursor=0	expected-anchor=-	expected-offset=3	expected-copy=-	expected-lines=0:1	expected-copy-lines=-	expected-bytes=-
+horizontal-clamp	cursor=0	anchor=-	offset=3	wrap=false	action=horizontal-next	step=3	expected-cursor=0	expected-anchor=-	expected-offset=4	expected-copy=-	expected-lines=0:1	expected-copy-lines=-	expected-bytes=-
+horizontal-previous	cursor=0	anchor=-	offset=2	wrap=false	action=horizontal-previous	step=3	expected-cursor=0	expected-anchor=-	expected-offset=0	expected-copy=-	expected-lines=0:1	expected-copy-lines=-	expected-bytes=-
+wrap-clears-offset	cursor=1	anchor=-	offset=3	wrap=true	action=normalize	step=4	expected-cursor=1	expected-anchor=-	expected-offset=0	expected-copy=-	expected-lines=1:2	expected-copy-lines=-	expected-bytes=-
+copy-selection	cursor=1	anchor=0	offset=0	wrap=false	action=copy-selection	step=4	expected-cursor=1	expected-anchor=0	expected-offset=0	expected-copy=a\nabcdefgh	expected-lines=0:2	expected-copy-lines=0:2	expected-bytes=0:10
+copy-last	cursor=3	anchor=-	offset=0	wrap=false	action=copy-selection	step=4	expected-cursor=3	expected-anchor=-	expected-offset=0	expected-copy=last\n	expected-lines=3:4	expected-copy-lines=3:4	expected-bytes=15:20
+copy-document	cursor=2	anchor=-	offset=0	wrap=false	action=copy-document	step=4	expected-cursor=2	expected-anchor=-	expected-offset=0	expected-copy=a\nabcdefgh\n日\nlast\n	expected-lines=2:3	expected-copy-lines=0:4	expected-bytes=0:20

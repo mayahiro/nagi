@@ -495,6 +495,78 @@ Number tokens and Boolean spellings are read from the owned serialization rather
 than duplicated in every index record. Configurable node, depth, decoded-string,
 and serialized-byte limits bound accepted resource use before indexing
 
+## CodeView purpose
+
+These benchmarks separate immutable code-source preparation, terminal-width
+projection, memoized projection lookup, and bounded CodeView construction
+
+- The document path receives 100,000 already validated, one-span ASCII
+  CodeLines and builds complete semantic source text, byte ranges, and the
+  copyability prefix index
+- The layout path projects the resulting document at an 80-cell viewport with
+  line numbers, Modern width, and no wrapping. Source spans are shared by the
+  projected rows because no tab expansion or wrapping changes their text
+- The cache path performs 100,000 warmed lookups of that same immutable
+  document, caller key, options, and resource limits
+- The viewport path constructs eight visible rows around a midpoint selection
+  and compares documents containing 8 and 100,000 logical lines
+- The long-line path constructs one visible row at a 1 MiB horizontal offset
+  into a 1,048,579-byte ASCII line. Sparse cell checkpoints are prepared before
+  measurement
+- All paths exclude Runtime preparation, Surface rendering, terminal I/O,
+  clipboard effects, syntax parsing, file I/O, and application update
+
+Rust reports the median of 12 document or layout builds and the median of 12
+samples containing 100,000 cache lookups or 10,000 view constructions. Go
+reports the median of three `testing` runs, using five source or layout builds
+and 10,000 cache or view calls per run, and includes standard allocation
+metrics. The Rust widget crate forbids unsafe code, so these benchmarks do not
+replace its global allocator
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui-widgets --bench code_view
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkCode(Document|Layout)100K$' -benchmem -benchtime=5x -count=3 ./widget
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkCode(LayoutCache100K|ViewViewport|ViewLongLineOffset)$' -benchmem -benchtime=10000x -count=3 ./widget
+```
+
+The root `make bench` command includes all paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the reference environment above
+
+| Implementation | Path | Source lines | Constructed rows | Median time | Allocations | Allocated bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | document preparation | 100,000 | not applicable | 2.491 ms | not measured | not measured |
+| Go | document preparation | 100,000 | not applicable | 1.928 ms | 5 | 5,914,720 |
+| Rust | terminal layout | 100,000 | 100,000 | 4.049 ms | not measured | not measured |
+| Go | terminal layout | 100,000 | 100,000 | 4.148 ms | 3 | 8,806,496 |
+| Rust | warmed layout cache | 100,000 | 0 | 4 ns | not measured | not measured |
+| Go | warmed layout cache | 100,000 | 0 | 14.06 ns | 0 | 0 |
+| Rust | bounded view | 8 | 8 | 34,266 ns | not measured | not measured |
+| Go | bounded view | 8 | 8 | 37,651 ns | 123 | 10,520 |
+| Rust | bounded view | 100,000 | 8 | 34,563 ns | not measured | not measured |
+| Go | bounded view | 100,000 | 8 | 37,699 ns | 139 | 10,712 |
+| Rust | 1 MiB line at end offset | 1 | 1 | 36,980 ns | not measured | not measured |
+| Go | 1 MiB line at end offset | 1 | 1 | 37,584 ns | 33 | 3,128 |
+
+The controlled view constructs only the selected visible window rather than
+rebuilding every source line. Increasing the document from 8 to 100,000 lines
+does not add proportional view-construction time. The small fixed Go allocation
+difference includes longer line-number and visual-row identifiers around the
+midpoint selection
+
+Layout preparation remains intentionally linear in projected source size and
+retains one visual-row record per no-wrap logical line. The built-in Modern and
+CJK profiles use an exact ASCII width fast path, while Custom profiles still
+invoke the application callback for every complete grapheme. Short no-wrap
+rows share validated source spans, reserve no more than the configured visual
+row limit, and omit checkpoint scans; long rows retain sparse checkpoints so a
+far horizontal offset is not rescanned from byte zero on each immutable view
+rebuild
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and

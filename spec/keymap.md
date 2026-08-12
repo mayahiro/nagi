@@ -243,6 +243,16 @@ It also reserves `nagi.selection.previous`, `nagi.selection.next`,
 widget owns its ordered default bindings according to its orientation and
 existing input contract
 
+`nagi.selection.extend-previous`, `nagi.selection.extend-next`,
+`nagi.selection.extend-first`, and `nagi.selection.extend-last` identify
+selection extension while preserving an application-owned anchor. CodeView
+uses the line-specific English labels `Extend to previous line`, `Extend to
+next line`, `Extend to first line`, and `Extend to last line`
+
+`nagi.scroll.horizontal-previous` and `nagi.scroll.horizontal-next` identify
+movement of a horizontal presentation toward its start or end. CodeView uses
+the English labels `Scroll left` and `Scroll right`
+
 `nagi.selection.previous-page` and `nagi.selection.next-page`, with the English
 labels `Previous page` and `Next page`, identify viewport-scale selection
 movement independently from single-item movement

@@ -17,7 +17,7 @@ nodes from `view`, and receive messages sequentially through `update`
 | Unicode graphemes and terminal width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input/output, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry, Cells, surfaces, composition, snapshots | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| Twenty-nine standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| Thirty standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual time and deterministic application driving | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindings remain private implementation details
@@ -264,6 +264,7 @@ available
 
 The standard widget packages expose constants for `nagi.activate`, four
 single-item and two page-scale `nagi.selection.*` operations,
+four line-selection extension operations, two horizontal-scroll operations,
 `nagi.navigation.back`, `nagi.collapse`, `nagi.expand`, `nagi.confirm`, and
 `nagi.dismiss`. Button, Checkbox, Radio, Select, each Tabs item, List, Table,
 Tree, Disclosure, Dialog action Buttons, and Command Palette declare activation
@@ -344,6 +345,18 @@ the complete selected compact value. See the
 [Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/json_inspector/README.md)
 and [Go example](../nagitui-go/examples/json-inspector/README.md)
 
+CodeView receives immutable application-styled logical lines rather than
+parsing source or depending on a language engine. `CodeDocument` validates
+bounded semantic source once. `CodeLayout` expands tabs and projects one
+terminal WidthProfile, viewport width, line-number policy, and wrap policy;
+`CodeLayoutCache` avoids repeated projection during immutable view rebuilds.
+The controlled view builds only a selection-following visual-row window,
+supports complete-line selection and no-wrap horizontal scrolling, and emits
+owned source copy requests. See the
+[Code view specification](../spec/code-view.md) and matching
+[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/code_view/README.md)
+and [Go example](../nagitui-go/examples/code-view/README.md)
+
 Command Palette declares activation plus vertical selection at its root and
 activation on each visible command row. Query TextInput editing consumes Text,
 Home, and End locally before the ancestor root actions; Enter, Up, and Down
@@ -393,7 +406,7 @@ Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
 List, Table, Tree, Disclosure, TextArea, Composer, SuggestionPopup, SelectableText,
-JsonInspector, Command Palette, Modal,
+JsonInspector, CodeView, Command Palette, Modal,
 Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
 migrated. See the
 [scoped key-map specification](../spec/keymap.md) for the complete dispatch,
@@ -481,6 +494,11 @@ Standard widgets use public Core composition and the public Unicode text API
   previews, and complete selected-value copy requests. Parsing, schema
   validation, redaction, clipboard policy, and domain meaning stay outside the
   component
+- CodeView displays immutable styled logical lines with application-owned line
+  selection, memoized terminal-width projection, bounded visual-row Node
+  construction, no-wrap horizontal scrolling, and complete-line copy requests.
+  Syntax parsing, file I/O, diff meaning, redaction, and clipboard policy stay
+  outside the component
 - VirtualFeed composes a flexible VirtualFlow that follows the end by default,
   with application-controlled centered empty, pinned loading-before and
   loading-after, and bottom-end unread-indicator slots
@@ -537,6 +555,7 @@ terminal
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | JSON inspector | `cargo run -p nagi-tui-widgets --example json_inspector` | `go run ./examples/json-inspector` |
+| Code view | `cargo run -p nagi-tui-widgets --example code_view` | `go run ./examples/code-view` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |

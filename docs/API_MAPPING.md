@@ -202,8 +202,10 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Selection next Action ID | `SELECTION_NEXT_ACTION_ID` | `widget.SelectionNextActionID` |
 | Selection first Action ID | `SELECTION_FIRST_ACTION_ID` | `widget.SelectionFirstActionID` |
 | Selection last Action ID | `SELECTION_LAST_ACTION_ID` | `widget.SelectionLastActionID` |
+| Selection extension Action IDs | `SELECTION_EXTEND_*_ACTION_ID` | `widget.SelectionExtend*ActionID` |
 | Selection previous-page Action ID | `SELECTION_PREVIOUS_PAGE_ACTION_ID` | `widget.SelectionPreviousPageActionID` |
 | Selection next-page Action ID | `SELECTION_NEXT_PAGE_ACTION_ID` | `widget.SelectionNextPageActionID` |
+| Horizontal-scroll Action IDs | `HORIZONTAL_SCROLL_PREVIOUS_ACTION_ID` / `HORIZONTAL_SCROLL_NEXT_ACTION_ID` | `widget.HorizontalScrollPreviousActionID` / `widget.HorizontalScrollNextActionID` |
 | Calendar day Action IDs | `SELECTION_PREVIOUS_DAY_ACTION_ID` / `SELECTION_NEXT_DAY_ACTION_ID` | `widget.SelectionPreviousDayActionID` / `widget.SelectionNextDayActionID` |
 | Calendar week Action IDs | `SELECTION_PREVIOUS_WEEK_ACTION_ID` / `SELECTION_NEXT_WEEK_ACTION_ID` | `widget.SelectionPreviousWeekActionID` / `widget.SelectionNextWeekActionID` |
 | Calendar month Action IDs | `SELECTION_PREVIOUS_MONTH_ACTION_ID` / `SELECTION_NEXT_MONTH_ACTION_ID` | `widget.SelectionPreviousMonthActionID` / `widget.SelectionNextMonthActionID` |
@@ -249,6 +251,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Suggestion placement | `SuggestionPopup::placement` | `SuggestionPopup.Placement` |
 | SelectableText action descriptors | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | JsonInspector action descriptors | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
+| CodeView action descriptors | `CodeView::action_descriptors` | `CodeView.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -289,7 +292,9 @@ submit and both history operations before those inherited text actions under
 the same root. SelectableText declares its 19 Core text selection and copy
 operations at one focusable root. JsonInspector declares activation, four
 vertical selection operations, collapse, expand, and complete-value copy at one
-focusable root. Command Palette retains query TextInput handling before its
+focusable root. CodeView declares four line-selection operations, four
+selection extensions, two horizontal-scroll operations, select all, copy
+selection, and copy document at one focusable root. Command Palette retains query TextInput handling before its
 ancestor root actions. Modal declares the shared `nagi.dismiss` action at its
 root and leaves an outer-action propagation boundary opt-in. Dialog declares
 `nagi.confirm` followed by `nagi.dismiss`, maps both roles to explicit action
@@ -320,6 +325,7 @@ structured conflict directly
 | SuggestionPopup | `SuggestionPopup::new` | `widget.NewSuggestionPopup` |
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | JsonInspector | `JsonInspector::new` | `widget.NewJSONInspector` |
+| CodeView | `CodeView::new` | `widget.NewCodeView` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -368,6 +374,13 @@ builders use exported mixed case and finish with `Node`. Examples include
 | JSON Pointer | `JsonPointer::new` | `widget.NewJSONPointer` |
 | JSON inspector state | `JsonInspectorState::new` | `widget.NewJSONInspectorState` |
 | JSON copy request | `JsonInspectorCopyRequest` | `widget.JSONInspectorCopyRequest` |
+| Styled code line | `CodeLine::plain` / `styled` | `widget.NewCodeLine` / `NewStyledCodeLine` |
+| Immutable code document | `CodeDocument::new` / `new_with_limits` | `widget.NewCodeDocument` / `NewCodeDocumentWithLimits` |
+| Code document line byte range | `CodeDocument::byte_range_for_lines` | `CodeDocument.ByteRangeForLines` |
+| Terminal code layout | `CodeLayout::new` / `new_with_limits` | `widget.NewCodeLayout` / `NewCodeLayoutWithLimits` |
+| Code layout memo | `CodeLayoutCache::resolve` | `widget.CodeLayoutCache.Resolve` |
+| Code view state | `CodeViewState::new` / `with_selection` | `widget.NewCodeViewState` / `NewCodeViewStateWithSelection` |
+| Code copy request | `CodeCopyRequest` / `CodeCopyKind` | `widget.CodeCopyRequest` / `CodeCopyKind` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

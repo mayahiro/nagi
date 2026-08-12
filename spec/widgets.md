@@ -546,6 +546,20 @@ lifetime
 - The complete source, resource, interaction, styling, and copy contract is in
   [JSON inspector](json-inspector.md)
 
+## CodeView
+
+- CodeView is an optional source adapter and controlled standard widget, not a
+  Core Node, source-neutral Content kind, syntax engine, file loader, diff
+  model, or clipboard backend
+- Application-styled logical lines form one immutable resource-bounded
+  CodeDocument. CodeLayout projects tabs, line numbers, wrapping, and one
+  terminal WidthProfile independently from selection and copy state
+- CodeView constructs either every visual row or one bounded
+  selection-following window. The application owns complete-line selection,
+  horizontal offset, layout-cache identity, and semantic copy handling
+- The complete source, layout, resource, interaction, styling, performance,
+  and copy contract is in [Code view](code-view.md)
+
 ## SelectableText
 
 - SelectableText is a controlled keyboard-and-pointer selection view over one
