@@ -567,6 +567,73 @@ row limit, and omit checkpoint scans; long rows retain sparse checkpoints so a
 far horizontal offset is not rescanned from byte zero on each immutable view
 rebuild
 
+## DiffView purpose
+
+These benchmarks separate typed diff-source preparation, terminal projection,
+memoized lookup, on-demand unified copy, and bounded DiffView construction
+
+- The document path receives 100,000 already validated one-span ASCII lines,
+  alternating Context, Deletion, and Addition, and builds typed line records,
+  conceptual unified byte ranges, a copyability prefix index, and the shared
+  CodeDocument projection source
+- The layout path projects the resulting document at an 80-cell viewport with
+  old and new numbers, unified markers, Modern width, and no wrapping
+- The cache path performs 100,000 warmed lookups of the same immutable
+  document, caller key, options, and resource limits
+- The copy path generates the complete 2,800,000-byte marker-prefixed unified
+  text. DiffDocument does not retain that complete string before this call
+- The viewport path constructs eight visible rows around a midpoint selection
+  and compares documents containing 8 and 100,000 logical lines
+- All paths exclude Runtime preparation, Surface rendering, terminal I/O,
+  clipboard effects, diff parsing, repository I/O, and patch application
+
+Rust reports the median of 12 builds, copies, or samples containing 100,000
+cache lookups or 10,000 view constructions. Go reports the median of three
+`testing` runs, using five source, layout, or copy calls and 10,000 cache or
+view calls per run, and includes standard allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui-widgets --bench diff_view
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkDiff(Document|Layout|Copy)100K$' -benchmem -benchtime=5x -count=3 ./widget
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkDiff(LayoutCache100K|ViewViewport)$' -benchmem -benchtime=10000x -count=3 ./widget
+```
+
+The root `make bench` command includes all paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the reference environment above
+
+| Implementation | Path | Source lines | Constructed rows or output bytes | Median time | Allocations | Allocated bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | document preparation | 100,000 | not applicable | 6.533 ms | not measured | not measured |
+| Go | document preparation | 100,000 | not applicable | 4.007 ms | 10 | 17,129,664 |
+| Rust | terminal layout | 100,000 | 100,000 rows | 4.098 ms | not measured | not measured |
+| Go | terminal layout | 100,000 | 100,000 rows | 4.896 ms | 4 | 8,806,560 |
+| Rust | warmed layout cache | 100,000 | 0 rows | 4 ns | not measured | not measured |
+| Go | warmed layout cache | 100,000 | 0 rows | 14.05 ns | 0 | 0 |
+| Rust | complete unified copy | 100,000 | 2,800,000 bytes | 0.834 ms | not measured | not measured |
+| Go | complete unified copy | 100,000 | 2,800,000 bytes | 1.022 ms | 1 | 2,801,664 |
+| Rust | bounded view | 8 | 8 rows | 35,538 ns | not measured | not measured |
+| Go | bounded view | 8 | 8 rows | 41,163 ns | 147 | 11,544 |
+| Rust | bounded view | 100,000 | 8 rows | 35,826 ns | not measured | not measured |
+| Go | bounded view | 100,000 | 8 rows | 41,028 ns | 181 | 11,944 |
+
+Diff source preparation is intentionally linear and retains typed line
+metadata plus the marker-free CodeDocument projection used by CodeLayout. It
+does not retain a second complete marker-prefixed unified string. Complete copy
+therefore performs one output-sized allocation in Go and equivalent owned
+output construction in Rust only when requested
+
+Increasing the source from 8 to 100,000 lines does not add proportional
+controlled-view construction time. The fixed Go allocation difference comes
+from formatting wider old and new line-number fields and longer derived row
+identities around the midpoint selection. Terminal layout remains linear in
+the complete projected source and retains one CodeVisualRow per no-wrap logical
+line, matching the CodeView projection contract
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and

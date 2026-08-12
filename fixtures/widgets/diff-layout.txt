@@ -1,0 +1,8 @@
+nagi-fixture-v1	widget-diff-layout
+full-gutter	kind=context	input=abcdef	old=9	new=10	profile=modern	viewport=12	tab=4	wrap=false	line-numbers=true	expected-gutter=7	expected-code-width=5	expected-rows=abcdef	expected-widths=6	expected-continuations=false
+marker-only	kind=addition	input=abcdef	old=-	new=10	profile=modern	viewport=5	tab=4	wrap=false	line-numbers=true	expected-gutter=2	expected-code-width=3	expected-rows=abcdef	expected-widths=6	expected-continuations=false
+suppressed-gutter	kind=deletion	input=abcdef	old=10	new=-	profile=modern	viewport=2	tab=4	wrap=false	line-numbers=true	expected-gutter=0	expected-code-width=2	expected-rows=abcdef	expected-widths=6	expected-continuations=false
+line-numbers-off	kind=context	input=abcdef	old=9	new=10	profile=modern	viewport=8	tab=4	wrap=false	line-numbers=false	expected-gutter=2	expected-code-width=6	expected-rows=abcdef	expected-widths=6	expected-continuations=false
+hard-wrap	kind=addition	input=abcdef	old=-	new=1	profile=modern	viewport=10	tab=4	wrap=true	line-numbers=true	expected-gutter=6	expected-code-width=4	expected-rows=abcd|ef	expected-widths=4,2	expected-continuations=false,true
+modern-ambiguous	kind=addition	input=·A	old=-	new=1	profile=modern	viewport=4	tab=4	wrap=true	line-numbers=false	expected-gutter=2	expected-code-width=2	expected-rows=·A	expected-widths=2	expected-continuations=false
+cjk-ambiguous	kind=addition	input=·A	old=-	new=1	profile=cjk	viewport=4	tab=4	wrap=true	line-numbers=false	expected-gutter=2	expected-code-width=2	expected-rows=·|A	expected-widths=2,1	expected-continuations=false,true

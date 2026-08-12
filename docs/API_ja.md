@@ -15,7 +15,7 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 | Unicode graphemeと端末幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input／output、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry、Cell、Surface、composition、snapshot | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
-| 30個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
+| 31個の標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Virtual timeと決定的application操作 | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 
 Unix terminal bindingはprivateな実装詳細として維持します
@@ -204,6 +204,8 @@ JsonInspectorはtextをparseしたり第三者JSON valueへ依存したりせず
 
 CodeViewはsourceをparseしたりlanguage engineへ依存したりせず、Applicationがstyleを付けたimmutableなlogical lineを受け取ります。`CodeDocument`は上限付きsemantic sourceを一度検証します。`CodeLayout`はtabを展開し、1個のterminal WidthProfile、viewport幅、line number policy、wrap policyへ投影し、`CodeLayoutCache`はimmutableなview再構築時の反復投影を避けます。Controlled viewはselection追従のvisual row windowだけをNode化し、完全な行単位selection、no-wrap時の横scroll、ownedなsource copy requestを提供します。詳細は[Code view仕様](../spec/code-view.md)、[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/code_view/README.md)、[Go example](../nagitui-go/examples/code-view/README.md)を参照してください
 
+DiffViewはunified diff textをparseせず、immutableなtyped metadata、hunk、context、addition、deletion lineを受け取ります。`DiffDocument`は完全なmarker付き文字列を保持せず、line number、hunk range、概念上のunified byte range、copyability、resource limitを検証します。`DiffLayout`はCodeLayoutのtab、wrap、WidthProfile、checkpoint、limit挙動を再利用しながら、old number、new number、markerのsticky gutterと決定的な狭幅縮退を追加します。Controlled viewはCodeViewの行selectionと横scrollを共有し、copy要求時だけownedなunified textを生成します。詳細は[Diff view仕様](../spec/diff-view.md)、[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/diff_view/README.md)、[Go example](../nagitui-go/examples/diff-view/README.md)を参照してください
+
 Command Paletteはrootでactivationとvertical selection、表示中の各command rowでactivationを宣言します
 
 queryのTextInput editingはancestor root actionより先にText、Home、Endをlocalでconsumeし、Enter、Up、Downはroot defaultへ届きます
@@ -240,7 +242,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、CodeView、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、CodeView、DiffView、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -292,6 +294,7 @@ Active Streamは長期稼働を前提とし、generationがactiveな間の正常
 - SelectableTextはimmutableなstyled contentとApplication所有のgrapheme境界に揃えたkeyboardおよび左drag selectionを表示し、controlled view再構築をまたぐcaptureと最寄りviewport端のscroll requestを行い、clipboard I/Oを行わずsemanticなselectionまたはdocument copy requestを発行する
 - JsonInspectorはApplication所有のselectionとexpansion、上限付きvisible row構築、grapheme境界を保つscalar preview、完全なselected valueのcopy requestを使ってimmutableなtyped JSONを表示し、parser、schema validation、redaction、clipboard policy、domain上の意味をcomponent外に維持する
 - CodeViewはApplication所有の行selection、memo化したterminal幅projection、上限付きvisual row Node構築、no-wrap時の横scroll、完全な行単位copy requestを使ってimmutableなstyled logical lineを表示し、syntax parser、file I/O、diffの意味、redaction、clipboard policyをcomponent外に維持する
+- DiffViewはApplication所有の行selection、memo化したterminal projection、stickyなold／new line number、unified marker、上限付きvisual row構築、要求時のunified copy requestを使ってimmutableなtyped diff lineを表示し、diff parse、repository access、patch apply、approval policy、redaction、clipboard policyをcomponent外に維持する
 - VirtualFeedはdefaultで末尾追従するflexibleなVirtualFlowへ、Application制御のcentered empty、pinned loading-beforeとloading-after、bottom-end unread-indicator slotを構成する
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
 - ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する
@@ -323,6 +326,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | JSON inspector | `cargo run -p nagi-tui-widgets --example json_inspector` | `go run ./examples/json-inspector` |
 | Code view | `cargo run -p nagi-tui-widgets --example code_view` | `go run ./examples/code-view` |
+| Diff view | `cargo run -p nagi-tui-widgets --example diff_view` | `go run ./examples/diff-view` |
 | Event-driven log viewer | `cargo run -p nagi-tui --example log_viewer` | `go run ./examples/log-viewer` |
 | Virtual scroll | `cargo run -p nagi-tui --example virtual_scroll` | `go run ./examples/virtual-scroll` |
 | Variable-height feed | `cargo run -p nagi-tui-widgets --example virtual_feed` | `go run ./examples/virtual-feed` |

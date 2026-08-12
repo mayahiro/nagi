@@ -247,6 +247,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | SelectableText action descriptor | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | JsonInspector action descriptor | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
 | CodeView action descriptor | `CodeView::action_descriptors` | `CodeView.ActionDescriptors` |
+| DiffView action descriptor | `DiffView::action_descriptors` | `DiffView.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -294,6 +295,8 @@ JsonInspectorは1個のfocusable rootでactivation、4個のvertical selection o
 
 CodeViewは1個のfocusable rootで4個の行selection operation、4個のselection extension、2個のhorizontal scroll operation、select all、copy selection、copy documentを宣言します
 
+DiffViewはtyped diff logical lineに対して同じ13個のoperationを宣言します
+
 Command Paletteはancestor root actionより先にqueryのTextInput handlingを維持します
 
 Modalはrootで共有`nagi.dismiss` actionを宣言し、outer actionのpropagation境界をopt-inのままにします。Dialogは`nagi.confirm`の後に`nagi.dismiss`を宣言し、両roleを明示的なaction IDへmapして各actionで既存Button activationを使用します
@@ -325,6 +328,7 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | JsonInspector | `JsonInspector::new` | `widget.NewJSONInspector` |
 | CodeView | `CodeView::new` | `widget.NewCodeView` |
+| DiffView | `DiffView::new` | `widget.NewDiffView` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -375,6 +379,15 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Code layout memo | `CodeLayoutCache::resolve` | `widget.CodeLayoutCache.Resolve` |
 | Code view state | `CodeViewState::new` / `with_selection` | `widget.NewCodeViewState` / `NewCodeViewStateWithSelection` |
 | Code copy request | `CodeCopyRequest` / `CodeCopyKind` | `widget.CodeCopyRequest` / `CodeCopyKind` |
+| Typed diff line | `DiffLine::metadata` / `hunk` / `context` / `addition` / `deletion` | `widget.NewDiffMetadataLine` / `NewDiffHunkLine` / `NewDiffContextLine` / `NewDiffAdditionLine` / `NewDiffDeletionLine` |
+| Diff hunk range | `DiffRange::new` / `DiffHunk::new` | `widget.NewDiffRange` / `NewDiffHunk` |
+| Immutable diff document | `DiffDocument::new` / `new_with_limits` | `widget.NewDiffDocument` / `NewDiffDocumentWithLimits` |
+| Diff document行byte範囲 | `DiffDocument::byte_range_for_lines` | `DiffDocument.ByteRangeForLines` |
+| 要求時のunified text | `DiffDocument::copy_text_for_lines` | `DiffDocument.CopyTextForLines` |
+| Terminal diff layout | `DiffLayout::new` / `new_with_limits` | `widget.NewDiffLayout` / `NewDiffLayoutWithLimits` |
+| Diff layout memo | `DiffLayoutCache::resolve` | `widget.DiffLayoutCache.Resolve` |
+| Diff view state alias | `DiffViewState::new` / `with_selection` | `widget.NewDiffViewState` / `NewDiffViewStateWithSelection` |
+| Diff copy request | `DiffCopyRequest` / `DiffCopyKind` | `widget.DiffCopyRequest` / `DiffCopyKind` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

@@ -27,7 +27,7 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 
 ## 現在の状態
 
-共有RustとGo基盤はimmutableなsource-neutral Content、Unicode対応Text、typed VT codecを提供します。既存のNagi TUI実装はimmutableなTerminal Presentation Rules、上限付きContentからNodeへのprojection、native runtime、Cell Surface、決定的test harness、30個の標準Widget、generic anchored overlay、controlled suggestion popup、typed JSON inspection、memo化した上限付きCodeView、大規模content向けvirtual ScrollViewportとstableな可変高VirtualFeedを追加します。Applicationはsemantic copy requestをcoalesceするClipboard Effectへ渡し、terminalでwrite-only OSC 52を明示的に有効化できます
+共有RustとGo基盤はimmutableなsource-neutral Content、Unicode対応Text、typed VT codecを提供します。既存のNagi TUI実装はimmutableなTerminal Presentation Rules、上限付きContentからNodeへのprojection、native runtime、Cell Surface、決定的test harness、31個の標準Widget、generic anchored overlay、controlled suggestion popup、typed JSON inspection、memo化した上限付きCodeViewとunified DiffView、大規模content向けvirtual ScrollViewportとstableな可変高VirtualFeedを追加します。Applicationはsemantic copy requestをcoalesceするClipboard Effectへ渡し、terminalでwrite-only OSC 52を明示的に有効化できます
 
 Nagi CLIはRustとGoのnative Command Graph、localと継承Option、command-local typed value scope、portable option groupとvalidator、制御可能なHelp-only Usage Variantを持つstructured deterministic Help、target付きsemantic Diagnostic、段階実行runtime policy、協調的SIGINT cancellation、handlerを含まないimmutable completion engine、Bash、Zsh、Fish、PowerShell generator、任意の行指向prompt、processなしのtest driver、対応するexampleを提供します
 
@@ -45,6 +45,7 @@ Nagi CLIはRustとGoのnative Command Graph、localと継承Option、command-loc
 - [ContentからNodeへのprojection仕様](spec/content-node-projection.md)
 - [JSON inspector仕様](spec/json-inspector.md)
 - [Code view仕様](spec/code-view.md)
+- [Diff view仕様](spec/diff-view.md)
 - [Public TUI API guide](docs/API_ja.md)
 - [Event-driven TUI application architecture](docs/EVENT_DRIVEN_APPLICATIONS_ja.md)
 - [Public CLI API guide](docs/CLI_API_ja.md)

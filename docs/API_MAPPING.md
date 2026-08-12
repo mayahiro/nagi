@@ -252,6 +252,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | SelectableText action descriptors | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | JsonInspector action descriptors | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
 | CodeView action descriptors | `CodeView::action_descriptors` | `CodeView.ActionDescriptors` |
+| DiffView action descriptors | `DiffView::action_descriptors` | `DiffView.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -294,8 +295,10 @@ operations at one focusable root. JsonInspector declares activation, four
 vertical selection operations, collapse, expand, and complete-value copy at one
 focusable root. CodeView declares four line-selection operations, four
 selection extensions, two horizontal-scroll operations, select all, copy
-selection, and copy document at one focusable root. Command Palette retains query TextInput handling before its
-ancestor root actions. Modal declares the shared `nagi.dismiss` action at its
+selection, and copy document at one focusable root. DiffView declares the same
+13 operations over typed diff logical lines. Command Palette retains query
+TextInput handling before its ancestor root actions. Modal declares the shared
+`nagi.dismiss` action at its
 root and leaves an outer-action propagation boundary opt-in. Dialog declares
 `nagi.confirm` followed by `nagi.dismiss`, maps both roles to explicit action
 IDs, and uses existing Button activation for each action. Paginator declares
@@ -326,6 +329,7 @@ structured conflict directly
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | JsonInspector | `JsonInspector::new` | `widget.NewJSONInspector` |
 | CodeView | `CodeView::new` | `widget.NewCodeView` |
+| DiffView | `DiffView::new` | `widget.NewDiffView` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
 | Tabs | `Tabs::new` | `widget.NewTabs` |
@@ -381,6 +385,15 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Code layout memo | `CodeLayoutCache::resolve` | `widget.CodeLayoutCache.Resolve` |
 | Code view state | `CodeViewState::new` / `with_selection` | `widget.NewCodeViewState` / `NewCodeViewStateWithSelection` |
 | Code copy request | `CodeCopyRequest` / `CodeCopyKind` | `widget.CodeCopyRequest` / `CodeCopyKind` |
+| Typed diff line | `DiffLine::metadata` / `hunk` / `context` / `addition` / `deletion` | `widget.NewDiffMetadataLine` / `NewDiffHunkLine` / `NewDiffContextLine` / `NewDiffAdditionLine` / `NewDiffDeletionLine` |
+| Diff hunk range | `DiffRange::new` / `DiffHunk::new` | `widget.NewDiffRange` / `NewDiffHunk` |
+| Immutable diff document | `DiffDocument::new` / `new_with_limits` | `widget.NewDiffDocument` / `NewDiffDocumentWithLimits` |
+| Diff document line byte range | `DiffDocument::byte_range_for_lines` | `DiffDocument.ByteRangeForLines` |
+| On-demand unified text | `DiffDocument::copy_text_for_lines` | `DiffDocument.CopyTextForLines` |
+| Terminal diff layout | `DiffLayout::new` / `new_with_limits` | `widget.NewDiffLayout` / `NewDiffLayoutWithLimits` |
+| Diff layout memo | `DiffLayoutCache::resolve` | `widget.DiffLayoutCache.Resolve` |
+| Diff view state alias | `DiffViewState::new` / `with_selection` | `widget.NewDiffViewState` / `NewDiffViewStateWithSelection` |
+| Diff copy request | `DiffCopyRequest` / `DiffCopyKind` | `widget.DiffCopyRequest` / `DiffCopyKind` |
 | Tree expansion state | `TreeState` | `widget.TreeState` |
 | Gregorian date | `CalendarDate::new` | `widget.NewCalendarDate` |
 | File metadata | `FilePickerEntry::file` / `directory` | `widget.NewFilePickerFile` / `NewFilePickerDirectory` |

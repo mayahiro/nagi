@@ -560,6 +560,23 @@ lifetime
 - The complete source, layout, resource, interaction, styling, performance,
   and copy contract is in [Code view](code-view.md)
 
+## DiffView
+
+- DiffView is an optional typed source adapter and controlled standard widget,
+  not a Core Node, source-neutral Content kind, diff parser, patch model,
+  repository adapter, approval policy, or clipboard backend
+- DiffDocument preserves metadata, hunk ranges, context, addition, deletion,
+  old and new line numbers, conceptual unified byte ranges, and copyability
+  within explicit resource limits without retaining complete unified text
+- DiffLayout reuses CodeLayout terminal projection while reserving a sticky
+  old-number, new-number, and unified-marker gutter with deterministic narrow
+  viewport fallback
+- DiffView uses the CodeView controlled line-selection, horizontal-scroll,
+  pointer, viewport, action, and copy contract while keeping semantic diff
+  styles independently replaceable
+- The complete source, layout, resource, interaction, styling, performance,
+  and copy contract is in [Diff view](diff-view.md)
+
 ## SelectableText
 
 - SelectableText is a controlled keyboard-and-pointer selection view over one
