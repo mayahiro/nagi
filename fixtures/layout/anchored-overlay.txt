@@ -1,0 +1,18 @@
+nagi-fixture-v1	anchored-overlay-placement
+below-fit	boundary=0:0:20:10	anchor=2:2:1:1	anchor-clip=2:2:1:1	overlay=6:3	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=2:3:6:3
+above-fit	boundary=0:0:20:10	anchor=4:6:2:1	anchor-clip=4:6:2:1	overlay=5:2	side=above	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=4:4:5:2
+flip-above	boundary=0:0:20:10	anchor=1:8:1:1	anchor-clip=1:8:1:1	overlay=4:3	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=1:5:4:3
+flip-below	boundary=0:0:20:10	anchor=1:1:1:1	anchor-clip=1:1:1:1	overlay=4:3	side=above	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=1:2:4:3
+flip-tie-keeps-preferred	boundary=0:0:20:9	anchor=1:4:1:1	anchor-clip=1:4:1:1	overlay=4:5	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=1:5:4:4
+clip-below	boundary=0:0:20:10	anchor=1:8:1:1	anchor-clip=1:8:1:1	overlay=4:3	side=below	alignment=start	gap=0	fallback=clip	max-width=0	max-height=0	expected=1:9:4:1
+center	boundary=0:0:20:10	anchor=8:2:2:1	anchor-clip=8:2:2:1	overlay=6:2	side=below	alignment=center	gap=0	fallback=flip	max-width=0	max-height=0	expected=6:3:6:2
+end-left-clamp	boundary=0:0:20:10	anchor=1:2:1:1	anchor-clip=1:2:1:1	overlay=6:2	side=below	alignment=end	gap=0	fallback=flip	max-width=0	max-height=0	expected=0:3:6:2
+start-right-clamp	boundary=0:0:20:10	anchor=18:2:1:1	anchor-clip=18:2:1:1	overlay=6:2	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=14:3:6:2
+gap	boundary=0:0:20:10	anchor=2:2:1:1	anchor-clip=2:2:1:1	overlay=4:2	side=below	alignment=start	gap=2	fallback=flip	max-width=0	max-height=0	expected=2:5:4:2
+maximum-size	boundary=0:0:20:10	anchor=2:2:1:1	anchor-clip=2:2:1:1	overlay=10:6	side=below	alignment=start	gap=0	fallback=flip	max-width=4	max-height=2	expected=2:3:4:2
+zero-width-cursor	boundary=0:0:20:10	anchor=5:2:0:1	anchor-clip=0:0:20:10	overlay=4:2	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=5:3:4:2
+zero-width-right-edge	boundary=0:0:20:10	anchor=20:2:0:1	anchor-clip=0:0:20:10	overlay=4:2	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=none
+zero-width-clipped	boundary=0:0:20:10	anchor=5:2:0:1	anchor-clip=0:0:5:10	overlay=4:2	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=none
+hidden-anchor	boundary=0:0:20:10	anchor=2:2:1:1	anchor-clip=2:2:0:0	overlay=4:2	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=none
+zero-overlay	boundary=0:0:20:10	anchor=2:2:1:1	anchor-clip=2:2:1:1	overlay=0:2	side=below	alignment=start	gap=0	fallback=flip	max-width=0	max-height=0	expected=none
+offset-boundary	boundary=-5:3:12:8	anchor=-3:5:1:1	anchor-clip=-3:5:1:1	overlay=5:3	side=below	alignment=start	gap=1	fallback=flip	max-width=0	max-height=0	expected=-3:7:5:3

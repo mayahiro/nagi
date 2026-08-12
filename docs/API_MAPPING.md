@@ -121,6 +121,9 @@ turns annotations into application actions
 | Horizontal children | `Node::row(children)` | `tui.Row[M](children...)` |
 | Vertical children | `Node::column(children)` | `tui.Column[M](children...)` |
 | Layered children | `Node::stack(children)` | `tui.Stack[M](children...)` |
+| Anchored front layer | `Node::anchored_overlay(...)` | `tui.AnchoredOverlay[M](...)` |
+| Configured anchored layer | `Node::anchored_overlay_with_options(...)` | `tui.AnchoredOverlayWithOptions[M](...)` |
+| Anchored placement options | `AnchoredOverlayOptions` | `tui.AnchoredOverlayOptions` |
 | Insets | `Node::padding(child, insets)` | `tui.Padding[M](child, insets)` |
 | Border | `Node::border(child, style)` | `tui.Border[M](child, style)` |
 | Titled panel | `Node::panel(child, title)` | `tui.Panel[M](child, title)` |
@@ -212,6 +215,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Confirm Action ID | `CONFIRM_ACTION_ID` | `widget.ConfirmActionID` |
 | Composer submit Action ID | `COMPOSER_SUBMIT_ACTION_ID` | `widget.ComposerSubmitActionID` |
 | History recall Action IDs | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
+| Suggestion Action IDs | `SUGGESTION_ACCEPT_ACTION_ID` / `SUGGESTION_DISMISS_ACTION_ID` | `widget.SuggestionAcceptActionID` / `widget.SuggestionDismissActionID` |
 | Text cursor Action IDs | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection-extension Action IDs | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -239,6 +243,9 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Composer row bounds | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
 | Composer length limits | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
 | Composer width profile | `Composer::width_profile` | `Composer.WidthProfile` |
+| Suggestion action descriptors | `SuggestionPopup::action_descriptors` | `SuggestionPopup.ActionDescriptors` |
+| Suggestion visible window | `SuggestionPopup::visible_rows` | `SuggestionPopup.VisibleRows` |
+| Suggestion placement | `SuggestionPopup::placement` | `SuggestionPopup.Placement` |
 | SelectableText action descriptors | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
@@ -306,6 +313,7 @@ structured conflict directly
 | Scrollbar | `Scrollbar::new` | `widget.NewScrollbar` |
 | TextArea | `TextArea::new` | `widget.NewTextArea` |
 | Composer | `Composer::new` | `widget.NewComposer` |
+| SuggestionPopup | `SuggestionPopup::new` | `widget.NewSuggestionPopup` |
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
@@ -339,6 +347,10 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Undo and redo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
+| Suggestion identity | `SuggestionId::new` | `widget.NewSuggestionID` |
+| Immutable suggestion order | `SuggestionItems::new` | `widget.NewSuggestionItems` |
+| Duplicate suggestion error | `DuplicateSuggestionId` | `widget.DuplicateSuggestionIDError` |
+| Suggestion asynchronous state | `SuggestionPopupStatus` | `widget.SuggestionPopupStatus` |
 | Selectable text content | `SelectableTextContent::plain` / `styled` | `widget.NewPlainSelectableTextContent` / `NewSelectableTextContent` |
 | Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
 | Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |

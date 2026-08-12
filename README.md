@@ -39,9 +39,10 @@ workspace because Cargo crates remain separately selectable dependencies
 The shared Rust and Go foundations provide immutable source-neutral Content,
 Unicode-aware text, and typed VT codecs. The existing Nagi TUI implementation
 adds immutable Terminal Presentation Rules, native runtimes, cell surfaces,
-bounded Content-to-Node projection, deterministic test harnesses, 27 standard
-widgets, virtual ScrollViewports, and stable variable-height VirtualFeeds for
-large content. Applications can route semantic copy requests through a
+bounded Content-to-Node projection, deterministic test harnesses, 28 standard
+widgets, generic anchored overlays, controlled suggestion popups, virtual
+ScrollViewports, and stable variable-height VirtualFeeds for large content.
+Applications can route semantic copy requests through a
 coalesced Clipboard Effect, with write-only OSC 52 available as an explicit
 terminal opt-in
 

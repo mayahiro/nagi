@@ -34,6 +34,9 @@ defined by the [scoped key-map specification](keymap.md)
 ## Pointer
 
 - Hit testing proceeds from the frontmost stack or overlay entry
+- An AnchoredOverlay indexes its base before its front layer. Both remain
+  logical children of the identified AnchoredOverlay root, so their events use
+  ordinary target-to-root routing and the layer does not create a modal scope
 - Clipped regions do not receive pointer hits
 - Pointer capture routes events to the capture node
 - Capture is released when its node disappears

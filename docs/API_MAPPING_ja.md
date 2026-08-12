@@ -121,6 +121,9 @@ Content identityからNode identityを導出せず、annotationをapplication ac
 | Horizontal child | `Node::row(children)` | `tui.Row[M](children...)` |
 | Vertical child | `Node::column(children)` | `tui.Column[M](children...)` |
 | Layered child | `Node::stack(children)` | `tui.Stack[M](children...)` |
+| Anchor付きfront layer | `Node::anchored_overlay(...)` | `tui.AnchoredOverlay[M](...)` |
+| 設定付きanchor layer | `Node::anchored_overlay_with_options(...)` | `tui.AnchoredOverlayWithOptions[M](...)` |
+| Anchor配置option | `AnchoredOverlayOptions` | `tui.AnchoredOverlayOptions` |
 | Insets | `Node::padding(child, insets)` | `tui.Padding[M](child, insets)` |
 | Border | `Node::border(child, style)` | `tui.Border[M](child, style)` |
 | Title付きPanel | `Node::panel(child, title)` | `tui.Panel[M](child, title)` |
@@ -207,6 +210,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Confirm Action ID | `CONFIRM_ACTION_ID` | `widget.ConfirmActionID` |
 | Composer submit Action ID | `COMPOSER_SUBMIT_ACTION_ID` | `widget.ComposerSubmitActionID` |
 | History recall Action ID | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
+| Suggestion Action ID | `SUGGESTION_ACCEPT_ACTION_ID` / `SUGGESTION_DISMISS_ACTION_ID` | `widget.SuggestionAcceptActionID` / `widget.SuggestionDismissActionID` |
 | Text cursor Action ID | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection extension Action ID | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -234,6 +238,9 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Composer row境界 | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
 | Composer長さ制限 | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
 | Composer width profile | `Composer::width_profile` | `Composer.WidthProfile` |
+| Suggestion action descriptor | `SuggestionPopup::action_descriptors` | `SuggestionPopup.ActionDescriptors` |
+| Suggestion visible window | `SuggestionPopup::visible_rows` | `SuggestionPopup.VisibleRows` |
+| Suggestion配置 | `SuggestionPopup::placement` | `SuggestionPopup.Placement` |
 | SelectableText action descriptor | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
@@ -305,6 +312,7 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | Scrollbar | `Scrollbar::new` | `widget.NewScrollbar` |
 | TextArea | `TextArea::new` | `widget.NewTextArea` |
 | Composer | `Composer::new` | `widget.NewComposer` |
+| SuggestionPopup | `SuggestionPopup::new` | `widget.NewSuggestionPopup` |
 | SelectableText | `SelectableText::new` | `widget.NewSelectableText` |
 | Table | `Table::new` | `widget.NewTable` |
 | Tree | `Tree::new` | `widget.NewTree` |
@@ -333,6 +341,10 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Undoとredo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
+| Suggestion identity | `SuggestionId::new` | `widget.NewSuggestionID` |
+| Immutable suggestion order | `SuggestionItems::new` | `widget.NewSuggestionItems` |
+| Duplicate suggestion error | `DuplicateSuggestionId` | `widget.DuplicateSuggestionIDError` |
+| Suggestion async state | `SuggestionPopupStatus` | `widget.SuggestionPopupStatus` |
 | Selectable text content | `SelectableTextContent::plain` / `styled` | `widget.NewPlainSelectableTextContent` / `NewSelectableTextContent` |
 | Selectable text state | `SelectableTextState::new` / `with_selection` | `widget.NewSelectableTextState` / `NewSelectableTextStateWithSelection` |
 | Semantic copy request | `TextCopyRequest` / `TextCopyKind` | `widget.TextCopyRequest` / `TextCopyKind` |

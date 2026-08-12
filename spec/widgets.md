@@ -483,6 +483,53 @@ lifetime
   text. Existing over-limit content is not rewritten, and deletion remains
   available
 
+## SuggestionPopup
+
+- SuggestionPopup is a controlled AnchoredOverlay around application-provided
+  base content. The application supplies the anchor Node ID, focus-owner Node
+  ID, ordered candidates, optional selected candidate ID, row builder, and
+  select, accept, and dismiss callbacks
+- Candidate IDs are opaque stable UTF-8 identities. SuggestionItems validates
+  uniqueness once, owns an immutable order, and shares that storage across
+  controlled view rebuilds. Go replaces invalid UTF-8 in IDs created through
+  its constructor; Rust strings are valid UTF-8 by type. Candidate labels,
+  query parsing, ranking, filtering, and domain meaning remain application
+  concerns
+- A missing selected ID normalizes visually to the first candidate without
+  emitting a selection Message. Empty candidates have no selection. Candidate
+  changes do not retain widget-owned selection state
+- Ready displays at most the configured positive visible-row count and shifts
+  that construction window to contain the normalized selection. Only rows in
+  the window are built. Each row builder receives its source index, stable ID,
+  and selected state
+- Loading replaces candidate rows with a default dim notice. Ready with no
+  candidates displays a distinct default dim empty notice. Applications may
+  replace either notice with an arbitrary Node
+- The widget starts open and enabled. Closing returns the unchanged base Node
+  with no popup scope or actions. Disabling retains visible status content but
+  disables candidate and dismissal interaction
+- An interactive Ready popup declares accept, previous, next, and dismiss in
+  that order. Defaults are initial-only Enter, repeatable Up, repeatable Down,
+  and initial-only Escape. Previous and next consume at collection boundaries
+  without emitting an unchanged selection
+- Its scoped KeyMap removes the conflicting Composer submit, history Up and
+  Down, TextArea visual Up and Down, and line-break bindings while interactive
+  Ready candidates exist. Text and Paste still reach the focused editor.
+  Loading, empty, and disabled candidate states allow the editor actions to
+  pass through
+- An enabled open popup consumes otherwise-unmatched repeat Enter and Escape
+  so initial-only acceptance or dismissal cannot escape to another ancestor
+- Enabled left-button press on a visible row emits selection first when needed
+  and acceptance second. Keyboard and pointer results restore the supplied
+  focus-owner ID, and candidate rows do not become Tab stops
+- The application owns asynchronous Effects, cancellation or generation,
+  provider failures, debounce, cache, and how acceptance changes its state.
+  SuggestionPopup starts no worker, timer, Subscription, or I/O
+- Placement uses the generic AnchoredOverlay options and remains bounded by
+  the rectangle allocated to the popup root. Candidate collections requiring
+  variable-height large-scale virtualization should use a specialized
+  application view rather than this bounded row window
+
 ## SelectableText
 
 - SelectableText is a controlled keyboard-and-pointer selection view over one

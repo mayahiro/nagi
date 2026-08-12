@@ -127,10 +127,10 @@ a Message, a log record, or telemetry
 ## Semantic views and interaction
 
 Core nodes include Text, RichText, Paragraph, safe ANSI Text, SurfaceNode,
-TextInput, CursorAnchor, Spacer, Gap, Row, Column, Stack, Padding, Border, Panel,
-Align, Clip, ScrollViewport, and Modal. Layout uses integer terminal cells and
-stable rounding rules. VirtualScrollViewport and VirtualFlow are the
-large-content variants
+TextInput, CursorAnchor, Spacer, Gap, Row, Column, Stack, AnchoredOverlay,
+Padding, Border, Panel, Align, Clip, ScrollViewport, and Modal. Layout uses
+integer terminal cells and stable rounding rules. VirtualScrollViewport and
+VirtualFlow are the large-content variants
 
 Every stateful, focusable, or event-receiving node needs an application-defined
 stable `NodeId`. IDs must survive rebuilding and must not be derived only from a
@@ -145,6 +145,15 @@ while any identified Node owns focus without changing its layout or routing
 layout width and set the typed Surface cursor while their stable owner has
 focus. They draw no caret grapheme, so following text keeps its geometry and
 terminal IME placement follows the rendered cursor
+
+`Node::anchored_overlay` in Rust and `AnchoredOverlay` in Go place one front
+layer relative to an identified descendant without adding it to measurement.
+The configured side, alignment, gap, flip-or-clip fallback, and size maxima are
+resolved inside the primitive's visible boundary. A hidden or absent anchor
+omits the layer from rendering and routing, while an overlapping visible layer
+renders and receives pointer hits after the base. The primitive itself adds no
+focus or modal policy. A zero-width CursorAnchor is a valid visible placement
+point while its coordinate remains inside the boundary and inherited clip
 
 `Node::block_unhandled_events` in Rust and `Node.BlockUnhandledEvents` in Go
 add an opt-in hard boundary to an identified Node. If its local action, Core,
@@ -308,6 +317,22 @@ exists, then Up or Down recalls history. Active scopes can replace the complete
 submit and line-break binding lists, and Paste remains editing input. When
 submit is invalid, both initial and repeat Enter are consumed locally
 
+SuggestionPopup wraps application-provided content in the generic
+AnchoredOverlay and keeps focus in the supplied editor or other focus owner.
+The application owns candidate acquisition, query parsing, ranking, stable
+candidate IDs, selected ID, asynchronous generation, and acceptance meaning.
+`SuggestionItems` validates one immutable unique order and shares its storage
+across view rebuilds. The widget builds only a bounded selected window,
+displays replaceable Loading and empty Nodes, and declares Enter acceptance,
+repeatable Up and Down selection, and Escape dismissal. Its local scope removes
+conflicting Composer and TextArea bindings only while Ready candidates are
+interactive. Left-button activation emits selection before acceptance without
+moving focus
+
+The matching [Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/suggestion_popup/README.md)
+and [Go example](../nagitui-go/examples/suggestion-popup/README.md) keep
+cancellable latest-result search in the application
+
 Command Palette declares activation plus vertical selection at its root and
 activation on each visible command row. Query TextInput editing consumes Text,
 Home, and End locally before the ancestor root actions; Enter, Up, and Down
@@ -356,7 +381,8 @@ from keyboard rebinding
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
-List, Table, Tree, Disclosure, TextArea, Composer, SelectableText, Command Palette, Modal,
+List, Table, Tree, Disclosure, TextArea, Composer, SuggestionPopup, SelectableText,
+Command Palette, Modal,
 Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
 migrated. See the
 [scoped key-map specification](../spec/keymap.md) for the complete dispatch,
@@ -431,6 +457,9 @@ Standard widgets use public Core composition and the public Unicode text API
 - Composer adds controlled submit, history recall, insertion limits, automatic
   row bounds, and application-provided validation content over TextArea without
   owning message meaning or persistence
+- SuggestionPopup composes application-owned candidates and asynchronous state
+  with generic anchored placement, bounded row construction, controlled
+  selection, keyboard actions, and focus-preserving pointer activation
 - SelectableText displays immutable styled content with application-owned,
   grapheme-aligned keyboard and left-drag selection, captures a drag across
   controlled view rebuilds, requests nearest-viewport edge scrolling, and

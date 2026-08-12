@@ -73,6 +73,42 @@ anchor position. It draws no visible grapheme and does not move following text.
 Out-of-bounds anchors follow the ordinary Surface rule and leave no visible
 cursor
 
+## Anchored overlay
+
+An AnchoredOverlay places one front layer relative to a stable Node ID found in
+its base subtree
+
+- Only the base contributes to measurement. The overlay can therefore be
+  added or removed without changing the surrounding layout
+- The assigned AnchoredOverlay rectangle intersected with its inherited clip
+  is the placement boundary. An overlay cannot escape that boundary
+- The anchor must intersect both its inherited clip and the placement
+  boundary. A zero-width, positive-height CursorAnchor is visible as a point
+  when its x coordinate is inside both half-open horizontal ranges. An absent,
+  fully hidden, or right-edge-outside anchor omits the overlay from rendering,
+  semantic indexing, hit testing, and routing
+- Placement defaults to below the anchor with start alignment and zero gap.
+  Above placement, start, center, or end alignment, a Cell gap, and optional
+  maximum width and height are configurable
+- Natural overlay size is measured within the configured maxima and placement
+  boundary. Zero maxima mean the complete boundary extent rather than a
+  zero-sized layer
+- Flip fallback uses the opposite vertical side only when the preferred side
+  cannot contain the desired height and the opposite side has strictly more
+  available rows. Clip fallback retains the preferred side. The result is
+  always clipped to its available rows
+- Horizontal placement is clamped to the complete boundary after alignment.
+  No grapheme or Cell may draw outside the inherited clip
+- The base is rendered and indexed first, then the overlay. Overlapping pointer
+  hits therefore select the overlay
+- Base and overlay are ordinary logical children of the AnchoredOverlay node.
+  The primitive creates no focus, modal, action, or hard Event boundary by
+  itself
+
+Wrapping a child ScrollViewport with AnchoredOverlay lets the layer use the
+outer boundary while the anchor remains clipped by that viewport. Placing the
+AnchoredOverlay inside a viewport keeps the complete layer inside the viewport
+
 ## Panel
 
 A Panel fills its assigned rectangle, draws a one-cell border, renders an

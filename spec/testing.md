@@ -25,6 +25,11 @@ The harnesses provide equivalent observable behavior for
   typed cursor placement, width-profile consistency, and caret-viewport following
 - Composer submission, line-break rebinding, controlled history recall, length
   limits, automatic height, validation placement, and viewport following
+- AnchoredOverlay placement, clipping, base-only measurement, front-layer
+  rendering and hit order, and missing-anchor omission
+- SuggestionPopup selection normalization, bounded row construction,
+  loading and empty states, editor action precedence, repeat blocking,
+  pointer selection-before-acceptance ordering, and retained editor focus
 - SelectableText grapheme, word, logical-line, and document movement,
   controlled keyboard and pointer selection, capture across controlled view
   rebuilds, width-aware paragraph hit testing, viewport edge auto-scroll,

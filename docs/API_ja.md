@@ -82,13 +82,15 @@ Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変
 
 ## Semantic viewとInteraction
 
-Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、CursorAnchor、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
+Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、CursorAnchor、Spacer、Gap、Row、Column、Stack、AnchoredOverlay、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
 
 Stateful、focusable、event受信Nodeにはapplication定義の安定した`NodeId`が必要です。IDはview再構築後も維持し、collection内の位置だけから導出してはいけません。Duplicate IDはruntime errorです
 
 Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、1個のviewport offset、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
 
 Rustの`Node::cursor_anchor`とGoの`CursorAnchor`はhorizontal layout幅を消費せず、stable ownerがfocusを持つ間だけtyped Surface cursorを設定します。Caret文字を描かないため後続textを移動せず、terminal IME位置は描画cursorへ追従します
+
+Rustの`Node::anchored_overlay`とGoの`AnchoredOverlay`はidentified descendantを基準に、measureへ加えずfront layerを配置します。Side、alignment、gap、flipまたはclip fallback、size上限をprimitiveのvisible boundary内で解決します。Anchorがhiddenまたはabsentならlayerをrenderとroutingから外し、visible layerがbaseと重なる場合はbaseより後にrenderしてpointer hitを受けます。Zero-width CursorAnchorは座標がboundaryとinherited clipの内側にある間はvisibleな配置pointです。Primitive自体はfocusやmodal policyを追加しません
 
 Rustの`Node::block_unhandled_events`とGoの`Node.BlockUnhandledEvents`はidentified Nodeへopt-inのhard boundaryを追加します。そのNodeのlocal action、Core handling、pointer handler、raw handlerがEventをconsumeしなかった場合、ancestor raw handlerまたはterminal fallback mappingへ届く前にboundaryがconsumeします。Defaultはsoft boundaryのままです
 
@@ -194,6 +196,10 @@ ComposerはTextAreaへcontrolled history recall、submit validity、1行から6�
 
 EnterはRepeatを受け付けずにsubmitし、Shift-Enter、Alt-Enter、Control-Oは改行を挿入します。別のvisual lineが存在する間はcursor移動を優先し、その後にUpまたはDownでhistoryをrecallします。Active scopeはsubmitと改行のbinding list全体を置換でき、Pasteはediting inputのままです。Submitがinvalidな場合はinitialとrepeatのEnterをどちらもlocalでconsumeします
 
+SuggestionPopupはapplication supplied contentをgeneric AnchoredOverlayで包み、supplied editorまたは別のfocus ownerへfocusを残します。Candidate取得、query解析、ranking、stable candidate ID、selected ID、async generation、acceptの意味はApplicationが所有します。`SuggestionItems`は一意なimmutable orderを一度検証し、view再構築をまたいでstorageを共有します。Widgetはselected itemを含むbounded windowだけを構築し、差し替え可能なLoadingとempty Nodeを表示して、Enter accept、repeat可能なUpとDown selection、Escape dismissを宣言します。Local scopeはReady candidateがinteractiveな間だけComposerとTextAreaの競合bindingを外し、左button activationはfocusを移さずselection後にacceptを発行します
+
+対応する[Rust example](../nagi-rs/crates/nagi-tui-widgets/examples/suggestion_popup/README.md)と[Go example](../nagitui-go/examples/suggestion-popup/README.md)はcancellableなlatest-result searchをApplicationへ維持します
+
 Command Paletteはrootでactivationとvertical selection、表示中の各command rowでactivationを宣言します
 
 queryのTextInput editingはancestor root actionより先にText、Home、Endをlocalでconsumeし、Enter、Up、Downはroot defaultへ届きます
@@ -230,7 +236,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SelectableText、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SuggestionPopup、SelectableText、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -278,6 +284,7 @@ Active Streamは長期稼働を前提とし、generationがactiveな間の正常
 - Treeはroot所有のactivation、vertical selection、collapse、expand actionを持つ1個のcomposite Tab stopとして動作し、application所有の展開状態、再利用可能な`TreeState`、selection追従viewportを使ってflat preorder modelをfilterする
 - TextAreaはselection、no-wrapまたはopt-in soft-wrap visual line、preferred-column navigation、任意のcaret追従viewport、application所有のundoとredo history、binding list全体をrebindできるroot所有semantic action setを使い、extended grapheme境界でmultiline textを編集する
 - Composerはmessageの意味や永続化を所有せず、TextAreaへcontrolled submit、history recall、挿入制限、自動row境界、application提供のvalidation contentを加える
+- SuggestionPopupはapplication所有candidateとasync stateへgeneric anchored placement、bounded row構築、controlled selection、keyboard action、focusを維持するpointer activationを組み合わせる
 - SelectableTextはimmutableなstyled contentとApplication所有のgrapheme境界に揃えたkeyboardおよび左drag selectionを表示し、controlled view再構築をまたぐcaptureと最寄りviewport端のscroll requestを行い、clipboard I/Oを行わずsemanticなselectionまたはdocument copy requestを発行する
 - VirtualFeedはdefaultで末尾追従するflexibleなVirtualFlowへ、Application制御のcentered empty、pinned loading-beforeとloading-after、bottom-end unread-indicator slotを構成する
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する

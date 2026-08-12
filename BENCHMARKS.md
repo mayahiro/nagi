@@ -390,6 +390,53 @@ cost of rebuilding styled selection spans after a controlled-state Message.
 The zero-allocation result prevents document length from adding transient
 memory pressure during a drag
 
+## SuggestionPopup purpose
+
+This benchmark constructs one controlled SuggestionPopup semantic Node with a
+midpoint selection and eight visible rows. It compares immutable candidate
+orders containing 8 and 100,000 stable IDs
+
+Candidate validation, the immutable ID-to-index map, and source data creation
+occur before measurement. The measured path clones shared SuggestionItems,
+resolves selection, builds eight application rows, creates the popup action
+group, and composes AnchoredOverlay. It excludes Runtime preparation,
+rendering, terminal I/O, asynchronous candidate acquisition, and application
+update
+
+Rust reports the median of 12 samples with 10,000 constructions per sample. Go
+reports the median of three `testing` runs with 10,000 constructions each and
+includes standard allocation metrics. The Rust widget crate forbids unsafe
+code, so this benchmark does not replace its global allocator; unit tests
+instead verify shared immutable storage and exactly bounded row-builder calls
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui-widgets --bench suggestion_popup
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkSuggestionPopupCandidates$' -benchmem -benchtime=10000x -count=3 ./widget
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the reference environment above
+
+| Implementation | Candidate IDs | Visible rows | Median time per construction | Allocations | Allocated bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | 8 | 8 | 3,021 ns | not measured | not measured |
+| Rust | 100,000 | 8 | 3,033 ns | not measured | not measured |
+| Go | 8 | 8 | 3,722 ns | 44 | 13,656 |
+| Go | 100,000 | 8 | 4,361 ns | 44 | 13,656 |
+
+Increasing the candidate order from 8 to 100,000 does not add proportional
+construction work or change Go allocation count and bytes. SuggestionItems
+intentionally retains one application-owned item array and ID-to-index map
+proportional to candidate count; view reconstruction shares that storage and
+performs one O(1) indexed selection lookup. The component is not a
+variable-height candidate virtualizer, and it still builds the configured
+visible row count on each controlled view
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and
@@ -406,6 +453,12 @@ heap after two 256-frame variable-height windows with the same 1 MiB tolerance
 Both implementations also verify that initial stick-to-end rendering and
 content growth invoke the fragment builder once per frame, construct only the
 visible rows, and preserve a manual offset after the user leaves the end
+
+SuggestionPopup tests validate duplicate rejection, immutable input ownership,
+shared storage after copy, O(1) indexed selection, exact visible-row builder
+bounds, and zero candidate-row builds for loading and empty notices. The Go
+placement regression additionally verifies zero allocations for 1,000 warmed
+AnchoredOverlay geometry resolutions
 
 Content projection shares 15 rendering and failure fixtures across Rust and
 Go. They cover inline style inheritance, Paragraph wrapping and alignment,
