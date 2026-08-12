@@ -29,7 +29,7 @@ Go moduleはTUIとCLIを別々にversioningして導入できるよう分割し�
 
 共有RustとGo基盤はimmutableなsource-neutral Content、Unicode対応Text、typed VT codecを提供します。既存のNagi TUI実装はimmutableなTerminal Presentation Rules、上限付きContentからNodeへのprojection、native runtime、Cell Surface、決定的test harness、27個の標準Widget、大規模content向けvirtual ScrollViewportとstableな可変高VirtualFeedを追加します
 
-Nagi CLIはRustとGoのnative Command Graph、command-local typed value scope、portable option groupとvalidator、制御可能なHelp-only Usage Variantを持つstructured deterministic Help、target付きsemantic Diagnostic、段階実行runtime policy、協調的SIGINT cancellation、processなしのtest driver、対応するexampleを提供します
+Nagi CLIはRustとGoのnative Command Graph、localと継承Option、command-local typed value scope、portable option groupとvalidator、制御可能なHelp-only Usage Variantを持つstructured deterministic Help、target付きsemantic Diagnostic、段階実行runtime policy、協調的SIGINT cancellation、processなしのtest driver、対応するexampleを提供します
 
 ## 利用例と契約
 

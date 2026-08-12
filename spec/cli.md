@@ -37,6 +37,8 @@ is true:
 - a short option is not one ASCII alphanumeric byte;
 - sibling command stable IDs, names, or aliases overlap;
 - option IDs, long names, or short names overlap within a command;
+- an inherited option spelling overlaps any option visible from that option's
+  declaration through a descendant command;
 - option and positional value IDs overlap within one command;
 - a repeated positional is not the final positional;
 - a relation names an option outside its command;
@@ -58,11 +60,34 @@ Options and positionals MAY be interspersed until `--`. The `--` argument ends
 option and subcommand recognition and is not stored. A lone `-` is positional.
 
 Before a positional is consumed, a non-option matching a child name or alias
-selects that child. After child selection, only child options are recognized.
-Parent and child commands MAY declare the same option spelling and local value
-ID; token position selects the command scope. Already parsed parent values
-remain in the Invocation. After any positional is consumed, later tokens are
-positional even if they match a child name.
+selects that child. After child selection, options declared by that child and
+inherited options declared by selected ancestors are recognized. Parent and
+child commands MAY declare the same local option spelling and local value ID;
+token position selects the command scope. This spelling reuse is invalid when
+the ancestor option is inherited because both declarations would be visible
+after child selection. Already parsed parent values remain in the Invocation.
+After any positional is consumed, later non-option tokens are positional even
+if they match a child name.
+
+Options are local unless explicitly marked Inherited. An inherited option is
+recognized in its declaring command and every selected descendant, including
+after positionals, until `--` disables option recognition. An inherited option
+declared by a child is not visible before that child is selected. Long and short
+spellings are resolved independently and short clusters MAY contain local and
+inherited options from different selected scopes.
+
+Every occurrence of an inherited option is stored in its declaration scope,
+regardless of its argv position. Duplicate checks and repeated-value order
+therefore span occurrences before and after subcommand selection. Required,
+environment, default, relation, option-group, and validator behavior continues
+to run in the declaration scope. Relations and groups remain command-local and
+MUST NOT reference an ancestor or descendant declaration.
+
+The complete graph is validated before parsing. A local or inherited spelling
+in a descendant MUST NOT overlap a visible inherited spelling. Reusing a
+non-inherited ancestor spelling remains valid, as does reuse on unrelated
+sibling branches. Implementations MUST resolve an option from only the selected
+root-to-active path and MUST NOT scan unrelated graph branches per argv token.
 
 If a command has children but no positionals, an unrecognized non-option is an
 `unknown-command` error. If a command requires a child and none is selected,
@@ -163,6 +188,12 @@ value was not resolved. A validator uses its defining command as the current
 scope. A handler uses the selected leaf command as the current scope.
 Applications MAY select an exact scope by stable command-ID path.
 
+An inherited option remains discoverable through ordinary ancestor lookup when
+no nearer value ID shadows it. Applications that require its exact declaration
+MAY select the declaration scope explicitly. Parse and validation Diagnostics
+for an inherited option use that declaration's stable command-ID path as their
+target while retaining the selected command path and usage context.
+
 Access is typed by option kind and Value Parser result. Looking up a missing or
 differently typed value returns absence rather than coercing it.
 
@@ -238,6 +269,14 @@ command entries, argument entries, option entries, pairwise option-relation
 metadata, option-group metadata, examples, notes, links, and custom sections.
 Custom sections have a stable ID, heading, and ordered paragraph or
 labeled-entry blocks.
+
+Help for a command lists its own declarations under `Options`. Inherited
+options from selected ancestors are listed separately in outermost-to-nearest
+ancestor and definition order. Each inherited Help entry retains the source
+canonical command path, source stable command-ID path, option ID, label, and
+description. The standard renderer uses an `Inherited Options` section and
+adds `[from COMMAND PATH]` to each description. Constraints remain attached to
+the Help Document of their declaration command.
 
 Each Help Usage Variant contains its source stable command-ID path, a
 source-local stable ID, a syntax suffix relative to the Help Document command,

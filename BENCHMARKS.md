@@ -153,6 +153,58 @@ allocation is expected. Go's projector passes its owned span slices directly
 to the internal Paragraph construction path; the public Paragraph constructor
 continues to defensively copy caller-owned slices
 
+## CLI inherited-option purpose
+
+This benchmark measures one complete command parse, including Command Graph
+validation and Invocation construction. The selected command is `root run`,
+and 1,000 occurrences of a root-declared inherited Count option appear after
+the child selection
+
+Two graph shapes use the same selected path and argv
+
+- The selected-path graph contains only `run`
+- The unrelated-branches graph additionally contains 100 unselected sibling
+  commands with eight inherited options each
+
+The complete graph is validated once per parse. Argument-token option lookup
+uses only the selected root-to-active path, so the additional siblings add a
+fixed validation cost rather than becoming candidates for each of the 1,000
+occurrences. The workload has no Handler, process I/O, cancellation, or
+long-running state
+
+Rust reports the median of 12 parses with allocation count, total allocated
+bytes, peak additional live bytes, and retained bytes. Go reports the median
+of three reports, each measured over 100 parses with standard `testing`
+allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench inherited_options
+GOWORK="$PWD/go.work" make -C nagicli-go bench
+```
+
+The root `make bench` command includes these paths together with the TUI
+benchmarks
+
+### Reference results
+
+Results recorded on 2026-08-12 in the same reference environment
+
+| Implementation | Graph | Median time per parse | Allocations per parse | Allocated bytes per parse | Peak additional live bytes | Retained bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | Selected path only | 0.059 ms | 2,043 | 44,183 | 34,301 | 0 |
+| Rust | 100 unrelated branches | 0.270 ms | 7,375 | 246,399 | 34,301 | 0 |
+| Go | Selected path only | 0.051 ms | 20 | 17,728 | not measured | not measured |
+| Go | 100 unrelated branches | 0.156 ms | 638 | 99,120 | not measured | not measured |
+
+The 1,000-occurrence selected-path case completes below 0.1 ms in both
+implementations on the reference machine. Adding 800 declarations on
+unselected branches increases whole-graph validation work and transient
+allocation, while the option-resolution loop remains proportional to selected
+path depth and options on that path. Rust drops each measured Invocation with
+zero retained bytes
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and

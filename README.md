@@ -43,11 +43,11 @@ bounded Content-to-Node projection, deterministic test harnesses, 27 standard
 widgets, virtual ScrollViewports, and stable variable-height VirtualFeeds for
 large content
 
-Nagi CLI provides native Rust and Go Command Graphs, command-local typed value
-scopes, portable option groups and validators, structured deterministic Help
-with controllable Help-only Usage Variants, targeted semantic Diagnostics,
-staged runtime policies, cooperative SIGINT cancellation, process-free test
-drivers, and matching examples
+Nagi CLI provides native Rust and Go Command Graphs, local and inherited
+options, command-local typed value scopes, portable option groups and
+validators, structured deterministic Help with controllable Help-only Usage
+Variants, targeted semantic Diagnostics, staged runtime policies, cooperative
+SIGINT cancellation, process-free test drivers, and matching examples
 
 ## Usage and contracts
 

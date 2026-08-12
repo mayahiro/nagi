@@ -33,6 +33,7 @@ Commands, options, and positionals use language-native builders
 | Flag | `OptionSpec::flag("id")` | `cli.Flag("id")` |
 | Count | `OptionSpec::count("id")` | `cli.Count("id")` |
 | Value option | `OptionSpec::value("id")` | `cli.ValueOption("id")` |
+| Inherited option | `.inherited()` | `.Inherited()` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
@@ -44,9 +45,13 @@ Commands, options, and positionals use language-native builders
 | Custom Help section | `HelpSection::new(...)` | `cli.NewHelpSection(...)` |
 | Handler | `.handler(handler)` | `.Handle(handler)` |
 
-Long and short names are explicit. Value options can be required, repeatable,
+Long and short names are explicit. Options are command-local by default.
+Marking an option inherited makes it visible in its declaring command and
+every selected descendant, before or after subcommand selection and
+positionals until `--`. Value options can be required, repeatable,
 environment-backed, defaulted, or related through `requires` and `conflicts`.
-Relations can inspect resolved presence or command-line presence
+Relations can inspect resolved presence or command-line presence and remain
+local to the command that declares them
 
 Portable option groups express `at-most-one`, `exactly-one`, `at-least-one`,
 and `all-or-none` cardinality over options on one command. Groups inspect
@@ -62,7 +67,9 @@ The complete graph is validated before argv is consumed. Invalid names,
 reserved built-in spellings, local option and positional ID collisions, sibling
 alias collisions, invalid positional order, malformed groups, and
 cross-command option relations return an `invalid-specification` Diagnostic.
-Parent and child commands may reuse the same value ID and option spelling
+Parent and child commands may reuse the same value ID. They may also reuse an
+option spelling when the ancestor declaration is local. A descendant cannot
+reuse a visible inherited spelling, while unrelated branches remain independent
 
 ## Parsing and typed values
 
@@ -92,6 +99,12 @@ Use `Invocation::scope` or `Invocation.Scope` with a stable command-ID path for
 exact access to a parent or another selected scope. `Invocation::scopes` and
 `Invocation.Scopes` enumerate all selected scopes in root-to-leaf order
 
+Every inherited-option occurrence is stored in the scope that declared it,
+including occurrences after a descendant was selected. Duplicate checks and
+repeated-value ordering therefore span both argv positions. A parse or
+validation Diagnostic targets the declaration's stable command-ID path while
+retaining the selected command path and usage
+
 Each parsed value records whether it came from the command line, environment,
 or default. Command-line values take precedence over both fallback sources.
 `Invocation::contains` and `Invocation.Contains` report resolved presence,
@@ -117,6 +130,13 @@ option-relation and option-group constraints, named examples, notes, links,
 and application-defined structured sections. Standard entries, Usage
 Variants, and relation and group members retain stable IDs separately from
 display labels
+
+Local declarations appear under `Options`. Options inherited from selected
+ancestors appear under `Inherited Options` in outermost-to-nearest ancestor
+and definition order. `HelpInheritedOption` retains the source command path,
+stable command-ID path, option ID, label, and unmodified description for
+custom renderers. The plain renderer appends the source command path to each
+inherited description
 
 `Command::usage_variant` and `Command.UsageVariant` add ordered Help-only
 invocation forms. Their syntax is a suffix such as `<NODE> [OPTIONS]`; the

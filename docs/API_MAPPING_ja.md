@@ -383,6 +383,8 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | --- | --- | --- |
 | Command定義 | `Command::new` | `cli.NewCommand` |
 | Flag、count、value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
+| Optionを継承可能にする | `OptionSpec::inherited` | `OptionSpec.Inherited` |
+| 継承状態の参照 | `OptionSpec::is_inherited` | `OptionSpec.IsInherited` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
 | Raw、string、integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
@@ -399,6 +401,7 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Help Usage Variant定義 | `Command::usage_variant` | `Command.UsageVariant` |
 | Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
+| Structured継承Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime service | `Context` | `cli.Context` |

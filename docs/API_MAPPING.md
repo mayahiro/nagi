@@ -400,6 +400,8 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | --- | --- | --- |
 | Command definition | `Command::new` | `cli.NewCommand` |
 | Flag, count, value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
+| Make an option inherited | `OptionSpec::inherited` | `OptionSpec.Inherited` |
+| Query inherited state | `OptionSpec::is_inherited` | `OptionSpec.IsInherited` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
 | Raw, string, integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
@@ -416,6 +418,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Help Usage Variant definition | `Command::usage_variant` | `Command.UsageVariant` |
 | Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
+| Structured inherited Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime services | `Context` | `cli.Context` |

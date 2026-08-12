@@ -30,6 +30,7 @@ Command、option、positionalは各言語に自然なbuilderで定義します
 | Flag | `OptionSpec::flag("id")` | `cli.Flag("id")` |
 | Count | `OptionSpec::count("id")` | `cli.Count("id")` |
 | Value option | `OptionSpec::value("id")` | `cli.ValueOption("id")` |
+| 継承Option | `.inherited()` | `.Inherited()` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
@@ -43,9 +44,13 @@ Command、option、positionalは各言語に自然なbuilderで定義します
 
 Longとshortの名前を明示します
 
+Optionは既定でCommand-localです
+
+継承Optionにすると、宣言したCommandと選択された全descendantで、subcommand選択やpositionalの前後を問わず`--`まで認識されます
+
 Value optionにはrequired、repeated、environment fallback、default、`requires`、`conflicts`を設定できます
 
-Relationはresolved presenceまたはcommand-line presenceを参照できます
+Relationはresolved presenceまたはcommand-line presenceを参照でき、宣言したCommand内に留まります
 
 Portable option groupは同一Command上のoptionに対する`at-most-one`、`exactly-one`、`at-least-one`、`all-or-none` cardinalityを表します
 
@@ -61,7 +66,11 @@ Argvを読む前にgraph全体を検証します
 
 不正な名前、予約済みbuilt-in spelling、同一Command内のoptionとpositional ID衝突、sibling alias衝突、不正なpositional順序、不正なgroup、Commandをまたぐoption relationは`invalid-specification` Diagnosticになります
 
-ParentとchildのCommandは同じvalue IDとoption spellingを再利用できます
+ParentとchildのCommandは同じvalue IDを再利用できます
+
+Ancestorの宣言がlocalなら同じoption spellingも再利用できますが、descendantは可視な継承Optionのspellingを再利用できません
+
+互いに無関係なbranchは独立しています
 
 ## Parsingとtyped value
 
@@ -95,6 +104,12 @@ Parentなどのexact scopeを参照する場合はstable command-ID pathを指�
 
 `Invocation::scopes`と`Invocation.Scopes`は選択されたscopeをrootからleafの順に列挙します
 
+継承Optionはdescendant選択後に現れた場合も、全occurrenceが宣言scopeへ保存されます
+
+そのためduplicate checkとrepeated valueの順序はsubcommand前後を通して適用されます
+
+Parseまたはvalidation Diagnosticは選択中のcommand pathとusageを維持しつつ、宣言元のstable command-ID pathをtargetにします
+
 各parsed valueはcommand line、environment、defaultのどこから得たかを記録し、command-line valueが両fallbackより優先されます
 
 `Invocation::contains`と`Invocation.Contains`はresolved presence、`Invocation::supplied`と`Invocation.Supplied`はnearest visible declarationがargvから指定されたかを返します
@@ -118,6 +133,12 @@ Schema上必要なvalueのmappingには、Rustの`Invocation::require_value`ま�
 Help Documentはcanonical command path、structured Usage Variantとrendered usage line、command、argument、option、option relationとoption-group constraint、名前付きexample、note、link、application定義のstructured sectionを保持します
 
 標準entry、Usage Variant、option relation、option-group memberはstable IDをdisplay labelとは分離して保持します
+
+Localな宣言は`Options`、選択されたancestorから継承したOptionは`Inherited Options`へ、外側から近いancestorの順と定義順で格納されます
+
+`HelpInheritedOption`はcustom renderer向けに宣言元command path、stable command-ID path、option ID、label、変更前のdescriptionを保持します
+
+既定rendererは各継承Optionのdescriptionへ宣言元command pathを付けます
 
 `Command::usage_variant`と`Command.UsageVariant`は定義順を持つHelp-only invocation formを追加します
 
