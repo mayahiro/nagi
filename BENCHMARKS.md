@@ -634,13 +634,15 @@ identities around the midpoint selection. Terminal layout remains linear in
 the complete projected source and retains one CodeVisualRow per no-wrap logical
 line, matching the CodeView projection contract
 
-## SplitPane and Drawer purpose
+## SplitPane, Drawer, StatusBar, and Toast purpose
 
-This benchmark constructs three controlled view compositions: one SplitPane
-with focus and resize handlers, one closed Drawer, and one open modal Drawer.
-Each pane or drawer body contains one fixed text Node. The measured path covers
-widget action composition and Core Node construction, but excludes Runtime
-preparation, layout, rendering, terminal I/O, pointer dispatch, and application
+This benchmark constructs five controlled view compositions: one SplitPane
+with focus and resize handlers, one closed Drawer, one open modal Drawer, one
+three-slot StatusBar, and one ToastRegion containing eight configured records
+with a visible limit of three. Each pane, slot, drawer body, or visible Toast
+body contains one fixed text Node. The measured path covers widget composition
+and Core Node construction, but excludes Runtime preparation, layout,
+rendering, terminal I/O, pointer dispatch, timer delivery, and application
 update
 
 Rust reports the median of 12 samples containing 10,000 constructions each. Go
@@ -651,29 +653,36 @@ Run only these benchmarks from the superproject root
 
 ```sh
 cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui-widgets --bench split_pane_drawer
-GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^Benchmark(SplitPane|Drawer(Closed|Open))Construction$' -benchmem -benchtime=10000x -count=3 ./widget
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^Benchmark(SplitPane|Drawer(Closed|Open)|StatusBar|ToastRegion)' -benchmem -benchtime=10000x -count=3 ./widget
 ```
 
 The root `make bench` command includes these paths
 
 ### Reference results
 
-Results recorded on 2026-08-12 in the reference environment above
+Results recorded on 2026-08-13 in the reference environment above
 
 | Implementation | Path | Median time per construction | Allocations | Allocated bytes |
 | --- | --- | ---: | ---: | ---: |
-| Rust | SplitPane | 1,015 ns | not measured | not measured |
-| Rust | closed Drawer | 70 ns | not measured | not measured |
-| Rust | open Drawer | 397 ns | not measured | not measured |
-| Go | SplitPane | 2,011 ns | 24 | 3,769 |
-| Go | closed Drawer | 215.6 ns | 1 | 640 |
-| Go | open Drawer | 1,035 ns | 11 | 4,488 |
+| Rust | SplitPane | 999 ns | not measured | not measured |
+| Rust | closed Drawer | 72 ns | not measured | not measured |
+| Rust | open Drawer | 374 ns | not measured | not measured |
+| Rust | three-slot StatusBar | 179 ns | not measured | not measured |
+| Rust | eight-record, three-visible ToastRegion | 952 ns | not measured | not measured |
+| Go | SplitPane | 1,706 ns | 24 | 3,769 |
+| Go | closed Drawer | 231.1 ns | 1 | 640 |
+| Go | open Drawer | 1,188 ns | 11 | 4,488 |
+| Go | three-slot StatusBar | 838.8 ns | 3 | 2,224 |
+| Go | eight-record, three-visible ToastRegion | 1,728 ns | 30 | 7,248 |
 
-These paths are constant in pane count. The closed Drawer takes the base-node
-path and omits modal, border, action, and overlay composition. Deterministic
-tests separately verify that a closed Drawer does not invoke its body builder
-and that an automatically omitted SplitPane child is excluded from semantic
-preparation, focus routing, rendering, and lazy virtual construction
+The SplitPane and Drawer paths are constant in pane count. The closed Drawer
+takes the base-node path and omits modal, border, action, and overlay
+composition. Deterministic tests separately verify that a closed Drawer does
+not invoke its body builder and that an automatically omitted SplitPane child
+is excluded from semantic preparation, focus routing, rendering, and lazy
+virtual construction. StatusBar construction is linear in configured slot
+count. ToastRegion retains and scans configured records linearly but invokes at
+most the visible-limit body builders
 
 ## Regression checks
 

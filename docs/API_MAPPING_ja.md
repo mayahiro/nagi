@@ -120,10 +120,14 @@ Content identityからNode identityを導出せず、annotationをapplication ac
 | Linear gap | `Node::gap(cells)` | `tui.Gap[M](cells)` |
 | Horizontal child | `Node::row(children)` | `tui.Row[M](children...)` |
 | Vertical child | `Node::column(children)` | `tui.Column[M](children...)` |
+| Priority対応horizontal child | `Node::responsive_row(items, options)` | `tui.ResponsiveRow[M](items, options)` |
+| Responsive item | `ResponsiveRowItem::new(node)` | `tui.NewResponsiveRowItem[M](node)` |
+| Responsive配置とoption | `ResponsiveRowPlacement` / `ResponsiveRowOptions` | `tui.ResponsiveRowPlacement` / `tui.ResponsiveRowOptions` |
 | Responsive two-pane layout | `Node::split_pane(primary, secondary, options)` | `tui.SplitPane[M](primary, secondary, options)` |
 | Split-pane option | `SplitPaneOptions` | `tui.SplitPaneOptions` / `DefaultSplitPaneOptions` |
 | Split axisとcollapse target | `SplitPaneAxis` / `SplitPaneCollapse` | `tui.SplitPaneAxis` / `tui.SplitPaneCollapse` |
 | Layered child | `Node::stack(children)` | `tui.Stack[M](children...)` |
+| Base-measured front layer | `Node::overlay(base, layer)` | `tui.Overlay[M](base, layer)` |
 | Anchor付きfront layer | `Node::anchored_overlay(...)` | `tui.AnchoredOverlay[M](...)` |
 | 設定付きanchor layer | `Node::anchored_overlay_with_options(...)` | `tui.AnchoredOverlayWithOptions[M](...)` |
 | Anchor配置option | `AnchoredOverlayOptions` | `tui.AnchoredOverlayOptions` |
@@ -326,6 +330,13 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | Disclosure | `Disclosure::new` | `widget.NewDisclosure` |
 | SplitPane | `SplitPane::new` | `widget.NewSplitPane` |
 | Drawer | `Drawer::new` | `widget.NewDrawer` |
+| StatusBar | `StatusBar::new` | `widget.NewStatusBar` |
+| StatusBar slot | `StatusBarSlot::new` | `widget.NewStatusBarSlot` |
+| StatusBar priority | `StatusBarPriority` | `widget.StatusBarPriority` |
+| Toast | `Toast::new` | `widget.NewToast` |
+| ToastRegion | `ToastRegion::new` | `widget.NewToastRegion` |
+| Toast toneと配置 | `ToastTone` / `ToastPlacement` | `widget.ToastTone` / `widget.ToastPlacement` |
+| Toast style | `ToastStyle` | `widget.ToastStyle` / `widget.DefaultToastStyle` |
 | Dialog | `Dialog::new` | `widget.NewDialog` |
 | ConfirmDialog | `ConfirmDialog::new` | `widget.NewConfirmDialog` |
 | Progress | `Progress::new` | `widget.NewProgress` |

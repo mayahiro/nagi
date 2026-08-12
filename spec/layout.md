@@ -132,5 +132,36 @@ divider
 - Resize does not mutate Runtime or application state. The standard SplitPane
   widget maps keyboard and pointer interaction to controlled ratio messages
 
+A Core `ResponsiveRow` lays out an eager sequence of priority-ranked items in
+start, center, and end regions
+
+- Every item contains one Node, one region, and an unsigned 16-bit retention
+  priority. Start and priority zero are the Core defaults. Unknown Go region
+  values normalize to start; Rust enums cannot represent unknown values
+- Row height is the greatest item height by default. A positive exact height
+  overrides that intrinsic height and bounds every retained item to the same
+  top-aligned extent; the assigned rectangle may still reduce it
+- Natural item width is measured without a horizontal bound and normalizes to
+  at least one Cell. Intrinsic row width is the saturating sum of every natural
+  width and every configured gap. Intrinsic height is the greatest item height
+- At zero assigned width no item is retained. Otherwise candidates are
+  considered by descending priority with source order breaking ties. The first
+  candidate is retained and clipped to the complete available width when
+  necessary
+- Every later candidate requires its complete natural width plus one gap. A
+  candidate that does not fit is skipped without preventing a later narrower
+  candidate from being considered
+- Retained items preserve source order inside each region. Start items pack
+  from the left edge and end items pack from the right edge. Center items use
+  the geometric center when possible and otherwise move only enough to retain
+  the configured gap from the start and end groups
+- Extra space between distinct regions is allowed. The configured gap is a
+  minimum separation, not a request to move edge groups toward the center
+- An omitted item does not participate in preparation, virtual child
+  construction, semantic indexing, focus, hit testing, routing, or rendering
+  Supplying its item Node remains eager
+- Resolution is deterministic and linear apart from priority ordering. One
+  semantic Node caches its resolved rectangles for the assigned rectangle
+
 The solver is not a separate public API; applications configure layout through
 semantic Node lengths and composition

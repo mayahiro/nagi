@@ -109,6 +109,22 @@ Wrapping a child ScrollViewport with AnchoredOverlay lets the layer use the
 outer boundary while the anchor remains clipped by that viewport. Placing the
 AnchoredOverlay inside a viewport keeps the complete layer inside the viewport
 
+## Base-measured overlay
+
+An Overlay places exactly one front layer over one base
+
+- Only the base contributes to intrinsic measurement. Adding or removing the
+  layer therefore does not move siblings in a surrounding linear layout
+- Base and layer receive the same complete assigned rectangle and inherited
+  clip. Applications use Align, Padding, Clip, or another ordinary Node to
+  constrain layer geometry
+- The base is prepared, indexed, and rendered first, then the layer. An
+  overlapping pointer hit therefore selects the layer
+- Both children remain ordinary logical children. Overlay creates no focus,
+  modal, action, placement, state, timer, or hard Event boundary
+- Overlay differs from Stack only in intrinsic measurement. Stack continues to
+  measure the greatest width and height of all supplied children
+
 ## Panel
 
 A Panel fills its assigned rectangle, draws a one-cell border, renders an
@@ -136,6 +152,17 @@ A SplitPane is the responsive two-child Core layout primitive defined by the
 - Only children present in the actual assigned layout enter semantic traversal
 - The primitive owns no focus target, input binding, pointer capture, or ratio
   state. Those policies belong to standard widgets or application composition
+
+## Responsive row
+
+A ResponsiveRow is the priority-aware Core layout primitive defined by the
+[layout specification](layout.md)
+
+- Each item contains an arbitrary Node. The primitive does not assign meaning
+  to status, activity, usage, severity, or any other application concept
+- Actual assigned width determines retention, so omission occurs inside Core
+  before semantic indexing rather than in an application-sized approximation
+- The primitive owns no focus target, key binding, state, task, timer, or I/O
 
 ## Spacing
 

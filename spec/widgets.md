@@ -195,7 +195,8 @@ lifetime
   body builder
 - A closed Drawer returns only its base, does not invoke the body builder, and
   declares no semantic subtree. Opening does not change surrounding
-  measurement because the edge layer is composed over the base with Core Stack
+  measurement because the edge layer is composed over the base with Core
+  Overlay
 - The default side is left, the default size is 40 percent, and the default is
   modal. Left and right sizes participate in Row allocation; top and bottom
   sizes participate in Column allocation. Unknown Go side values use left;
@@ -215,6 +216,55 @@ lifetime
   application state
 - Drawer does not infer outside-click dismissal, backdrop appearance,
   navigation meaning, or application domain state
+
+## StatusBar
+
+- StatusBar receives an eager ordered sequence of slots. Every slot contains
+  an arbitrary Node, a Core start, center, or end placement, and low, normal,
+  high, or critical retention priority
+- The default is start placement and normal priority. The four categories map
+  to monotonically increasing Core numeric priorities. Unknown Go priority
+  values normalize to normal; Rust enums cannot represent unknown values
+- StatusBar composes Core ResponsiveRow, defaults to one empty Cell between
+  retained slots, and configures an exact height of one row even at the root
+  or on a Row cross axis. The gap is configurable
+- Actual narrow-width omission, equal-priority source order, clipping of an
+  oversized highest-priority slot, and semantic omission use the Core
+  ResponsiveRow contract
+- Slot Nodes own their text, style, actions, and application meaning. A Spinner
+  is one possible activity slot but is not treated specially
+- StatusBar owns no Agent, Provider, Tool, token, connection, severity, state,
+  timer, task, Subscription, or I/O concept
+
+## Toast and ToastRegion
+
+- Toast receives one stable root ID, one lazy arbitrary body builder, a neutral,
+  info, success, warning, or error visual tone, and an optional dismissal
+  callback with its own explicit stable Button ID
+- Tone changes only the replaceable border style. Body content and meaning stay
+  application-owned. Unknown Go tone values normalize to neutral; Rust enums
+  cannot represent unknown values
+- A dismissal callback adds the standard focusable Button and therefore reuses
+  its semantic `nagi.activate` keyboard and raw pointer behavior. No derived ID,
+  implicit Escape binding, outside-click behavior, or global action is created
+- ToastRegion receives an eager base Node and a controlled sequence ordered
+  oldest to newest. It defaults to top-end placement, one empty row between
+  values, and a visible limit of three. Top-start, bottom-end, bottom-start,
+  gap, limit, and all styles are configurable
+- Only the newest `min(limit, count)` body builders are invoked. Retained
+  Toasts preserve source order from top to bottom. A zero limit or empty input
+  returns the base without adding an overlay or invoking a body builder
+- The visible group is aligned inside a Core base-measured Overlay, so adding
+  notifications does not affect base or surrounding intrinsic measurement
+- Toast and ToastRegion own no collection mutation, timeout, task,
+  Subscription, I/O, Runtime notice mapping, or queue. Applications remove a
+  controlled record and MAY return an After Effect that carries the Toast ID
+  or an application generation. Expiry handling SHOULD verify that identity so
+  a stale timeout cannot remove a replacement record
+- Configured Toast records are retained and scanned linearly during view
+  construction, while body construction is bounded by the visible limit. An
+  application with an unbounded notification history must bound or virtualize
+  that history outside the widget
 
 ## Dialog and ConfirmDialog
 

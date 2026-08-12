@@ -127,10 +127,10 @@ a Message, a log record, or telemetry
 ## Semantic views and interaction
 
 Core nodes include Text, RichText, Paragraph, safe ANSI Text, SurfaceNode,
-TextInput, CursorAnchor, Spacer, Gap, Row, Column, Stack, AnchoredOverlay,
-Padding, Border, Panel, Align, Clip, ScrollViewport, and Modal. Layout uses
-integer terminal cells and stable rounding rules. VirtualScrollViewport and
-VirtualFlow are the large-content variants
+TextInput, CursorAnchor, Spacer, Gap, Row, Column, ResponsiveRow, Stack,
+Overlay, AnchoredOverlay, Padding, Border, Panel, Align, Clip, ScrollViewport,
+and Modal. Layout uses integer terminal cells and stable rounding rules.
+VirtualScrollViewport and VirtualFlow are the large-content variants
 
 Every stateful, focusable, or event-receiving node needs an application-defined
 stable `NodeId`. IDs must survive rebuilding and must not be derived only from a
@@ -154,6 +154,13 @@ omits the layer from rendering and routing, while an overlapping visible layer
 renders and receives pointer hits after the base. The primitive itself adds no
 focus or modal policy. A zero-width CursorAnchor is a valid visible placement
 point while its coordinate remains inside the boundary and inherited clip
+
+`Node::responsive_row` and `ResponsiveRow` retain higher-priority arbitrary
+Nodes when assigned width is insufficient, then place retained items in start,
+center, and end regions. Options may set an exact cross-axis height. Hidden
+items are omitted before semantic indexing and lazy virtual preparation.
+`Node::overlay` and `Overlay` place one layer over a
+base while measuring only the base; Stack continues to measure all layers
 
 `Node::block_unhandled_events` in Rust and `Node.BlockUnhandledEvents` in Go
 add an opt-in hard boundary to an identified Node. If its local action, Core,
@@ -531,6 +538,14 @@ Standard widgets use public Core composition and the public Unicode text API
   Core Modal focus and routing by default, supports a non-modal mode, and
   declares semantic dismissal without defining outside-click behavior or
   application meaning
+- StatusBar composes arbitrary one-row slots through Core ResponsiveRow with
+  configurable placement, gap, and low through critical retention categories
+  without assigning meaning to status or activity
+- ToastRegion overlays the newest bounded suffix of an application-controlled
+  Toast sequence without constructing omitted bodies. Tone changes replaceable
+  border style, optional dismissal reuses Button activation, and timeout,
+  identity generation, collection mutation, and Runtime notice mapping remain
+  application-owned
 - Dialog composes application-defined actions with explicit default and cancel
   targets, lazy controlled details, modal focus policies, pointer activation,
   and Cell-width action wrapping

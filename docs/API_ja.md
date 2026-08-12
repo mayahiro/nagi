@@ -82,7 +82,7 @@ Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変
 
 ## Semantic viewとInteraction
 
-Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、CursorAnchor、Spacer、Gap、Row、Column、Stack、AnchoredOverlay、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
+Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、CursorAnchor、Spacer、Gap、Row、Column、ResponsiveRow、Stack、Overlay、AnchoredOverlay、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
 
 Stateful、focusable、event受信Nodeにはapplication定義の安定した`NodeId`が必要です。IDはview再構築後も維持し、collection内の位置だけから導出してはいけません。Duplicate IDはruntime errorです
 
@@ -91,6 +91,8 @@ Event handlerはMessage送信、event consume、focus変更、pointer captureと
 Rustの`Node::cursor_anchor`とGoの`CursorAnchor`はhorizontal layout幅を消費せず、stable ownerがfocusを持つ間だけtyped Surface cursorを設定します。Caret文字を描かないため後続textを移動せず、terminal IME位置は描画cursorへ追従します
 
 Rustの`Node::anchored_overlay`とGoの`AnchoredOverlay`はidentified descendantを基準に、measureへ加えずfront layerを配置します。Side、alignment、gap、flipまたはclip fallback、size上限をprimitiveのvisible boundary内で解決します。Anchorがhiddenまたはabsentならlayerをrenderとroutingから外し、visible layerがbaseと重なる場合はbaseより後にrenderしてpointer hitを受けます。Zero-width CursorAnchorは座標がboundaryとinherited clipの内側にある間はvisibleな配置pointです。Primitive自体はfocusやmodal policyを追加しません
+
+Rustの`Node::responsive_row`とGoの`ResponsiveRow`は割当幅が不足する場合に高priorityの任意Nodeを残し、start、center、end領域へ配置します。Optionではcross-axisの正確な高さも指定できます。Hidden itemはsemantic indexingとlazy virtual preparationより前に除外されます。Rustの`Node::overlay`とGoの`Overlay`はbaseだけをmeasureしてfront layerを重ね、Stackは引き続き全layerをmeasureします
 
 Rustの`Node::block_unhandled_events`とGoの`Node.BlockUnhandledEvents`はidentified Nodeへopt-inのhard boundaryを追加します。そのNodeのlocal action、Core handling、pointer handler、raw handlerがEventをconsumeしなかった場合、ancestor raw handlerまたはterminal fallback mappingへ届く前にboundaryがconsumeします。Defaultはsoft boundaryのままです
 
@@ -299,6 +301,8 @@ Active Streamは長期稼働を前提とし、generationがactiveな間の正常
 - Disclosureはcontrolledなfocusable summary、rebind可能なtoggle、collapse、expand action、raw pointer toggle、collapsed時に呼ばれないbody builder、nested focus fallbackを提供する
 - SplitPaneはCoreの二pane allocatorへcontrolledなbasis-point ratio、paneごとのminimum、決定的な自動collapse、F6 focus移動、axisに対応するkeyboard resize、divider dragを組み合わせ、paneの意味とstate永続化はApplicationが所有する
 - Drawerはopen中だけcontrolledなedge overlayをlazy構築し、defaultではCore Modalのfocusとroutingを再利用し、non-modal modeとsemantic dismissを提供するが、outside-click挙動とApplication上の意味は定義しない
+- StatusBarはCore ResponsiveRowを通じて任意の1行slotへ配置、gap、lowからcriticalまでの保持categoryを構成し、statusやactivityの意味は定義しない
+- ToastRegionはApplication制御のToast sequenceから新しい方の上限付きsuffixだけをoverlayし、除外bodyを構築しない。Toneは差し替え可能なborder styleだけを変更し、任意dismissはButton activationを再利用する。Timeout、identity generation、collection mutation、Runtime notice mappingはApplicationが所有する
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
 - ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する
 - Command Paletteはfilterされた安定したcommand IDに対するcontrolled query、root所有vertical action、row所有activationを組み合わせる
