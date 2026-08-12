@@ -120,6 +120,9 @@ Content identityからNode identityを導出せず、annotationをapplication ac
 | Linear gap | `Node::gap(cells)` | `tui.Gap[M](cells)` |
 | Horizontal child | `Node::row(children)` | `tui.Row[M](children...)` |
 | Vertical child | `Node::column(children)` | `tui.Column[M](children...)` |
+| Responsive two-pane layout | `Node::split_pane(primary, secondary, options)` | `tui.SplitPane[M](primary, secondary, options)` |
+| Split-pane option | `SplitPaneOptions` | `tui.SplitPaneOptions` / `DefaultSplitPaneOptions` |
+| Split axisとcollapse target | `SplitPaneAxis` / `SplitPaneCollapse` | `tui.SplitPaneAxis` / `tui.SplitPaneCollapse` |
 | Layered child | `Node::stack(children)` | `tui.Stack[M](children...)` |
 | Anchor付きfront layer | `Node::anchored_overlay(...)` | `tui.AnchoredOverlay[M](...)` |
 | 設定付きanchor layer | `Node::anchored_overlay_with_options(...)` | `tui.AnchoredOverlayWithOptions[M](...)` |
@@ -214,6 +217,8 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | History recall Action ID | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
 | Suggestion Action ID | `SUGGESTION_ACCEPT_ACTION_ID` / `SUGGESTION_DISMISS_ACTION_ID` | `widget.SuggestionAcceptActionID` / `widget.SuggestionDismissActionID` |
 | Inspector copy Action ID | `INSPECTOR_COPY_ACTION_ID` | `widget.InspectorCopyActionID` |
+| Pane focus Action ID | `PANE_FOCUS_PREVIOUS_ACTION_ID` / `PANE_FOCUS_NEXT_ACTION_ID` | `widget.PaneFocusPreviousActionID` / `widget.PaneFocusNextActionID` |
+| Pane resize Action ID | `PANE_RESIZE_PREVIOUS_ACTION_ID` / `PANE_RESIZE_NEXT_ACTION_ID` | `widget.PaneResizePreviousActionID` / `widget.PaneResizeNextActionID` |
 | Text cursor Action ID | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection extension Action ID | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -248,6 +253,8 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | JsonInspector action descriptor | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
 | CodeView action descriptor | `CodeView::action_descriptors` | `CodeView.ActionDescriptors` |
 | DiffView action descriptor | `DiffView::action_descriptors` | `DiffView.ActionDescriptors` |
+| SplitPane action descriptor | `SplitPane::action_descriptors` | `SplitPane.ActionDescriptors` |
+| Drawer action descriptor | `Drawer::action_descriptor` | `Drawer.ActionDescriptor` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -317,6 +324,8 @@ Rustはroute conflictを`RuntimeError`でwrapし、Goはstructured conflictを�
 | Button | `Button::new` | `widget.NewButton` |
 | Modal | `Modal::new` | `widget.NewModal` |
 | Disclosure | `Disclosure::new` | `widget.NewDisclosure` |
+| SplitPane | `SplitPane::new` | `widget.NewSplitPane` |
+| Drawer | `Drawer::new` | `widget.NewDrawer` |
 | Dialog | `Dialog::new` | `widget.NewDialog` |
 | ConfirmDialog | `ConfirmDialog::new` | `widget.NewConfirmDialog` |
 | Progress | `Progress::new` | `widget.NewProgress` |
@@ -355,6 +364,7 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Preferred visual column | `TextAreaState::preferred_column` | `TextAreaState.PreferredColumn` |
 | Undoとredo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
+| Split pane state | `SplitPaneState::new` | `widget.NewSplitPaneState` / `DefaultSplitPaneState` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
 | Suggestion identity | `SuggestionId::new` | `widget.NewSuggestionID` |
 | Immutable suggestion order | `SuggestionItems::new` | `widget.NewSuggestionItems` |

@@ -124,6 +124,19 @@ padding
   `width - 4` cells, and one U+0020. It begins one cell after the left border
 - Every operation remains clipped and zero-sized panels are valid
 
+## Split pane
+
+A SplitPane is the responsive two-child Core layout primitive defined by the
+[layout specification](layout.md)
+
+- The primary child, optional one-Cell divider, and secondary child follow the
+  configured main-axis order
+- Measurement includes both eager child measurements and one divider Cell.
+  Actual layout may omit the configured collapse pane under insufficient space
+- Only children present in the actual assigned layout enter semantic traversal
+- The primitive owns no focus target, input binding, pointer capture, or ratio
+  state. Those policies belong to standard widgets or application composition
+
 ## Spacing
 
 `Spacer` is an invisible leaf with an explicit width and height. `Gap` is an

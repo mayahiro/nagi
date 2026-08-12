@@ -634,6 +634,47 @@ identities around the midpoint selection. Terminal layout remains linear in
 the complete projected source and retains one CodeVisualRow per no-wrap logical
 line, matching the CodeView projection contract
 
+## SplitPane and Drawer purpose
+
+This benchmark constructs three controlled view compositions: one SplitPane
+with focus and resize handlers, one closed Drawer, and one open modal Drawer.
+Each pane or drawer body contains one fixed text Node. The measured path covers
+widget action composition and Core Node construction, but excludes Runtime
+preparation, layout, rendering, terminal I/O, pointer dispatch, and application
+update
+
+Rust reports the median of 12 samples containing 10,000 constructions each. Go
+reports the median of three `testing` runs with 10,000 constructions each and
+includes standard allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui-widgets --bench split_pane_drawer
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^Benchmark(SplitPane|Drawer(Closed|Open))Construction$' -benchmem -benchtime=10000x -count=3 ./widget
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the reference environment above
+
+| Implementation | Path | Median time per construction | Allocations | Allocated bytes |
+| --- | --- | ---: | ---: | ---: |
+| Rust | SplitPane | 1,015 ns | not measured | not measured |
+| Rust | closed Drawer | 70 ns | not measured | not measured |
+| Rust | open Drawer | 397 ns | not measured | not measured |
+| Go | SplitPane | 2,011 ns | 24 | 3,769 |
+| Go | closed Drawer | 215.6 ns | 1 | 640 |
+| Go | open Drawer | 1,035 ns | 11 | 4,488 |
+
+These paths are constant in pane count. The closed Drawer takes the base-node
+path and omits modal, border, action, and overlay composition. Deterministic
+tests separately verify that a closed Drawer does not invoke its body builder
+and that an automatically omitted SplitPane child is excluded from semantic
+preparation, focus routing, rendering, and lazy virtual construction
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and

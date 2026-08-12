@@ -120,6 +120,9 @@ turns annotations into application actions
 | Linear gap | `Node::gap(cells)` | `tui.Gap[M](cells)` |
 | Horizontal children | `Node::row(children)` | `tui.Row[M](children...)` |
 | Vertical children | `Node::column(children)` | `tui.Column[M](children...)` |
+| Responsive two-pane layout | `Node::split_pane(primary, secondary, options)` | `tui.SplitPane[M](primary, secondary, options)` |
+| Split-pane options | `SplitPaneOptions` | `tui.SplitPaneOptions` / `DefaultSplitPaneOptions` |
+| Split axis and collapse target | `SplitPaneAxis` / `SplitPaneCollapse` | `tui.SplitPaneAxis` / `tui.SplitPaneCollapse` |
 | Layered children | `Node::stack(children)` | `tui.Stack[M](children...)` |
 | Anchored front layer | `Node::anchored_overlay(...)` | `tui.AnchoredOverlay[M](...)` |
 | Configured anchored layer | `Node::anchored_overlay_with_options(...)` | `tui.AnchoredOverlayWithOptions[M](...)` |
@@ -219,6 +222,8 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | History recall Action IDs | `HISTORY_PREVIOUS_ACTION_ID` / `HISTORY_NEXT_ACTION_ID` | `widget.HistoryPreviousActionID` / `widget.HistoryNextActionID` |
 | Suggestion Action IDs | `SUGGESTION_ACCEPT_ACTION_ID` / `SUGGESTION_DISMISS_ACTION_ID` | `widget.SuggestionAcceptActionID` / `widget.SuggestionDismissActionID` |
 | Inspector copy Action ID | `INSPECTOR_COPY_ACTION_ID` | `widget.InspectorCopyActionID` |
+| Pane focus Action IDs | `PANE_FOCUS_PREVIOUS_ACTION_ID` / `PANE_FOCUS_NEXT_ACTION_ID` | `widget.PaneFocusPreviousActionID` / `widget.PaneFocusNextActionID` |
+| Pane resize Action IDs | `PANE_RESIZE_PREVIOUS_ACTION_ID` / `PANE_RESIZE_NEXT_ACTION_ID` | `widget.PaneResizePreviousActionID` / `widget.PaneResizeNextActionID` |
 | Text cursor Action IDs | `TEXT_CURSOR_*_ACTION_ID` | `tui.TextCursor*ActionID` |
 | Text selection-extension Action IDs | `TEXT_SELECTION_EXTEND_*_ACTION_ID` | `tui.TextSelectionExtend*ActionID` |
 | Select-all Action ID | `TEXT_SELECT_ALL_ACTION_ID` | `tui.TextSelectAllActionID` |
@@ -253,6 +258,8 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | JsonInspector action descriptors | `JsonInspector::action_descriptors` | `JSONInspector.ActionDescriptors` |
 | CodeView action descriptors | `CodeView::action_descriptors` | `CodeView.ActionDescriptors` |
 | DiffView action descriptors | `DiffView::action_descriptors` | `DiffView.ActionDescriptors` |
+| SplitPane action descriptors | `SplitPane::action_descriptors` | `SplitPane.ActionDescriptors` |
+| Drawer action descriptor | `Drawer::action_descriptor` | `Drawer.ActionDescriptor` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
 | Dialog action | `DialogAction::new` | `widget.NewDialogAction` |
@@ -318,6 +325,8 @@ structured conflict directly
 | Button | `Button::new` | `widget.NewButton` |
 | Modal | `Modal::new` | `widget.NewModal` |
 | Disclosure | `Disclosure::new` | `widget.NewDisclosure` |
+| SplitPane | `SplitPane::new` | `widget.NewSplitPane` |
+| Drawer | `Drawer::new` | `widget.NewDrawer` |
 | Dialog | `Dialog::new` | `widget.NewDialog` |
 | ConfirmDialog | `ConfirmDialog::new` | `widget.NewConfirmDialog` |
 | Progress | `Progress::new` | `widget.NewProgress` |
@@ -361,6 +370,7 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Preferred visual column | `TextAreaState::preferred_column` | `TextAreaState.PreferredColumn` |
 | Undo and redo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
+| Split pane state | `SplitPaneState::new` | `widget.NewSplitPaneState` / `DefaultSplitPaneState` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
 | Suggestion identity | `SuggestionId::new` | `widget.NewSuggestionID` |
 | Immutable suggestion order | `SuggestionItems::new` | `widget.NewSuggestionItems` |

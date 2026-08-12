@@ -242,7 +242,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、CodeView、DiffView、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
+Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、SplitPane、Drawer、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、CodeView、DiffView、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -296,6 +296,9 @@ Active Streamは長期稼働を前提とし、generationがactiveな間の正常
 - CodeViewはApplication所有の行selection、memo化したterminal幅projection、上限付きvisual row Node構築、no-wrap時の横scroll、完全な行単位copy requestを使ってimmutableなstyled logical lineを表示し、syntax parser、file I/O、diffの意味、redaction、clipboard policyをcomponent外に維持する
 - DiffViewはApplication所有の行selection、memo化したterminal projection、stickyなold／new line number、unified marker、上限付きvisual row構築、要求時のunified copy requestを使ってimmutableなtyped diff lineを表示し、diff parse、repository access、patch apply、approval policy、redaction、clipboard policyをcomponent外に維持する
 - VirtualFeedはdefaultで末尾追従するflexibleなVirtualFlowへ、Application制御のcentered empty、pinned loading-beforeとloading-after、bottom-end unread-indicator slotを構成する
+- Disclosureはcontrolledなfocusable summary、rebind可能なtoggle、collapse、expand action、raw pointer toggle、collapsed時に呼ばれないbody builder、nested focus fallbackを提供する
+- SplitPaneはCoreの二pane allocatorへcontrolledなbasis-point ratio、paneごとのminimum、決定的な自動collapse、F6 focus移動、axisに対応するkeyboard resize、divider dragを組み合わせ、paneの意味とstate永続化はApplicationが所有する
+- Drawerはopen中だけcontrolledなedge overlayをlazy構築し、defaultではCore Modalのfocusとroutingを再利用し、non-modal modeとsemantic dismissを提供するが、outside-click挙動とApplication上の意味は定義しない
 - Dialogはapplication-defined action、明示的なdefaultとcancel target、lazy controlled details、modal focus policy、pointer activation、Cell幅によるaction wrappingを構成する
 - ConfirmDialogはdefaultを明示する二action convenienceとApplication suppliedのdestructive styleを提供する
 - Command Paletteはfilterされた安定したcommand IDに対するcontrolled query、root所有vertical action、row所有activationを組み合わせる

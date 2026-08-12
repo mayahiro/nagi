@@ -156,6 +156,66 @@ lifetime
 - Disabling the header does not rewrite application-owned expanded state or
   disable interactions explicitly supplied inside an already expanded body
 
+## SplitPane
+
+- SplitPane receives one stable root ID, two eager display Nodes, a controlled
+  `SplitPaneState`, and Core axis, minimum, collapse, and divider-style options
+- State stores the primary-pane ratio in basis points from 0 through 10,000.
+  The default is 5,000. Keyboard and pointer interaction emit replacement
+  state and never mutate Runtime-owned state
+- Expanded allocation and automatic collapse use the Core SplitPane contract.
+  Hidden pane Nodes are already supplied but do not enter Core preparation,
+  semantic indexing, focus, hit testing, routing, or rendering
+- Optional stable focus targets enable `nagi.pane.focus-previous` and
+  `nagi.pane.focus-next`. Their defaults are Shift-F6 and F6. In a two-pane
+  component either direction moves to the opposite supplied target
+- Each pane wrapper declares a focus fallback toward the opposite target. If a
+  focused pane is omitted by terminal resize, focus moves to the remaining
+  target. Expanding again does not implicitly restore the prior focus
+- An optional resize callback enables `nagi.pane.resize-previous` and
+  `nagi.pane.resize-next`. Horizontal defaults are Alt-Left and Alt-Right;
+  vertical defaults are Alt-Up and Alt-Down. Initial and explicit repeat
+  events are accepted
+- The default keyboard step is 500 basis points and is configurable. A resize
+  at a ratio boundary is consumed without a duplicate message. Missing focus
+  targets or a missing resize callback make the corresponding descriptors
+  `disabled-pass-through`
+- A left-button press on the visible divider starts pointer capture. Captured
+  Move events emit a ratio derived from the pointer Cell, and left-button
+  release applies the final ratio and releases capture. Presses outside the
+  divider remain unhandled
+- Active KeyMap scopes may replace or remove each complete binding list.
+  Pane meaning, persistence, selection, and narrow-screen product policy
+  remain application concerns
+
+## Drawer
+
+- Drawer receives one stable root ID, an eager base Node, controlled open
+  state, one of four viewport edges, a main-axis `Length`, and an optional lazy
+  body builder
+- A closed Drawer returns only its base, does not invoke the body builder, and
+  declares no semantic subtree. Opening does not change surrounding
+  measurement because the edge layer is composed over the base with Core Stack
+- The default side is left, the default size is 40 percent, and the default is
+  modal. Left and right sizes participate in Row allocation; top and bottom
+  sizes participate in Column allocation. Unknown Go side values use left;
+  Rust enums cannot represent unknown values
+- An open body receives one Core Border. The builder is invoked once per
+  semantic view construction while open. Empty and absent bodies are valid
+- Modal Drawers reuse Core modal entry, return, trap, nesting, and routing
+  behavior. Initial focus defaults to the first focusable body descendant and
+  close returns to the previously focused base descendant. Both policies are
+  configurable
+- A non-modal Drawer leaves base routing and focus available. Its dismissal
+  action participates only when the drawer root is on the active route, such
+  as while a body descendant owns focus
+- An open Drawer with a dismissal callback declares `nagi.dismiss` and exact
+  unmodified Escape. Closed Drawers and Drawers without a callback expose a
+  `disabled-pass-through` descriptor when inspected. Visibility remains
+  application state
+- Drawer does not infer outside-click dismissal, backdrop appearance,
+  navigation meaning, or application domain state
+
 ## Dialog and ConfirmDialog
 
 - Dialog receives one stable modal ID, an optional title Node, a body Node, an

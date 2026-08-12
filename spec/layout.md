@@ -104,5 +104,33 @@ Cell heights may differ
   `ScrollTo` Effect, and ScrollState callback without timers, tasks, I/O, or a
   new wake-up source
 
+A Core `SplitPane` lays out exactly two eager child Nodes and one optional
+divider
+
+- The axis is horizontal by default and may be vertical
+- Go values outside the named axis or collapse enums normalize to horizontal
+  and secondary respectively; Rust enums cannot represent unknown values
+- The ratio is the primary-pane share in basis points. Values above 10,000 are
+  clamped to 10,000. Rust default options use 5,000; Go callers use
+  `DefaultSplitPaneOptions` for the same value
+- Primary and secondary minima independently normalize to at least one Cell
+- When the assigned main-axis extent is at least
+  `primary_minimum + 1 + secondary_minimum`, one Cell is reserved for the
+  divider. The initial primary extent is
+  `floor((available - 1) * ratio / 10000)`, clamped between the primary minimum
+  and `available - 1 - secondary_minimum`. The secondary receives the
+  remainder after the divider
+- When that threshold is not met, the configured primary or secondary pane is
+  omitted, the divider is absent, and the other pane receives the complete
+  rectangle. The secondary pane is the default collapse target
+- An omitted pane does not participate in preparation, virtual child
+  construction, semantic indexing, focus, hit testing, event routing, or
+  rendering. Supplying both child Nodes remains eager; applications use lazy
+  Core children for bounded hidden work
+- The divider uses the selected WidthProfile and the same one-cell Unicode to
+  ASCII fallback as Core borders
+- Resize does not mutate Runtime or application state. The standard SplitPane
+  widget maps keyboard and pointer interaction to controlled ratio messages
+
 The solver is not a separate public API; applications configure layout through
 semantic Node lengths and composition

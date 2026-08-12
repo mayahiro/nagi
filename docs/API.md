@@ -418,9 +418,9 @@ from keyboard rebinding
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
 terminal `mapEvent` behavior. Tab traversal is still handled before action
 routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
-List, Table, Tree, Disclosure, TextArea, Composer, SuggestionPopup, SelectableText,
-JsonInspector, CodeView, DiffView, Command Palette, Modal,
-Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
+List, Table, Tree, Disclosure, SplitPane, Drawer, TextArea, Composer,
+SuggestionPopup, SelectableText, JsonInspector, CodeView, DiffView, Command
+Palette, Modal, Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
 migrated. See the
 [scoped key-map specification](../spec/keymap.md) for the complete dispatch,
 matching, override, conflict, and notation contract
@@ -523,6 +523,14 @@ Standard widgets use public Core composition and the public Unicode text API
 - Disclosure provides a controlled, focusable summary with rebindable toggle,
   collapse, and expand actions, raw pointer toggling, a body builder that is not
   called while collapsed, and nested focus fallback
+- SplitPane composes the Core two-pane allocator with a controlled basis-point
+  ratio, per-pane minima, deterministic automatic collapse, F6 focus movement,
+  axis-aware keyboard resizing, and divider dragging. Pane meaning and state
+  persistence remain application-owned
+- Drawer lazily constructs a controlled edge overlay only while open. It reuses
+  Core Modal focus and routing by default, supports a non-modal mode, and
+  declares semantic dismissal without defining outside-click behavior or
+  application meaning
 - Dialog composes application-defined actions with explicit default and cancel
   targets, lazy controlled details, modal focus policies, pointer activation,
   and Cell-width action wrapping
