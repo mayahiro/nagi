@@ -360,6 +360,7 @@ contract; Rust uses unsigned indices
 | View environment | `ViewContext { size, width_profile }` | `ViewContext{Size: ..., WidthProfile: ...}` |
 | Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
 | Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
+| Terminal clipboard mode | `TerminalOptions::clipboard` / `TerminalClipboard` | `TerminalOptions.Clipboard` / `TerminalClipboard` |
 | Context-aware Runtime construction | Language-specific caller integration | `NewRuntimeContext` / `NewRuntimeWithClockContext` |
 | Run a terminal app | `run_terminal` | `RunTerminal[M]` |
 | Run with external cancellation | Language-specific caller integration | `RunTerminalContext[M]` |
@@ -380,6 +381,11 @@ contract; Rust uses unsigned indices
 | Application exit Effect | `Effect::exit()` | `ExitEffect[M]()` |
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
+| Clipboard Effect | `Effect::set_clipboard(text)` | `SetClipboardEffect[M](text)` |
+| Clipboard request | `ClipboardRequest` | `ClipboardRequest` |
+| Pending clipboard request | `Runtime::pending_clipboard_request` | `Runtime.PendingClipboardRequest` |
+| Take clipboard request | `Runtime::take_clipboard_request` | `Runtime.TakeClipboardRequest` |
+| Test-harness clipboard request | `Harness::pending_clipboard_request` / `take_clipboard_request` | `Harness.PendingClipboardRequest` / `TakeClipboardRequest` |
 | No Subscription | `Subscription::none()` | `NoneSubscription[M]()` |
 
 Both terminal runners route and apply every Event decoded from one input chunk
@@ -390,6 +396,10 @@ use it automatically
 The allocation-sensitive VT append APIs are `nagi_vt::append_encoded` and
 `vt.AppendEncoded`. They append exactly the bytes produced by `encode` and
 `Encode` into caller-owned buffers
+
+The typed write-only clipboard operation is `TerminalOp::SetClipboard` in Rust
+and `vt.SetClipboard` in Go. Both encode normalized UTF-8 text as direct OSC 52;
+neither API exposes clipboard reads or raw control-sequence injection
 
 `ScrollAxis`, `ScrollOffset`, and `ScrollState` map directly to the Go types of
 the same names. Rust test support uses `Harness::scroll_state` and

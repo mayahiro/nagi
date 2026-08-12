@@ -2,16 +2,26 @@
 
 ## Effects
 
-The effect algebra contains `None`, `Exit`, `Focus`, `ScrollTo`, `Run`,
-`Latest`, `Cancel`, `Scoped`, `CancelScope`, `After`, `Batch`, and `Sequence`.
-Debounce is composed from `Latest` and `After` unless evidence requires another
-primitive
+The effect algebra contains `None`, `Exit`, `Focus`, `ScrollTo`,
+`SetClipboard`, `Run`, `Latest`, `Cancel`, `Scoped`, `CancelScope`, `After`,
+`Batch`, and `Sequence`. Debounce is composed from `Latest` and `After` unless
+evidence requires another primitive
 
-`Exit`, `Focus`, and `ScrollTo` are synchronous UI commands applied by the
-Runtime. They MUST NOT start a worker thread or goroutine. `Exit` requests
-normal application termination after the final dirty frame, `Focus` requests a
-focusable stable Node ID in the next view, and `ScrollTo` requests a clamped
-offset for a stable ScrollViewport ID in the next view
+`Exit`, `Focus`, `ScrollTo`, and `SetClipboard` are synchronous UI commands
+applied by the Runtime. They MUST NOT start a worker thread or goroutine.
+`Exit` requests normal application termination after the final dirty frame,
+`Focus` requests a focusable stable Node ID in the next view, and `ScrollTo`
+requests a clamped offset for a stable ScrollViewport ID in the next view
+
+`SetClipboard` carries owned semantic UTF-8 text without choosing a domain
+meaning. Go normalizes invalid UTF-8 runs to U+FFFD at the Effect boundary.
+The Runtime retains at most one pending clipboard request, and a later request
+replaces an earlier request that has not been taken by a driver. Taking the
+request clears it. Custom Runtime drivers can route it to an application-owned
+backend. The standard terminal runner drops it while terminal clipboard output
+is disabled and encodes it as typed OSC 52 output only when explicitly enabled.
+Clipboard reads, raw terminal sequences, redaction policy, and OS-specific
+clipboard commands are not part of this Effect
 
 Rust tasks use standard threads and cooperative cancellation. Go tasks use
 goroutines and `context.Context`. A Go context-aware Runtime derives Effect and
@@ -33,7 +43,9 @@ An Effect returned directly from `update` MAY declare that the update did not
 change state observed by `view`. The runtime MUST still schedule that Effect
 and reconcile subscriptions, but MUST NOT dirty an otherwise clean view solely
 for that update. An already-dirty runtime stays dirty. Synchronous `Exit`,
-`Focus`, and `ScrollTo` commands still request their required frame
+`Focus`, and `ScrollTo` commands still request their required frame.
+`SetClipboard` does not independently dirty the view, but is flushed at the
+next terminal scheduling boundary even when no frame is produced
 
 Concurrent task execution is bounded by runtime configuration. Cancellation
 does not free a worker slot until a running task returns. Task panics are caught

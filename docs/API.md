@@ -80,6 +80,10 @@ cursor placement use it automatically. Width-sensitive widgets expose
 `ViewContext` when the Runtime does not use Modern width. A Custom override must
 return a stable width for the same grapheme throughout the Runtime lifetime
 
+Rust callers using an exhaustive `TerminalOptions` struct literal must provide
+the `clipboard` field. A literal using `..TerminalOptions::default()` keeps the
+disabled default without further configuration
+
 Rust uses the `App` trait and an associated `Message` type. Go uses the generic
 `App[Message]` interface. See the matching
 [Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs) and
@@ -275,8 +279,12 @@ SelectableText declares the 19-operation document subset for grapheme, word,
 logical-line, and document movement, matching selection extension, select all,
 copy selection, and copy document. Content and selection state are controlled
 and grapheme-aligned. Copy actions emit an owned application message containing
-source ID, semantic text, kind, and original UTF-8 byte range; Nagi does not
-choose a clipboard backend. Hidden spans disable both copy actions
+source ID, semantic text, kind, and original UTF-8 byte range. The application
+may turn that message into `Effect::set_clipboard` or `SetClipboardEffect`.
+Runtime drivers can inspect or take the latest coalesced `ClipboardRequest`.
+The standard terminal runner drops requests by default and emits typed,
+write-only OSC 52 only with `TerminalClipboard::Osc52` or
+`TerminalClipboardOSC52`. Hidden spans disable both copy actions
 
 Composer layers controlled history recall, submit validity, automatic one-to-six
 row height, optional validation content, and UTF-8-byte or grapheme insertion
@@ -347,8 +355,10 @@ matching, override, conflict, and notation contract
 
 Effects represent one-shot work
 
-- `Exit`, `Focus`, and `ScrollTo` are synchronous Runtime UI commands and do
-  not start worker threads or goroutines
+- `Exit`, `Focus`, `ScrollTo`, and `SetClipboard` are synchronous Runtime UI
+  commands and do not start worker threads or goroutines
+- `SetClipboard` retains at most the latest pending semantic UTF-8 text,
+  independently of view dirtiness
 - `Run` starts anonymous work
 - `Latest` replaces keyed work and suppresses stale results
 - `Cancel` and scoped cancellation request cooperative termination

@@ -82,6 +82,11 @@ Frameworkが扱うkeyboard scroll、focus、resizeはurgentのままです
 - 通常のsource dataごとに`RequestFrame`または`request_frame`を呼ばない
 - 未選択process用に保持するoutputなど、現在のviewが読むstateを変更しないMessageでは`Effect::none().without_redraw()`または`NoneEffect[Message]().WithoutRedraw()`を返す
 
+`SetClipboard`も同期処理でありworkerを起動しません
+Runtimeはpending requestを最新1件だけ保持するため、custom driverはcoalesced stepごとにtakeします
+標準terminal runnerはdirectかつwrite-onlyのOSC 52を明示的に有効化しない限りrequestを破棄します
+Copy Messageが表示中のapplication stateを変更しない場合はClipboard Effectへ`without_redraw`または`WithoutRedraw`を組み合わせます
+
 ## 第2のUI loopを避ける
 
 標準的なfull-screen terminal applicationでは次のpatternを避けます

@@ -11,3 +11,5 @@ screen-modes	capabilities=modern	operations=enter-alternate;enable-paste;enable-
 sync-baseline	capabilities=baseline	operations=begin-sync;end-sync	expected=
 mouse-press	capabilities=modern	operations=enable-mouse,press	expected=\x1B[?1000h\x1B[?1006h
 mouse-any	capabilities=modern	operations=enable-mouse,any	expected=\x1B[?1003h\x1B[?1006h
+clipboard	capabilities=baseline	operations=set-clipboard,0041+65E5	expected=\x1B]52;c;QeaXpQ==\x1B\\
+clipboard-empty	capabilities=baseline	operations=set-clipboard,-	expected=\x1B]52;c;\x1B\\

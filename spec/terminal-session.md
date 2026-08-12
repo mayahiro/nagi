@@ -19,6 +19,10 @@ and alternate-screen lifecycle
   bracketed paste and focus reporting using typed VT operations. It also
   enables the configured SGR mouse tracking policy when present; mouse tracking
   is disabled by default so terminal text selection remains available
+- Clipboard output is disabled by default. When the terminal runner explicitly
+  selects OSC 52, it appends the latest pending clipboard request to the same
+  serialized output boundary as a rendered frame. It never queries clipboard
+  contents
 - Reads and writes retry interrupted system calls. Writes continue until all
   bytes are written or an error occurs
 - A zero timeout performs an immediate readiness check. Positive waits do not

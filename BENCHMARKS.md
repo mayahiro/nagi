@@ -153,6 +153,62 @@ allocation is expected. Go's projector passes its owned span slices directly
 to the internal Paragraph construction path; the public Paragraph constructor
 continues to defensively copy caller-owned slices
 
+## Clipboard encoding purpose
+
+This benchmark measures direct, write-only OSC 52 encoding for two semantic
+UTF-8 clipboard payloads
+
+- The small path encodes `A日`, four UTF-8 bytes
+- The large path encodes 1 MiB of ASCII text
+- Fresh encoding starts with an empty output allocation on every call
+- Reused encoding starts with a buffer already sized by one unmeasured call,
+  matching the standard terminal session's retained output buffer
+- Both paths include the OSC prefix, RFC 4648 Base64 transform, and canonical
+  ST terminator. They exclude terminal I/O, the Clipboard Effect, rendering,
+  and application text construction
+
+Rust reports the median of 12 samples. Each small sample contains 10,000 calls
+and each large sample contains four calls. Go reports the median of three
+one-second benchmark runs. Rust peak-live and retained-byte values are measured
+relative to the beginning of each sample
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui --bench clipboard
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkClipboardEncoding(Small|1MiB)$' -benchmem -benchtime=1s -count=3 .
+```
+
+The root `make bench` command includes both paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the same reference environment
+
+| Implementation | Input | Buffer | Median time per call | Allocations per call | Allocated bytes per call | Peak additional live bytes | Retained bytes |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | 4 bytes | fresh | 80 ns | 3 | 56 | 32 | 0 |
+| Rust | 4 bytes | reused | 7 ns | 0 | 0 | 0 | 0 |
+| Rust | 1 MiB | fresh | 0.930 ms | 19 | 4,194,296 | 2,097,152 | 0 |
+| Rust | 1 MiB | reused | 0.846 ms | 0 | 0 | 0 | 0 |
+| Go | 4 bytes | fresh | 57.78 ns | 3 | 56 | not measured | not measured |
+| Go | 4 bytes | reused | 8.914 ns | 0 | 0 | not measured | not measured |
+| Go | 1 MiB | fresh | 0.883 ms | 34 | 6,642,448 | not measured | not measured |
+| Go | 1 MiB | reused | 0.574 ms | 0 | 0 | not measured | not measured |
+
+Encoding is linear in input bytes and requires an output of roughly four
+thirds the payload size plus the fixed control-sequence framing. The reusable
+path performs no measured allocation in either implementation. Its output
+capacity was established before measurement, so zero retained bytes means no
+additional retention during a sample; the terminal session still retains a
+buffer sized for its largest encoded write. Runtime separately retains only
+the latest semantic clipboard request, so repeated requests do not increase
+memory by request count
+
+These measurements do not establish OSC 52 payload limits. Terminals and
+intermediate multiplexers may enforce their own limits, and direct OSC 52
+remains disabled unless the application opts in
+
 ## CLI inherited-option purpose
 
 This benchmark measures one complete command parse, including Command Graph

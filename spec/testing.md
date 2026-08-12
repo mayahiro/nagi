@@ -11,6 +11,7 @@ The harnesses provide equivalent observable behavior for
   chunk, with rendering coalesced after the batch
 - Virtual time and due scheduled work
 - Controlled Effect completion and cancellation
+- Pending Clipboard Effect inspection and destructive take without terminal I/O
 - Manual Subscription delivery and lifecycle inspection
 - Interaction State inspection and focus control
 - Resolved ScrollViewport state and application exit-request inspection

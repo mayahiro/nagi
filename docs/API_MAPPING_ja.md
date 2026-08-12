@@ -351,6 +351,7 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | View環境 | `ViewContext { size, width_profile }` | `ViewContext{Size: ..., WidthProfile: ...}` |
 | Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
 | Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
+| Terminal clipboard mode | `TerminalOptions::clipboard` / `TerminalClipboard` | `TerminalOptions.Clipboard` / `TerminalClipboard` |
 | Context-aware Runtime構築 | 言語固有のcaller integration | `NewRuntimeContext` / `NewRuntimeWithClockContext` |
 | Terminal application実行 | `run_terminal` | `RunTerminal[M]` |
 | 外部cancellation付き実行 | 言語固有のcaller integration | `RunTerminalContext[M]` |
@@ -371,11 +372,19 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Application終了Effect | `Effect::exit()` | `ExitEffect[M]()` |
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
+| Clipboard Effect | `Effect::set_clipboard(text)` | `SetClipboardEffect[M](text)` |
+| Clipboard request | `ClipboardRequest` | `ClipboardRequest` |
+| Pending clipboard request | `Runtime::pending_clipboard_request` | `Runtime.PendingClipboardRequest` |
+| Clipboard requestのtake | `Runtime::take_clipboard_request` | `Runtime.TakeClipboardRequest` |
+| Test harnessのclipboard request | `Harness::pending_clipboard_request` / `take_clipboard_request` | `Harness.PendingClipboardRequest` / `TakeClipboardRequest` |
 | Subscriptionなし | `Subscription::none()` | `NoneSubscription[M]()` |
 
 両terminal runnerは1個のinput chunkからdecodeした各Eventをrouteしてupdateへ適用してから次のEventを処理し、renderだけをcoalesceします。幅計算を行うWidgetは`ViewContext`からRuntime profileを明示的に受け取り、Core Nodeは同じprofileを自動的に使用します
 
 Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendEncoded`です。Caller所有bufferへ`encode`と`Encode`が生成するbyteと同一の内容を追記します
+
+Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`とGoの`vt.SetClipboard`です
+両APIは正規化済みUTF-8 textをdirect OSC 52としてencodeし、clipboard readやraw control sequence injectionを公開しません
 
 `ScrollAxis`、`ScrollOffset`、`ScrollState`はGoの同名typeへ直接対応します。Rust test supportは`Harness::scroll_state`と`Harness::exit_requested`、Goは`Harness.ScrollState`と`Harness.ExitRequested`を使用します
 

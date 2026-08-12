@@ -4,7 +4,7 @@ The output encoder is pure and maps terminal operations to bytes
 
 Operations cover cursor movement and visibility, style changes, text
 writes, erasure, alternate-screen lifecycle, bracketed paste, mouse reporting,
-and synchronized updates
+clipboard writes, and synchronized updates
 
 - Widgets and views MUST NOT emit ANSI or VT byte strings directly
 - The renderer converts surface differences into terminal operations
@@ -36,6 +36,13 @@ Mode operations use alternate screen `1049`, bracketed paste
 `2004`, focus reports `1004`, SGR mouse encoding `1006` with tracking modes
 `1000`, `1002`, or `1003`, and synchronized updates `2026`. Disabling mouse
 reporting resets every supported tracking mode and SGR encoding
+
+`SetClipboard` is an explicit write-only OSC 52 operation for the standard
+clipboard selection `c`. It normalizes invalid UTF-8 at the Go boundary,
+encodes the resulting UTF-8 bytes as unwrapped RFC 4648 Base64, and uses the
+canonical `ESC \\` String Terminator. Empty text emits an empty payload and may
+clear the terminal clipboard. The encoder does not expose clipboard reads,
+selection queries, arbitrary OSC parameters, or multiplexer passthrough
 
 The encoder deliberately has no public raw escape-sequence operation. Terminal
 behavior must be represented by a typed operation

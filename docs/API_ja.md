@@ -63,6 +63,9 @@ Applicationは4個のoperationを実装します
 
 `RuntimeConfig`と`TerminalOptions`はRuntime lifetime全体で使用するNagi Textの`WidthProfile`を1個選択します。Coreのmeasure、wrap、draw、hit geometry、cursor配置は自動的に同じprofileを使います。幅計算を行うWidgetはRustの`width_profile`とGoの`WidthProfile`を提供するため、RuntimeがModern以外を使う場合は`ViewContext`の値を渡します。Custom overrideは同じgraphemeに対してRuntime lifetime中に安定した幅を返す必要があります
 
+Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`clipboard` fieldも指定する必要があります
+`..TerminalOptions::default()`を使うliteralは追加設定なしでdisabled defaultを維持します
+
 Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
 
 Production terminal applicationにおけるprocess output、timer、wake-up、renderの所有関係は[event-driven application architecture](EVENT_DRIVEN_APPLICATIONS_ja.md)を参照してください
@@ -175,7 +178,7 @@ TextとPasteはlocal action解決後のraw editing inputとして残り、Paste�
 
 SelectableTextはgrapheme、word、logical line、documentの移動、対応するselection extension、select all、copy selection、copy documentからなる19 operationのdocument subsetを宣言します
 
-Contentとselection stateはcontrolledかつgrapheme境界へ揃えられます。Copy actionはsource ID、semantic text、kind、元document上のUTF-8 byte rangeを持つownedなApplication Messageを発行し、Nagiはclipboard backendを選びません。Hidden spanがある場合は両copy actionを無効にします
+Contentとselection stateはcontrolledかつgrapheme境界へ揃えられます。Copy actionはsource ID、semantic text、kind、元document上のUTF-8 byte rangeを持つownedなApplication Messageを発行します。ApplicationはそのMessageを`Effect::set_clipboard`または`SetClipboardEffect`へ変換できます。Runtime driverはcoalesceされた最新`ClipboardRequest`を参照またはtakeできます。標準terminal runnerはdefaultでrequestを破棄し、`TerminalClipboard::Osc52`または`TerminalClipboardOSC52`を明示した場合だけtypedなwrite-only OSC 52を出力します。Hidden spanがある場合は両copy actionを無効にします
 
 ComposerはTextAreaへcontrolled history recall、submit validity、1行から6行までの自動高さ、任意のvalidation content、UTF-8 byte数またはgrapheme数による挿入制限を加え、messageの意味や永続化は所有しません
 
@@ -227,7 +230,8 @@ Tab traversalは引き続きaction routingより先に処理され、Button、Ch
 
 Effectはone-shot workを表します
 
-- `Exit`、`Focus`、`ScrollTo`はRuntimeが同期適用するUI commandで、worker threadやgoroutineを起動しない
+- `Exit`、`Focus`、`ScrollTo`、`SetClipboard`はRuntimeが同期適用するUI commandで、worker threadやgoroutineを起動しない
+- `SetClipboard`はviewのdirty状態と独立して、pendingなsemantic UTF-8 textを最新1件だけ保持する
 - `Run`は匿名workを開始する
 - `Latest`はkey付きworkを置換してstale resultを抑止する
 - `Cancel`とscope cancelは協調的な終了を要求する

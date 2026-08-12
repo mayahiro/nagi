@@ -41,7 +41,9 @@ Unicode-aware text, and typed VT codecs. The existing Nagi TUI implementation
 adds immutable Terminal Presentation Rules, native runtimes, cell surfaces,
 bounded Content-to-Node projection, deterministic test harnesses, 27 standard
 widgets, virtual ScrollViewports, and stable variable-height VirtualFeeds for
-large content
+large content. Applications can route semantic copy requests through a
+coalesced Clipboard Effect, with write-only OSC 52 available as an explicit
+terminal opt-in
 
 Nagi CLI provides native Rust and Go Command Graphs, local and inherited
 options, command-local typed value scopes, portable option groups and

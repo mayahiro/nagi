@@ -106,6 +106,13 @@ For high-rate sources
   `NoneEffect[Message]().WithoutRedraw()` when a Message changes no state read
   by the current view, such as output retained for an unselected process
 
+`SetClipboard` is also synchronous and does not start a worker. Runtime keeps
+only the latest pending request, so a custom driver should take it after each
+coalesced step. The standard terminal runner drops requests unless direct,
+write-only OSC 52 is explicitly enabled. When a copy Message changes no visible
+application state, combine the Clipboard Effect with `without_redraw` or
+`WithoutRedraw`
+
 ## Avoid a second UI loop
 
 Avoid these patterns in a standard full-screen terminal application

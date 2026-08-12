@@ -528,7 +528,9 @@ lifetime
 - A copy callback receives an owned request containing the source Node ID,
   selection-or-document kind, copied semantic text, and its UTF-8 byte range in
   the original document. The widget performs no terminal, OS, or OSC 52
-  clipboard I/O
+  clipboard I/O. An application can translate that semantic request into the
+  generic Clipboard Effect when its Runtime driver provides an acceptable
+  clipboard destination
 - Caller span styles are preserved. Selection defaults to reverse, focus to an
   underline overlay, and disabled content to dim. ParagraphOptions controls
   wrapping and alignment without changing selection or copy text
