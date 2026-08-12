@@ -51,11 +51,21 @@ An application implements four operations
 2. `update` applies one Message and returns follow-up Effects
 3. `subscriptions` declares the current stable-key long-lived sources
 4. `view` rebuilds a semantic Node tree from application state and a
-   `ViewContext` containing the current terminal `Size`
+   `ViewContext` containing the current terminal `Size` and `WidthProfile`
 
 `update` always runs sequentially. Effects and subscriptions may produce work
 concurrently, but their results enter the bounded runtime queue before another
-update runs
+update runs. When one terminal read decodes multiple Events, Nagi completes
+routing, fallback mapping, input-derived updates, and semantic-tree refresh for
+each Event before routing the next one. Surface rendering alone is coalesced
+across the input batch
+
+`RuntimeConfig` and `TerminalOptions` select one Nagi Text `WidthProfile` for
+the Runtime lifetime. Core measurement, wrapping, drawing, hit geometry, and
+cursor placement use it automatically. Width-sensitive widgets expose
+`width_profile` in Rust and `WidthProfile` in Go; pass the value from
+`ViewContext` when the Runtime does not use Modern width. A Custom override must
+return a stable width for the same grapheme throughout the Runtime lifetime
 
 Rust uses the `App` trait and an associated `Message` type. Go uses the generic
 `App[Message]` interface. See the matching
@@ -70,7 +80,10 @@ terminal application
 An application can return `Effect::exit()` or `ExitEffect` after updating its
 state. The terminal runner renders the final dirty view before restoration. Go
 also provides `RunTerminalContext` for external `context.Context` cancellation;
-that path returns `ctx.Err()` after restoring the terminal
+that path returns `ctx.Err()` after restoring the terminal. The caller context
+is also the parent of Effect and Stream contexts, preserving its values,
+deadline, cancellation, and cancellation cause. Manually driven Go runtimes can
+use `NewRuntimeContext` or `NewRuntimeWithClockContext` for the same behavior
 
 When an update handles a Message without changing anything read by `view`, it
 can return `Effect::none().without_redraw()` in Rust or
@@ -86,13 +99,21 @@ changing queue or Delivery semantics. Default terminal options limit
 non-urgent rendering to at most 120 frames per second; setting the minimum
 frame interval to zero disables that render limit
 
+Recovered Effect panics, unexpected active Stream returns, Stream panics, and
+worker-spawn failures enter a separate bounded `RuntimeNotice` FIFO. They do not
+become application Messages or dirty the view. Manual Runtime drivers can drain
+the queue and inspect its dropped counter; terminal applications can use
+`run_terminal_with_notice_handler` or `RunTerminalWithNoticeHandler` and the Go
+context-aware variant. The application decides whether a notice becomes state,
+a Message, a log record, or telemetry
+
 ## Semantic views and interaction
 
 Core nodes include Text, RichText, Paragraph, safe ANSI Text, SurfaceNode,
-TextInput, Spacer, Gap, Row, Column, Stack, Padding, Border, Panel, Align, Clip,
-ScrollViewport, and Modal. Layout uses integer terminal cells and stable
-rounding rules. VirtualScrollViewport and VirtualFlow are the large-content
-variants
+TextInput, CursorAnchor, Spacer, Gap, Row, Column, Stack, Padding, Border, Panel,
+Align, Clip, ScrollViewport, and Modal. Layout uses integer terminal cells and
+stable rounding rules. VirtualScrollViewport and VirtualFlow are the
+large-content variants
 
 Every stateful, focusable, or event-receiving node needs an application-defined
 stable `NodeId`. IDs must survive rebuilding and must not be derived only from a
@@ -102,6 +123,16 @@ Event handlers return composable results that may emit messages, consume the
 event, change focus, capture or release the pointer, and request redraw. The
 public focus-style modifier can overlay a style while any identified Node owns
 focus without changing its layout or routing
+
+`Node::cursor_anchor` in Rust and `CursorAnchor` in Go occupy no horizontal
+layout width and set the typed Surface cursor while their stable owner has
+focus. They draw no caret grapheme, so following text keeps its geometry and
+terminal IME placement follows the rendered cursor
+
+`Node::block_unhandled_events` in Rust and `Node.BlockUnhandledEvents` in Go
+add an opt-in hard boundary to an identified Node. If its local action, Core,
+and raw handling all leave an Event unconsumed, the boundary consumes it before
+ancestor raw handlers or terminal fallback mapping. The default remains soft
 
 `Node::modal_with_focus` in Rust and `ModalWithFocus` in Go add declarative
 modal entry and return policies. Entry selects the first focusable descendant,
@@ -162,7 +193,9 @@ Node-declared action, Core semantic action, non-key Core handling, raw handler,
 then ancestor order. An equal Node-declared binding is evaluated before the
 separate Core semantic group at the same owner. Ignored action results and
 disabled-pass-through bindings continue routing, while disabled-consume
-bindings consume without calling a handler
+bindings consume without calling a handler. A disabled-consume binding also
+blocks an explicit repeat of an initial-only stroke; enabled and
+disabled-pass-through matching still enforce the binding repeat policy
 
 `stop-at-scope` omits outer ancestor Node-declared and Core semantic action
 groups without stopping raw event routing, wheel scrolling, or root-to-target
@@ -219,10 +252,11 @@ Boundary movement and deletion remain enabled and consume without a message by
 default. Bubble navigation can instead pass Up and Down through at the first or
 last visual line. Opt-in soft wrap makes those actions preserve a preferred
 visual column, while Home and End remain logical-line operations. A TextArea
-viewport follows an identified caret without adding a Tab stop. Undo and redo
-are disabled-pass-through when their callbacks are absent. Text and Paste
-remain raw editing input after local action resolution, and Paste never invokes
-an action
+uses the zero-width typed cursor anchor instead of a visible caret character;
+its viewport follows an identified cursor anchor without adding a Tab stop.
+Undo and redo are disabled-pass-through when their callbacks are absent. Text
+and Paste remain raw editing input after local action resolution, and Paste
+never invokes an action
 
 SelectableText declares the 19-operation document subset for grapheme, word,
 logical-line, and document movement, matching selection extension, select all,
@@ -239,7 +273,8 @@ declares `nagi.composer.submit`, `nagi.history.previous`, and
 Enter submits without accepting repeat; Shift-Enter, Alt-Enter, and Control-O
 insert a line break. Cursor movement takes precedence while another visual line
 exists, then Up or Down recalls history. Active scopes can replace the complete
-submit and line-break binding lists, and Paste remains editing input
+submit and line-break binding lists, and Paste remains editing input. When
+submit is invalid, both initial and repeat Enter are consumed locally
 
 Command Palette declares activation plus vertical selection at its root and
 activation on each visible command row. Query TextInput editing consumes Text,
@@ -251,8 +286,10 @@ or empty-filter palettes expose disabled-pass-through descriptors
 Modal declares `nagi.dismiss` at its root with exact unmodified Escape as its
 default. A missing dismissal handler makes the descriptor
 disabled-pass-through. Child handling retains target-to-root precedence, and
-the Modal does not add an implicit stop-at-scope boundary; applications may
-attach that boundary explicitly without stopping raw ancestor routing
+the Modal does not add an implicit action or raw-Event boundary. A KeyMap
+stop-at-scope boundary stops only outer semantic actions. Applications that
+must isolate approval input can additionally apply the hard unhandled-Event
+boundary to the Modal root
 
 Dialog composes an optional title Node, body, controlled lazy Disclosure, and
 ordered application-defined actions in a Core Modal. Its root declares
@@ -260,9 +297,11 @@ ordered application-defined actions in a Core Modal. Its root declares
 and cancel action IDs; an unselected role passes through, an enabled target
 emits its action message, and an absent or disabled configured target consumes
 without escaping. The root confirmation defaults to non-repeating Enter, while
-focused action Buttons and Disclosure headers retain child precedence. A default action
-also becomes the entry-focus target unless the application overrides the focus
-policy. Action rows wrap greedily at an application-supplied Cell width
+focused action Buttons and Disclosure headers retain child precedence. If the
+configured default is absent or disabled, repeat Enter is blocked as well. A
+default action also becomes the entry-focus target unless the application
+overrides the focus policy. Action rows wrap greedily at an
+application-supplied Cell width
 
 ConfirmDialog accepts exactly confirm and cancel actions plus an explicit
 Confirm-or-Cancel default. It reuses Dialog focus, wrapping, and lazy details.
@@ -305,6 +344,9 @@ Effects represent one-shot work
 - `without_redraw` and `WithoutRedraw` suppress only the frame that an
   otherwise-clean runtime would request for the current update
 
+Go context-aware Runtime and terminal entry points derive Effect contexts from
+the caller context. Runtime close still requests cooperative child cancellation
+
 Subscriptions represent long-lived stable-key sources
 
 - `Every` emits on the runtime clock
@@ -312,6 +354,10 @@ Subscriptions represent long-lived stable-key sources
 - Reliable delivery blocks a full source inbox
 - Latest delivery retains only the newest pending value
 - Batch delivery releases FIFO values by count or maximum delay
+
+An active Stream is expected to remain alive. A normal return while its
+generation is active produces a Runtime notice; return after requested
+cancellation does not. A recovered panic always produces a panic notice
 
 Use VirtualClock-based tests for time-dependent behavior. Do not sleep inside
 application tests
@@ -390,9 +436,11 @@ implementations
 
 Rust `nagi-tui-test` and Go `tuitest` provide virtual input, size, time, frame
 history, message history, Interaction State inspection, controlled effects,
-manual subscriptions, supervisor diagnostics, resolved ScrollState and
-VirtualFlowState, active resolved action groups, and application exit-request
-inspection
+manual subscriptions, supervisor and Runtime-notice diagnostics, resolved
+ScrollState and VirtualFlowState, active resolved action groups, and application
+exit-request inspection. Input helpers preserve per-Event controlled-state
+updates when one byte chunk decodes multiple Events, while coalescing only the
+resulting render
 
 Use virtual time and controlled asynchronous sources in application tests so
 they do not depend on real sleeps or terminal timing

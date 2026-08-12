@@ -59,6 +59,20 @@ A Surface node embeds a fixed-size public Surface as a semantic leaf
 - Surface cells contain normalized graphemes and typed styles, not terminal
   byte sequences. Embedding a Surface does not create a raw VT output path
 
+## Width profile and cursor anchor
+
+Every Core Node uses the Runtime-selected Nagi Text width profile for
+measurement and drawing. A captured Surface cell whose stored span disagrees
+with that profile is skipped rather than composited with inconsistent geometry.
+Built-in border glyphs are replaced by one-cell ASCII `+`, `-`, and `|` when
+the selected profile does not measure the configured glyphs as one cell
+
+A cursor anchor occupies zero layout width and one row of height. While its
+stable focus owner owns focus, rendering sets the typed Surface cursor at the
+anchor position. It draws no visible grapheme and does not move following text.
+Out-of-bounds anchors follow the ordinary Surface rule and leave no visible
+cursor
+
 ## Panel
 
 A Panel fills its assigned rectangle, draws a one-cell border, renders an

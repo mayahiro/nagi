@@ -30,6 +30,8 @@ terminal input --------------------/                         |
                                                 coalesced view and render
 ```
 
+1回のterminal readから複数のUnicodeまたはkey Eventがdecodeされる場合があります。Nagiは1個のEventから生じるroutingと全updateを完了してから次のEventをrouteするため、controlled Widgetは常に最新stateから再構築されます。Input batch全体でcoalesceするのは結果のrenderだけです
+
 ## Lifetimeに応じたsource選択
 
 - Initまたはupdateから開始する有限workにはEffectを使う
@@ -55,6 +57,14 @@ Uptimeは最新値だけが必要なためLatest配送に適しています
 同じapplication stateではsource keyを安定させます
 Subscriptions宣言からsourceを削除すると、Nagiはそのgenerationをcancelし、block中のsendをwakeし、updateへ入っていない値を破棄します
 Producerはcancellationまたはclosed sinkを検出したらreturnし、detached threadやgoroutineを残しません
+
+Goのterminalとcontext-aware Runtime entry pointはcaller contextからEffectとStream contextをderiveします。Process adapterとtrace codeはvalue、deadline、cancellation、cancel causeをそのまま利用でき、Runtime closeでも各active childへcancellationを要求します
+
+## Lifecycle notice
+
+Active Streamは長期sourceであり、そのgenerationがactiveな間のreturnは予期しない`RuntimeNotice`になります。要求済みcancellation後のreturnはnoticeになりません。回復したEffectとStreamのpanic、およびworker spawn failureもnoticeになり、panic payloadは保持しません
+
+NoticeはApplication Messageと別の上限付きFIFOを使い、保持済みの古いentryを優先し、満杯時はdrop counterを増やします。Notice自体はviewをdirtyにしません。手動driveするRuntimeはnoticeをdrainしてapplication-owned Messageへmapでき、terminal runnerはlog、telemetry、application定義bridge向けの同期handlerを提供します
 
 ## Renderとbackpressure
 
@@ -102,4 +112,4 @@ Productではproducer本体だけをblocking process-output readerへ置き換�
 ## Test
 
 `nagi-tui-test`またはGoの`tuitest`をvirtual timeとcontrolled Effect／Subscription sourceと組み合わせます
-Application testでsleepせず、Messageとdeadlineを明示的にdriveします
+Application testでsleepせず、Messageとdeadlineを明示的にdriveします。Controlled editorでは複数scalar inputを1個のchunkとして渡し、Event単位updateとrender coalescingを同時に確認します

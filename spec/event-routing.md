@@ -17,6 +17,13 @@ the modal root. Routing still continues from a target inside the modal through
 the modal's ancestors to the screen or root handler unless a handler consumes
 the event
 
+An identified Node MAY declare a hard unhandled-Event boundary. Actions,
+built-in handling, and the raw handler on that Node retain their ordinary
+order. If the Event is still unhandled afterward, the boundary consumes it and
+prevents ancestor raw handlers and terminal fallback mapping. The default has
+no hard boundary, and this behavior is independent from KeyMap propagation
+boundaries
+
 Within each target-to-root Node, Node-declared semantic key actions run before
 Runtime-owned Core semantic actions, non-key Core input handling, and the raw
 handler. Action propagation boundaries affect Node-declared and Core semantic

@@ -44,15 +44,17 @@ Applicationは4個のoperationを実装します
 1. `init`は起動時のEffectを1個返す
 2. `update`はMessageを1個適用して後続Effectを返す
 3. `subscriptions`は現在の安定key付き長期sourceを宣言する
-4. `view`はapplication stateと現在のterminal `Size`を持つ`ViewContext`からsemantic Node treeを再構築する
+4. `view`はapplication stateと現在のterminal `Size`および`WidthProfile`を持つ`ViewContext`からsemantic Node treeを再構築する
 
-`update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります
+`update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります。1回のterminal readから複数Eventがdecodeされた場合も、各Eventのrouting、fallback mapping、入力由来update、semantic tree更新を完了してから次のEventを処理し、Surface描画だけをbatch全体でcoalesceします
+
+`RuntimeConfig`と`TerminalOptions`はRuntime lifetime全体で使用するNagi Textの`WidthProfile`を1個選択します。Coreのmeasure、wrap、draw、hit geometry、cursor配置は自動的に同じprofileを使います。幅計算を行うWidgetはRustの`width_profile`とGoの`WidthProfile`を提供するため、RuntimeがModern以外を使う場合は`ViewContext`の値を渡します。Custom overrideは同じgraphemeに対してRuntime lifetime中に安定した幅を返す必要があります
 
 Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
 
 Production terminal applicationにおけるprocess output、timer、wake-up、renderの所有関係は[event-driven application architecture](EVENT_DRIVEN_APPLICATIONS_ja.md)を参照してください
 
-Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します
+Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します。Caller contextはEffectとStream contextの親にもなり、value、deadline、cancellation、cancel causeを維持します。手動driveするGo Runtimeでは`NewRuntimeContext`または`NewRuntimeWithClockContext`を使用できます
 
 Messageを処理しても`view`が参照する内容が変わらない場合、Rustでは`Effect::none().without_redraw()`、Goでは`tui.NoneEffect[Message]().WithoutRedraw()`を返せます。後続Effectの処理とSubscriptionの再調整は継続します。Modifierは`update`が返す最外側のEffectへ適用し、既存のdirty stateと同期UI commandは必要なframeを生成します
 
@@ -60,13 +62,19 @@ Production terminal runnerはterminal input、非同期EffectまたはStreamの�
 Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変更しません
 既定のterminal optionはnon-urgent描画を最大120 FPSへ制限し、minimum frame intervalをzeroにすると制限を無効化できます
 
+回復したEffect panic、active Streamの予期しないreturn、Stream panic、worker spawn failureはApplication Messageと別の上限付き`RuntimeNotice` FIFOへ入ります。Noticeはviewをdirtyにしません。手動Runtime driverはqueueをdrainしてdrop counterを確認でき、terminal applicationは`run_terminal_with_notice_handler`、`RunTerminalWithNoticeHandler`、Goのcontext-aware variantを使用できます。Noticeをstate、Message、log、telemetryのどれへ変換するかはApplicationが決めます
+
 ## Semantic viewとInteraction
 
-Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
+Core NodeにはText、RichText、Paragraph、安全なANSI Text、SurfaceNode、TextInput、CursorAnchor、Spacer、Gap、Row、Column、Stack、Padding、Border、Panel、Align、Clip、ScrollViewport、Modalがあります。Layoutは整数のterminal Cellと固定された丸め規則を使用します。VirtualScrollViewportとVirtualFlowは大規模content向けのvariantです
 
 Stateful、focusable、event受信Nodeにはapplication定義の安定した`NodeId`が必要です。IDはview再構築後も維持し、collection内の位置だけから導出してはいけません。Duplicate IDはruntime errorです
 
 Event handlerはMessage送信、event consume、focus変更、pointer captureとrelease、redraw要求を合成できるresultを返します。Publicなfocus style modifierは、特定された任意のNodeがfocusを所有する間だけstyleをoverlayし、layoutやroutingは変更しません
+
+Rustの`Node::cursor_anchor`とGoの`CursorAnchor`はhorizontal layout幅を消費せず、stable ownerがfocusを持つ間だけtyped Surface cursorを設定します。Caret文字を描かないため後続textを移動せず、terminal IME位置は描画cursorへ追従します
+
+Rustの`Node::block_unhandled_events`とGoの`Node.BlockUnhandledEvents`はidentified Nodeへopt-inのhard boundaryを追加します。そのNodeのlocal action、Core handling、raw handlerがEventをconsumeしなかった場合、ancestor raw handlerまたはterminal fallback mappingへ届く前にboundaryがconsumeします。Defaultはsoft boundaryのままです
 
 Rustの`Node::modal_with_focus`とGoの`ModalWithFocus`はdeclarativeなModal entryとreturn policyを追加します。Entryは最初のfocusable descendant、stable target、focusなしから選び、closeは以前のfocus、stable target、focusなしから選びます。既存Modal constructorのdefaultはFirstとPreviousです。Application stateによる消滅、nested Modal、重ねたsibling Modalも同じLIFO lifecycleを使用します。Rustの`Node::focus_fallback`とGoの`Node.FocusFallback`はfocused subtreeが消える場合に通常のdeterministic reconciliationより先にavailableなstable targetを選べます
 
@@ -92,7 +100,7 @@ Runtimeはactiveなtarget-to-root routeをNodeDeclared action、CoreSemantic act
 
 同じownerの等しいbindingではNodeDeclaredを別precedenceのCoreSemanticより先に評価します
 
-ignored action resultとdisabled-pass-through bindingはroutingを継続し、disabled-consume bindingはhandlerを呼ばずにconsumeします
+ignored action resultとdisabled-pass-through bindingはroutingを継続し、disabled-consume bindingはhandlerを呼ばずにconsumeします。Disabled-consumeはinitial-only strokeのexplicit repeatもblockし、EnabledとDisabledPassThroughでは従来どおりbindingのrepeat policyを適用します
 
 `stop-at-scope`はouter ancestorのNodeDeclaredとCoreSemantic action groupを除外し、raw event routing、wheel scroll、root-to-targetのKeyMap継承は止めません
 
@@ -148,7 +156,7 @@ Coreはcursor移動10個、対応するselection extension 10個、select all、
 
 TextAreaは既存の18 operationのediting subsetを、従来のdefault keyとexplicit Repeat挙動を持つfocus所有rootで宣言します
 
-boundaryでの移動と削除はdefaultではEnabledのままMessageなしでconsumeします。Bubble navigationでは最初または最後のvisual lineにおけるUpとDownをDisabledPassThroughにできます。Opt-inのsoft wrapではUpとDownがpreferred visual columnを保持し、HomeとEndはlogical line操作のままです。TextArea viewportはTab stopを増やさずidentified caretへ追従します。undoとredoは対応callbackがない場合にDisabledPassThroughになります
+boundaryでの移動と削除はdefaultではEnabledのままMessageなしでconsumeします。Bubble navigationでは最初または最後のvisual lineにおけるUpとDownをDisabledPassThroughにできます。Opt-inのsoft wrapではUpとDownがpreferred visual columnを保持し、HomeとEndはlogical line操作のままです。TextAreaは可視caret文字ではなくzero-widthのtyped cursor anchorを使い、viewportはTab stopを増やさずidentified cursor anchorへ追従します。undoとredoは対応callbackがない場合にDisabledPassThroughになります
 
 TextとPasteはlocal action解決後のraw editing inputとして残り、Pasteはactionを起動しません
 
@@ -160,7 +168,7 @@ ComposerはTextAreaへcontrolled history recall、submit validity、1行から6�
 
 同じrootで継承したtext actionより先に`nagi.composer.submit`、`nagi.history.previous`、`nagi.history.next`を宣言します
 
-EnterはRepeatを受け付けずにsubmitし、Shift-Enter、Alt-Enter、Control-Oは改行を挿入します。別のvisual lineが存在する間はcursor移動を優先し、その後にUpまたはDownでhistoryをrecallします。Active scopeはsubmitと改行のbinding list全体を置換でき、Pasteはediting inputのままです
+EnterはRepeatを受け付けずにsubmitし、Shift-Enter、Alt-Enter、Control-Oは改行を挿入します。別のvisual lineが存在する間はcursor移動を優先し、その後にUpまたはDownでhistoryをrecallします。Active scopeはsubmitと改行のbinding list全体を置換でき、Pasteはediting inputのままです。Submitがinvalidな場合はinitialとrepeatのEnterをどちらもlocalでconsumeします
 
 Command Paletteはrootでactivationとvertical selection、表示中の各command rowでactivationを宣言します
 
@@ -174,13 +182,11 @@ ModalはconfigurableなFirstとPreviousのfocus lifecycle defaultを持ち、roo
 
 dismiss handlerがない場合はDisabledPassThrough descriptorになります
 
-child handlingはtarget-to-root precedenceを維持し、Modalは暗黙のstop-at-scope境界を追加しません
-
-applicationはraw ancestor routingを止めずにこの境界を明示的にattachできます
+child handlingはtarget-to-root precedenceを維持し、Modalは暗黙のaction boundaryまたはraw Event boundaryを追加しません。KeyMapのstop-at-scopeはouter semantic actionだけを止めます。Approval inputを分離するApplicationはModal rootへhard unhandled-Event boundaryも適用できます
 
 Dialogはoptional title Node、body、controlled lazy Disclosure、順序付きapplication-defined actionをCore Modal内へ構成し、rootで`nagi.confirm`の後に`nagi.dismiss`を宣言します
 
-Applicationはdefaultとcancelのaction IDを明示します。未選択roleはpass-throughし、enabled targetはaction Messageを発行し、設定済みtargetが欠落またはdisabledなら外へ伝播せずconsumeします。Root confirmはRepeatを受け付けないEnterをdefaultにし、focused action ButtonとDisclosure headerはchild precedenceを維持します。Default actionはApplicationがfocus policyをoverrideしない場合のentry targetにもなり、action rowはApplication suppliedのCell幅でgreedyにwrapします
+Applicationはdefaultとcancelのaction IDを明示します。未選択roleはpass-throughし、enabled targetはaction Messageを発行し、設定済みtargetが欠落またはdisabledなら外へ伝播せずconsumeします。Root confirmはRepeatを受け付けないEnterをdefaultにし、focused action ButtonとDisclosure headerはchild precedenceを維持します。設定済みdefaultが欠落またはdisabledの場合はrepeat Enterもblockします。Default actionはApplicationがfocus policyをoverrideしない場合のentry targetにもなり、action rowはApplication suppliedのCell幅でgreedyにwrapします
 
 ConfirmDialogはconfirmとcancelの二actionと明示的なConfirmまたはCancelのdefaultを受け取り、Dialogのfocus、wrapping、lazy detailsを再利用します。Destructive表現はNagi policyではなくApplication suppliedのButtonStyleとし、三択以上ではgeneric Dialogを使用します
 
@@ -216,6 +222,8 @@ Effectはone-shot workを表します
 - `Batch`はchildを並行実行し、`Sequence`は順番に実行する
 - `without_redraw`と`WithoutRedraw`は、現在のupdateだけでotherwise-cleanなruntimeへ要求されるframeを抑止する
 
+Goのcontext-aware Runtimeとterminal entry pointはcaller contextからEffect contextをderiveし、Runtime closeでも各childへ協調的cancellationを要求します
+
 Subscriptionは安定key付きの長期sourceを表します
 
 - `Every`はruntime clockで値を生成する
@@ -223,6 +231,8 @@ Subscriptionは安定key付きの長期sourceを表します
 - Reliable配送はsource inboxが満杯になるとblockする
 - Latest配送は最新のpending値だけを保持する
 - Batch配送は件数または最大delayでFIFO値を解放する
+
+Active Streamは長期稼働を前提とし、generationがactiveな間の正常returnはRuntime noticeになります。要求済みcancellation後のreturnはnoticeにならず、回復したpanicは常にpanic noticeになります
 
 時間依存の挙動はVirtualClockでテストし、application test内でsleepしないでください
 
@@ -260,7 +270,7 @@ Widget galleryでは標準library全体を一覧できます。Variable-height f
 
 ## Testing
 
-Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisor diagnostic、解決済みScrollStateとVirtualFlowState、activeなresolved action group、application終了要求の検査を提供します
+Rust `nagi-tui-test`とGo `tuitest`はvirtual input、size、time、frame history、Message history、Interaction State検査、controlled Effect、手動Subscription、supervisorとRuntime notice diagnostic、解決済みScrollStateとVirtualFlowState、activeなresolved action group、application終了要求の検査を提供します。Input helperは1個のbyte chunkから複数Eventをdecodeする場合もEvent単位のcontrolled state更新を維持し、結果のrenderだけをcoalesceします
 
 Application testではreal sleepやterminal timingへ依存しないようにvirtual timeとcontrolled async sourceを使用してください
 

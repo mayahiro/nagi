@@ -35,6 +35,11 @@ terminal input --------------------/                         |
                                                 coalesced view and render
 ```
 
+One terminal read may decode several Unicode or key Events. Nagi completes
+routing and every input-derived update for one Event before routing the next,
+so controlled widgets always rebuild from the latest state. Only the resulting
+render is coalesced across that input batch
+
 ## Choose the source by lifetime
 
 - Use an Effect for finite work started by init or update
@@ -63,6 +68,24 @@ source from the subscriptions declaration asks Nagi to cancel that generation,
 wake blocked sends, and discard values that have not entered update. A producer
 must return after cancellation or a closed sink. Do not leave detached worker
 threads or goroutines behind
+
+Go terminal and context-aware Runtime entry points derive Effect and Stream
+contexts from the caller context. Values, deadlines, cancellation, and
+cancellation causes therefore remain available to process adapters and tracing
+code. Runtime close still requests cancellation for each active child
+
+## Lifecycle notices
+
+An active Stream is a long-lived source. Returning while its generation remains
+active is unexpected and produces a `RuntimeNotice`; a return after requested
+cancellation does not. Recovered Effect and Stream panics and worker-spawn
+failures also produce notices. Panic payloads are not retained
+
+Notices use a separate bounded FIFO, preserve the oldest retained entries, and
+increment a dropped counter when full. They do not become application Messages
+or mark the view dirty. A manually driven Runtime can drain and map them to
+application-owned Messages. Terminal runners provide a synchronous notice
+handler for logging, telemetry, or an application-defined bridge
 
 ## Rendering and backpressure
 
@@ -118,4 +141,5 @@ same
 
 Use `nagi-tui-test` or Go `tuitest` with virtual time and controlled Effect or
 Subscription sources. Drive Messages and deadlines explicitly instead of
-sleeping in application tests
+sleeping in application tests. Feed multi-scalar input as one chunk when testing
+controlled editors so per-Event updates and render coalescing are both covered

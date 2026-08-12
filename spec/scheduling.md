@@ -7,6 +7,13 @@
 - Backpressure behavior remains diagnosable
 - Multiple sequential updates MAY be followed by one coalesced render
 - Coalescing MUST NOT change message order or state transitions
+- When one terminal read decodes multiple input Events, each Event MUST complete
+  routing, terminal fallback mapping, input-derived Message updates, and
+  semantic-tree rebuilding before the next Event is routed. Only Surface
+  rendering is coalesced across the decoded batch
+- Polling asynchronous Effect and Subscription sources occurs at the normal
+  scheduling boundary rather than between Events from the same decoded input
+  batch
 - Resize, focus, cursor handling, and explicit frame requests bypass the frame
   interval and request an immediate frame
 - Scheduling is event-driven and does not assume a fixed 60 frames per second
@@ -19,6 +26,8 @@
 - Stream values and completed asynchronous Effects MUST notify a waiting
   terminal runner. Notifications MAY be coalesced, but message values and
   required state transitions MUST follow their Delivery and queue semantics
+- Stream return, Stream panic, and Effect panic lifecycle notices MUST also wake
+  a waiting terminal runner
 - Batch Stream notifications MAY coalesce between the first buffered value and
   the configured count or delay boundary. The first value MUST establish a
   waitable deadline, and reaching the count MUST wake a waiting runner

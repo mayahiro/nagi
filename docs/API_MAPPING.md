@@ -118,6 +118,7 @@ computed results retain the immutable string storage as a value
 | Clip | `Node::clip(child)` | `tui.Clip[M](child)` |
 | One-line input | `Node::text_input(...)` | `tui.TextInput[M](...)` |
 | Styled input | `Node::text_input_styled(...)` | `tui.StyledTextInput[M](...)` |
+| Zero-width typed cursor | `Node::cursor_anchor(owner)` | `tui.CursorAnchor[M](owner)` |
 | Scroll viewport | `Node::scroll_viewport(...)` | `tui.ScrollViewport[M](...)` |
 | Configured viewport | `Node::scroll_viewport_with_options(...)` | `tui.ScrollViewportWithOptions[M](...)` |
 | Virtual viewport | `Node::virtual_scroll_viewport(...)` | `tui.VirtualScrollViewport[M](...)` |
@@ -146,6 +147,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | --- | --- | --- |
 | Explicit viewport reveal target | `Node::reveal_descendant(...)` | `Node.RevealDescendant(...)` |
 | Disappearing-subtree focus fallback | `Node::focus_fallback(...)` | `Node.FocusFallback(...)` |
+| Hard unhandled-Event boundary | `Node::block_unhandled_events()` | `Node.BlockUnhandledEvents()` |
 
 `TextSpan::new` and `TextSpan::with_style` map to `tui.NewTextSpan` and
 `TextSpan.WithStyle`, while
@@ -159,6 +161,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Key stroke | `KeyStroke::new` / `character` / `function` | `NewKeyStroke` / `NewCharacterKeyStroke` / `NewFunctionKeyStroke` |
 | Event normalization | `KeyStroke::from_event` | `KeyStrokeFromEvent` |
 | Key binding | `KeyBinding::new` | `NewKeyBinding` |
+| Stroke-only blocking match | `KeyBinding::matches_stroke` | `KeyBinding.MatchesStroke` |
 | Repeat policy | `RepeatPolicy` | `RepeatPolicy` |
 | Binding support | `BindingSupport` | `BindingSupport` |
 | Action descriptor | `ActionDescriptor::new` | `NewActionDescriptor` |
@@ -220,9 +223,11 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | TextArea soft wrap and no-wrap | `TextArea::soft_wrap` / `no_wrap` | `TextArea.SoftWrap` / `NoWrap` |
 | TextArea vertical boundary policy | `TextAreaBoundaryNavigation` / `TextArea::boundary_navigation` | `widget.TextAreaBoundaryNavigation` / `TextArea.BoundaryNavigation` |
 | TextArea caret viewport | `TextArea::viewport` | `TextArea.Viewport` |
+| TextArea width profile | `TextArea::width_profile` | `TextArea.WidthProfile` |
 | Composer action descriptors | `Composer::action_descriptors` | `Composer.ActionDescriptors` |
 | Composer row bounds | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
 | Composer length limits | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
+| Composer width profile | `Composer::width_profile` | `Composer.WidthProfile` |
 | SelectableText action descriptors | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure actions | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
@@ -230,7 +235,9 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Dialog role selection | `Dialog::default_action` / `cancel_action` | `Dialog.DefaultAction` / `CancelAction` |
 | Dialog actions | `Dialog::action_descriptors` | `Dialog.ActionDescriptors` |
 | Dialog action wrapping | `Dialog::action_wrap_width` | `Dialog.ActionWrapWidth` |
+| Dialog width profile | `Dialog::width_profile` | `Dialog.WidthProfile` |
 | Confirm default | `ConfirmDialogDefault` | `widget.ConfirmDialogDefaultConfirm` / `ConfirmDialogDefaultCancel` |
+| ConfirmDialog width profile | `ConfirmDialog::width_profile` | `ConfirmDialog.WidthProfile` |
 | Modal focus builders | `Modal::initial_focus` / `return_focus` | `Modal.InitialFocus` / `ReturnFocus` |
 | Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
 | Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
@@ -239,6 +246,9 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | FilePicker action descriptors | `FilePicker::action_descriptors` | `FilePicker.ActionDescriptors` |
 | Calendar action descriptors | `Calendar::action_descriptors` | `Calendar.ActionDescriptors` |
 | Resolved-action Help | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
+| Help width profile | `Help::width_profile` | `Help.WidthProfile` |
+| BarChart width profile | `BarChart::width_profile` | `BarChart.WidthProfile` |
+| Chart width profile | `Chart::width_profile` | `Chart.WidthProfile` |
 
 Rust carries Character and Function values inside `KeyCode`. Go uses the
 matching private fields exposed through the `KeyStroke.Character` and
@@ -336,9 +346,19 @@ contract; Rust uses unsigned indices
 | Purpose | Rust | Go |
 | --- | --- | --- |
 | Application contract | `App` with associated `Message` | `App[Message]` |
-| View environment | `ViewContext { size }` | `ViewContext{Size: ...}` |
+| View environment | `ViewContext { size, width_profile }` | `ViewContext{Size: ..., WidthProfile: ...}` |
+| Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
+| Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
+| Context-aware Runtime construction | Language-specific caller integration | `NewRuntimeContext` / `NewRuntimeWithClockContext` |
 | Run a terminal app | `run_terminal` | `RunTerminal[M]` |
 | Run with external cancellation | Language-specific caller integration | `RunTerminalContext[M]` |
+| Run with Runtime notices | `run_terminal_with_notice_handler` | `RunTerminalWithNoticeHandler[M]` |
+| Context cancellation and notices | Language-specific caller integration | `RunTerminalContextWithNoticeHandler[M]` |
+| Process queued input without async polling | `Runtime::process_queued` | `Runtime.ProcessQueued` |
+| Lifecycle notice | `RuntimeNotice` / `RuntimeNoticeKind` | `RuntimeNotice` / `RuntimeNoticeKind` |
+| Pending and drain notices | `Runtime::pending_runtime_notices` / `drain_runtime_notices` | `Runtime.PendingRuntimeNotices` / `DrainRuntimeNotices` |
+| Notice drop diagnostics | `Runtime::runtime_notice_diagnostics` | `Runtime.RuntimeNoticeDiagnostics` |
+| Test harness notices | `Harness::pending_runtime_notices` / `drain_runtime_notices` / `runtime_notice_diagnostics` | `Harness.PendingRuntimeNotices` / `DrainRuntimeNotices` / `RuntimeNoticeDiagnostics` |
 | Ignore event | `EventResult::ignored()` | `IgnoreResult[M]()` |
 | Consume event | `EventResult::consumed()` | `ConsumeResult[M]()` |
 | Emit one Message | `EventResult::message(value)` | `MessageResult(value)` |
@@ -350,6 +370,11 @@ contract; Rust uses unsigned indices
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | No Subscription | `Subscription::none()` | `NoneSubscription[M]()` |
+
+Both terminal runners route and apply every Event decoded from one input chunk
+before routing the next Event, then coalesce only the render. Width-sensitive
+widgets receive the Runtime profile explicitly from `ViewContext`; Core nodes
+use it automatically
 
 The allocation-sensitive VT append APIs are `nagi_vt::append_encoded` and
 `vt.AppendEncoded`. They append exactly the bytes produced by `encode` and

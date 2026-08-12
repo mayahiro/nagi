@@ -118,6 +118,7 @@ Goのcomputed resultはimmutableなstring storageをvalueとして保持しま�
 | Clip | `Node::clip(child)` | `tui.Clip[M](child)` |
 | 1行input | `Node::text_input(...)` | `tui.TextInput[M](...)` |
 | Styled input | `Node::text_input_styled(...)` | `tui.StyledTextInput[M](...)` |
+| Zero-width typed cursor | `Node::cursor_anchor(owner)` | `tui.CursorAnchor[M](owner)` |
 | Scroll viewport | `Node::scroll_viewport(...)` | `tui.ScrollViewport[M](...)` |
 | 設定付きviewport | `Node::scroll_viewport_with_options(...)` | `tui.ScrollViewportWithOptions[M](...)` |
 | Virtual viewport | `Node::virtual_scroll_viewport(...)` | `tui.VirtualScrollViewport[M](...)` |
@@ -143,6 +144,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | --- | --- | --- |
 | 明示的なviewport内target表示 | `Node::reveal_descendant(...)` | `Node.RevealDescendant(...)` |
 | 消えるsubtreeのfocus fallback | `Node::focus_fallback(...)` | `Node.FocusFallback(...)` |
+| Hard unhandled-Event boundary | `Node::block_unhandled_events()` | `Node.BlockUnhandledEvents()` |
 
 `TextSpan::new`と`TextSpan::with_style`は`tui.NewTextSpan`と`TextSpan.WithStyle`、`ParagraphOptions::default`は`tui.DefaultParagraphOptions`に対応します
 
@@ -154,6 +156,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Key stroke | `KeyStroke::new` / `character` / `function` | `NewKeyStroke` / `NewCharacterKeyStroke` / `NewFunctionKeyStroke` |
 | Event normalization | `KeyStroke::from_event` | `KeyStrokeFromEvent` |
 | Key binding | `KeyBinding::new` | `NewKeyBinding` |
+| Strokeだけを使うblocking match | `KeyBinding::matches_stroke` | `KeyBinding.MatchesStroke` |
 | Repeat policy | `RepeatPolicy` | `RepeatPolicy` |
 | Binding support | `BindingSupport` | `BindingSupport` |
 | Action descriptor | `ActionDescriptor::new` | `NewActionDescriptor` |
@@ -215,9 +218,11 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | TextArea soft wrapとno-wrap | `TextArea::soft_wrap` / `no_wrap` | `TextArea.SoftWrap` / `NoWrap` |
 | TextArea vertical boundary policy | `TextAreaBoundaryNavigation` / `TextArea::boundary_navigation` | `widget.TextAreaBoundaryNavigation` / `TextArea.BoundaryNavigation` |
 | TextArea caret viewport | `TextArea::viewport` | `TextArea.Viewport` |
+| TextArea width profile | `TextArea::width_profile` | `TextArea.WidthProfile` |
 | Composer action descriptor | `Composer::action_descriptors` | `Composer.ActionDescriptors` |
 | Composer row境界 | `Composer::rows` / `visible_rows` | `Composer.Rows` / `VisibleRows` |
 | Composer長さ制限 | `Composer::maximum_utf8_bytes` / `maximum_graphemes` | `Composer.MaximumUTF8Bytes` / `MaximumGraphemes` |
+| Composer width profile | `Composer::width_profile` | `Composer.WidthProfile` |
 | SelectableText action descriptor | `SelectableText::action_descriptors` | `SelectableText.ActionDescriptors` |
 | Disclosure | `Disclosure::new` / `body` | `widget.NewDisclosure` / `Disclosure.Body` |
 | Disclosure action | `Disclosure::action_descriptors` | `Disclosure.ActionDescriptors` |
@@ -225,7 +230,9 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Dialog role選択 | `Dialog::default_action` / `cancel_action` | `Dialog.DefaultAction` / `CancelAction` |
 | Dialog action | `Dialog::action_descriptors` | `Dialog.ActionDescriptors` |
 | Dialog action wrapping | `Dialog::action_wrap_width` | `Dialog.ActionWrapWidth` |
+| Dialog width profile | `Dialog::width_profile` | `Dialog.WidthProfile` |
 | Confirm default | `ConfirmDialogDefault` | `widget.ConfirmDialogDefaultConfirm` / `ConfirmDialogDefaultCancel` |
+| ConfirmDialog width profile | `ConfirmDialog::width_profile` | `ConfirmDialog.WidthProfile` |
 | Modal focus builder | `Modal::initial_focus` / `return_focus` | `Modal.InitialFocus` / `ReturnFocus` |
 | Command Palette command action descriptor | `CommandPalette::command_action_descriptor` | `CommandPalette.CommandActionDescriptor` |
 | Command Palette root action descriptors | `CommandPalette::action_descriptors` | `CommandPalette.ActionDescriptors` |
@@ -234,6 +241,9 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | FilePicker action descriptors | `FilePicker::action_descriptors` | `FilePicker.ActionDescriptors` |
 | Calendar action descriptors | `Calendar::action_descriptors` | `Calendar.ActionDescriptors` |
 | Resolved actionからのHelp | `Help::from_resolved_actions` | `widget.NewHelpFromResolvedActions` |
+| Help width profile | `Help::width_profile` | `Help.WidthProfile` |
+| BarChart width profile | `BarChart::width_profile` | `BarChart.WidthProfile` |
+| Chart width profile | `Chart::width_profile` | `Chart.WidthProfile` |
 
 RustはCharacterとFunctionの値を`KeyCode`内に保持します
 
@@ -327,9 +337,19 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | 用途 | Rust | Go |
 | --- | --- | --- |
 | Application contract | associated `Message`を持つ`App` | `App[Message]` |
-| View環境 | `ViewContext { size }` | `ViewContext{Size: ...}` |
+| View環境 | `ViewContext { size, width_profile }` | `ViewContext{Size: ..., WidthProfile: ...}` |
+| Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
+| Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
+| Context-aware Runtime構築 | 言語固有のcaller integration | `NewRuntimeContext` / `NewRuntimeWithClockContext` |
 | Terminal application実行 | `run_terminal` | `RunTerminal[M]` |
 | 外部cancellation付き実行 | 言語固有のcaller integration | `RunTerminalContext[M]` |
+| Runtime notice付き実行 | `run_terminal_with_notice_handler` | `RunTerminalWithNoticeHandler[M]` |
+| Context cancellationとnotice | 言語固有のcaller integration | `RunTerminalContextWithNoticeHandler[M]` |
+| Async pollingなしのqueued input処理 | `Runtime::process_queued` | `Runtime.ProcessQueued` |
+| Lifecycle notice | `RuntimeNotice` / `RuntimeNoticeKind` | `RuntimeNotice` / `RuntimeNoticeKind` |
+| Pending noticeとdrain | `Runtime::pending_runtime_notices` / `drain_runtime_notices` | `Runtime.PendingRuntimeNotices` / `DrainRuntimeNotices` |
+| Notice drop diagnostic | `Runtime::runtime_notice_diagnostics` | `Runtime.RuntimeNoticeDiagnostics` |
+| Test harnessのnotice | `Harness::pending_runtime_notices` / `drain_runtime_notices` / `runtime_notice_diagnostics` | `Harness.PendingRuntimeNotices` / `DrainRuntimeNotices` / `RuntimeNoticeDiagnostics` |
 | Eventをignore | `EventResult::ignored()` | `IgnoreResult[M]()` |
 | Eventをconsume | `EventResult::consumed()` | `ConsumeResult[M]()` |
 | 1個のMessageをemit | `EventResult::message(value)` | `MessageResult(value)` |
@@ -341,6 +361,8 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Focus Effect | `Effect::focus(id)` | `FocusEffect[M](id)` |
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | Subscriptionなし | `Subscription::none()` | `NoneSubscription[M]()` |
+
+両terminal runnerは1個のinput chunkからdecodeした各Eventをrouteしてupdateへ適用してから次のEventを処理し、renderだけをcoalesceします。幅計算を行うWidgetは`ViewContext`からRuntime profileを明示的に受け取り、Core Nodeは同じprofileを自動的に使用します
 
 Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendEncoded`です。Caller所有bufferへ`encode`と`Encode`が生成するbyteと同一の内容を追記します
 

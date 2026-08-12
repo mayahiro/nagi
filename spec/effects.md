@@ -14,8 +14,10 @@ focusable stable Node ID in the next view, and `ScrollTo` requests a clamped
 offset for a stable ScrollViewport ID in the next view
 
 Rust tasks use standard threads and cooperative cancellation. Go tasks use
-goroutines and `context.Context`. Neither implementation embeds a general
-network or async runtime
+goroutines and `context.Context`. A Go context-aware Runtime derives Effect and
+Stream contexts from its caller so values, deadlines, cancellation, and
+cancellation causes are retained. Closing the Runtime still cancels each active
+child. Neither implementation embeds a general network or async runtime
 
 `Run` starts an anonymous one-shot task. `Latest` starts a keyed task. `Cancel`
 targets the current Latest generation for its key. `Scoped` associates all
@@ -89,3 +91,28 @@ intervals and produce one value at a scheduling boundary
 
 Backpressure, replacement, discarded-value, lifecycle, and producer-failure
 counters remain observable through runtime and test-support diagnostics
+
+## Asynchronous lifecycle notices
+
+The Runtime retains a separate bounded FIFO of lifecycle notices. This queue
+does not inject an application Message or dirty the view. When full, it keeps
+the oldest notices, drops newer notices, and increments an observable dropped
+counter
+
+Notice kinds are Effect panic, Effect worker spawn failure, active Stream
+return, Stream panic, and Stream worker spawn failure. Go worker primitives do
+not currently report spawn failure, but the kind remains shared across the
+public model. A Latest Effect notice contains its Task key and generation; an
+anonymous Run notice has no task identity. Every Stream notice contains its
+Subscription key and generation. Panic payloads and stack traces are not
+retained
+
+A Stream that returns while its generation remains active emits the active
+Stream return notice because Stream is a long-lived source. Returning after the
+Runtime requested cancellation or closed the sink does not emit that notice. A
+recovered panic remains a panic notice
+
+Custom Runtime drivers drain notices explicitly. Terminal runners provide a
+synchronous notice-handler entry point and drain after each asynchronous
+scheduling boundary. Applications decide whether a notice becomes domain
+state, a Message, a log record, or process-level telemetry

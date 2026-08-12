@@ -166,7 +166,11 @@ group
 
 An enabled action invokes its handler. If the result is ignored, Core handling,
 the raw handler, and ancestor routing continue. A disabled-pass-through match
-is skipped. A disabled-consume match consumes without invoking the handler
+is skipped. A disabled-consume match consumes without invoking the handler.
+For this blocking match only, the normalized stroke is compared without the
+binding's repeat policy, so an explicit repeat of an initial-only binding
+cannot escape to another action or ancestor. Enabled and disabled-pass-through
+matching continue to enforce the declared repeat policy
 
 TextInput therefore gives its own action group a chance before editing. Text
 that is not consumed locally enters TextInput editing before an ancestor

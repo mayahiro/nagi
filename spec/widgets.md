@@ -10,6 +10,16 @@ Widget constructors return semantic nodes rebuilt by application `view`, so
 application state remains the authority for selection, enabled state, progress,
 spinner ticks, and modal visibility
 
+## Width profiles
+
+TextArea, Composer, Dialog, ConfirmDialog, Help, BarChart, and Chart perform
+text-width or glyph-width calculations while building their Core Nodes. Each
+accepts an explicit Nagi Text width profile and defaults to Modern when used
+standalone. An application using a non-default Runtime profile MUST pass the
+profile from `ViewContext` so widget calculations and Core layout use one
+policy. Rust Runtime profiles, including Custom callbacks, have a `'static`
+lifetime
+
 ## List
 
 - A List receives an application-defined root `NodeId` and one distinct stable
@@ -164,7 +174,8 @@ spinner ticks, and modal visibility
 - An unselected default or cancel role is `disabled-pass-through`. A selected
   ID that names an enabled action is enabled and emits that action's message.
   A selected ID that is absent or disabled is `disabled-consume`, preventing
-  the same key from escaping the Dialog
+  the same key from escaping the Dialog. This blocking behavior also consumes
+  explicit repeat Enter even though confirmation is initial-only
 - Focused child actions retain target-to-root precedence over Dialog root
   actions. Enter therefore activates a focused action or Disclosure header
   before considering the Dialog default
@@ -376,9 +387,10 @@ spinner ticks, and modal visibility
   logical line. Up and Down move between visual lines and preserve a preferred
   terminal-cell column across shorter targets. Editing and successful
   non-vertical movement clear that preferred column
-- CR, LF, and CRLF delimit logical lines. An enabled TextArea renders `▏` at the
-  application cursor and uses a focus overlay to identify active editing. A
-  disabled TextArea omits the cursor and cannot receive input
+- CR, LF, and CRLF delimit logical lines. An enabled TextArea places the typed
+  terminal cursor at a zero-width cursor anchor and uses a focus overlay to
+  identify active editing. It does not draw a caret grapheme or shift following
+  text. A disabled TextArea omits the cursor and cannot receive input
 - TextArea uses logical lines without wrapping by default. Opt-in soft wrapping
   accepts a terminal-cell width, normalizes zero to one, and hard-wraps without
   changing text or splitting an extended grapheme cluster. A cursor on a byte
@@ -460,9 +472,10 @@ spinner ticks, and modal visibility
   raw TextArea editing input, and Paste never submits
 - When Composer is disabled, all 21 actions are disabled-pass-through. When
   editing remains enabled but submit is invalid, submit is disabled-consume so
-  Enter cannot escape to an ancestor action. Validation content is an optional
-  application-provided Node below the editor viewport; the application controls
-  its meaning and submit availability separately
+  initial or explicit repeat Enter cannot escape to an ancestor action.
+  Validation content is an optional application-provided Node below the editor
+  viewport; the application controls its meaning and submit availability
+  separately
 - Applications may limit future insertion by UTF-8 bytes or extended grapheme
   count. Reject discards the complete Text, Paste, or line-break insertion;
   Truncate inserts the longest grapheme-aligned prefix that fits. Only inserted
@@ -539,6 +552,8 @@ spinner ticks, and modal visibility
   unsigned value. Labels align to the greatest terminal-cell width
 - The bar portion has a fixed unsigned 16-bit width and uses `█` for completed
   cells and `░` for remaining cells. Values optionally follow the bar
+- If either bar glyph is not one cell in the selected width profile, BarChart
+  uses ASCII `#` and `.` so geometry remains stable
 - Automatic maximum is the greatest supplied value. An explicit zero maximum
   is valid and renders empty bars. Values above a nonzero maximum clamp to a
   complete bar without overflow
@@ -556,7 +571,9 @@ spinner ticks, and modal visibility
 - Optional axes reserve the left column and bottom row and use `│`, `─`, and
   `└`. Mapping uses integer floor division and is defined for the complete
   signed 32-bit coordinate range
-- A marker that is empty or not exactly one terminal cell falls back to `•`.
+- Axes use ASCII `|`, `-`, and `+` if any built-in axis glyph is not one cell
+  in the selected width profile. A marker that is empty or not exactly one
+  terminal cell falls back to `•`, then to `*` if `•` is also not one cell.
   Surface allocation failure returns a same-size Spacer rather than panicking
 
 ## Help

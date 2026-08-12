@@ -7,6 +7,8 @@ The harnesses provide equivalent observable behavior for
 
 - Initial terminal size and resize events
 - Direct messages and decoded terminal input
+- Per-Event controlled-state updates for multiple Events decoded from one input
+  chunk, with rendering coalesced after the batch
 - Virtual time and due scheduled work
 - Controlled Effect completion and cancellation
 - Manual Subscription delivery and lifecycle inspection
@@ -19,7 +21,7 @@ The harnesses provide equivalent observable behavior for
   stabilization under sustained scrolling
 - Explicit reveal-target scrolling without terminal timing
 - TextArea visual wrapping, preferred-column movement, boundary availability,
-  and caret-viewport following
+  typed cursor placement, width-profile consistency, and caret-viewport following
 - Composer submission, line-break rebinding, controlled history recall, length
   limits, automatic height, validation placement, and viewport following
 - SelectableText grapheme, word, logical-line, and document movement,
@@ -34,7 +36,8 @@ The harnesses provide equivalent observable behavior for
   destructive styling, and Cell-width action wrapping
 - Active target-to-root resolved action-group inspection
 - Message history, frame history, and canonical Surface snapshots
-- Active-task, stale-result, and backpressure diagnostics
+- Active-task, stale-result, backpressure, and bounded Runtime-notice diagnostics
+- Soft and hard Modal Event propagation boundaries
 
 Time-dependent application tests SHOULD use the virtual clock instead of real
 sleep. Controlled asynchronous work SHOULD be completed explicitly so tests do
