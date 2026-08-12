@@ -6,8 +6,9 @@ values. It is the CSS-like side of the Content boundary: Content retains
 meaning and structure, while a Presentation Sheet selects concrete text and
 layout values without modifying the Content tree
 
-This specification defines rule resolution only. It does not define a Content
-to TUI Node projection
+This specification defines rule resolution only. The separate
+[Content-to-Node projection specification](content-node-projection.md) defines
+how resolved values create a bounded TUI render tree
 
 ## Scope
 
@@ -150,10 +151,9 @@ before constructing a sheet
 
 ## Projection boundary
 
-A later backend projection may map computed display and layout values into
-ordinary TUI Nodes. That projection must separately define valid inline and
-block nesting, eager-work limits, Node ID namespacing, annotation behavior,
-and VirtualFlow integration
+The TUI backend can map Content and computed values into ordinary TUI Nodes
+using the separate bounded
+[Content-to-Node projection contract](content-node-projection.md)
 
 Rule resolution itself does not create Nodes, map Element IDs to Node IDs,
 activate annotations, or choose a Markdown, ANSI, Help, Diagnostic, JSON,

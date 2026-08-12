@@ -11,6 +11,7 @@ Nagi TUIは、Rustの各crateとGoの各packageで言語に自然なAPIを提供
 | Application、runtime、layout、event、Effect、Subscription | `nagi-tui` | `github.com/mayahiro/nagitui-go`の`tui` package |
 | Source-neutral structured Content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
 | Terminal Presentation Rules | `nagi-tui` | `github.com/mayahiro/nagitui-go`の`tui` package |
+| ContentからNodeへのprojection | `nagi-tui` | `github.com/mayahiro/nagitui-go`の`tui` package |
 | Unicode graphemeと端末幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input／output、Color、Attributes、Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry、Cell、Surface、composition、snapshot | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
@@ -36,6 +37,18 @@ Text Style fieldはcallerが渡すStyleからinheritし、display、Length、gap
 Rule resolutionはVT Style mergeを使わず、Content変更、Node生成、Element ID mapping、annotation activationを行いません
 
 完全な境界は[Terminal Presentation guide](PRESENTATION_ja.md)を参照してください
+
+Rustの`project_content`とGoの`ProjectContent`は独立した上限付きbackend bridgeです
+
+訪問Elementをresolveし、Inline、Paragraph、Flow、Sequenceをstyled span、Paragraph、Column、Row Nodeへ対応付けます
+
+State対応variantは同期的なelement単位callbackからactive Stateを取得します
+
+ProjectionはContent node数、生成Node数、span数、depth、visual UTF-8 byte数を明示的に制限します
+
+Inline content内のblock displayを拒否し、Node IDの割り当て、annotation activation、VirtualFlow itemの生成またはcacheを行いません
+
+完全な契約は[ContentからNodeへのprojection仕様](../spec/content-node-projection.md)を参照してください
 
 ## Application lifecycle
 

@@ -13,6 +13,7 @@ nodes from `view`, and receive messages sequentially through `update`
 | Application, runtime, layout, events, effects, subscriptions | `nagi-tui` | `github.com/mayahiro/nagitui-go` package `tui` |
 | Source-neutral structured content | `nagi-content` | `github.com/mayahiro/nagi-go/content` |
 | Terminal Presentation Rules | `nagi-tui` | `github.com/mayahiro/nagitui-go` package `tui` |
+| Content-to-Node projection | `nagi-tui` | `github.com/mayahiro/nagitui-go` package `tui` |
 | Unicode graphemes and terminal width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 | Typed terminal input/output, Color, Attributes, Style | `nagi-vt` | `github.com/mayahiro/nagi-go/vt` |
 | Geometry, Cells, surfaces, composition, snapshots | `nagi-surface` | `github.com/mayahiro/nagitui-go/surface` |
@@ -42,6 +43,18 @@ not inherit
 Rule resolution does not use VT Style merging, mutate Content, create Nodes,
 map Element IDs, or activate annotations. See the
 [Terminal Presentation guide](PRESENTATION.md) for the complete boundary
+
+`project_content` in Rust and `ProjectContent` in Go form the separate bounded
+backend bridge. They resolve visited Elements and map Inline, Paragraph, Flow,
+and Sequence to styled spans, Paragraph, Column, and Row Nodes. State-aware
+variants obtain active States from a synchronous per-element callback
+
+Projection applies explicit limits to Content nodes, generated Nodes, spans,
+depth, and visual UTF-8 bytes. It rejects block displays inside inline content,
+does not allocate Node IDs or activate annotations, and does not create or
+cache VirtualFlow items. See the
+[Content-to-Node projection specification](../spec/content-node-projection.md)
+for the complete contract
 
 ## Application lifecycle
 

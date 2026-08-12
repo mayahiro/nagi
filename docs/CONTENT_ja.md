@@ -75,9 +75,9 @@ Contentは構造と意味を保持しますが、terminal Color、Style、Length
 
 Terminal presentation層はroleとclassをbackend固有のlayoutとcomputed styleへ解決し、その結果を通常のTUI Nodeへprojectできます
 
-現在のNagiでは[Terminal Presentation Rules](PRESENTATION_ja.md)がこの境界の決定的なrule resolutionを定義します
+Nagiの[Terminal Presentation Rules](PRESENTATION_ja.md)がこの境界の決定的なrule resolutionを定義します
 
-ContentからNodeへのprojectionは別契約として維持します
+独立した上限付き[ContentからNodeへのprojection](../spec/content-node-projection.md)がContentへterminal依存を追加せず、resolved resultを通常のTUI Nodeへ対応付けます
 
 Markdown、ANSI、Help、Diagnostic、JSON、Diff、application domain modelはsource adapterまたはrendererとして維持します
 

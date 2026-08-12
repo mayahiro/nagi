@@ -72,9 +72,10 @@ focus target, event handler, or viewport state. A terminal presentation layer
 may resolve roles and classes into backend-specific layout and computed style,
 then project the result into ordinary TUI nodes
 
-Nagi's current [Terminal Presentation Rules](PRESENTATION.md) define the
-deterministic rule-resolution half of that boundary. Content-to-Node projection
-remains a separate contract
+Nagi's [Terminal Presentation Rules](PRESENTATION.md) define deterministic
+rule resolution. The separate bounded
+[Content-to-Node projection](../spec/content-node-projection.md) maps that
+result into ordinary TUI Nodes without adding terminal dependencies to Content
 
 Markdown, ANSI, Help, Diagnostic, JSON, Diff, and application domain models
 remain source adapters or renderers. They may produce Content without becoming

@@ -109,6 +109,50 @@ These values are directional baselines, not performance guarantees. Machine
 load, allocator behavior, compiler versions, and application content affect the
 result. Timing remains a benchmark rather than a pass/fail test
 
+## Content-to-Node projection purpose
+
+This benchmark measures two eager projection paths without layout, Surface
+rendering, terminal I/O, timers, Effects, or Subscriptions
+
+- The visible-subtree path projects one Flow containing 24 Paragraphs, 24
+  nested Inline Elements, 48 source Text nodes, two Presentation Rules, and one
+  visual separator per Paragraph
+- The bounded-failure path receives a Flow with 100,000 direct Text children
+  and a caller limit of 128 visited Content nodes. The immutable input is built
+  before measurement; projection stops at the first node above the limit
+- Every measured result Node or partial failure result is dropped before the
+  retained-memory sample
+
+The workload represents projection inside a VirtualFlow visible-item builder,
+not projection of a complete 100,000-item feed. VirtualFlow continues to own
+visibility and item ordering
+
+Rust reports the median of 12 calls with allocation count, total allocated
+bytes, peak additional live bytes, and retained bytes from its benchmark-only
+allocator. Go reports the median of three reports, each measured over five
+calls with standard `testing` allocation metrics
+
+### Reference results
+
+Results recorded on 2026-08-12 in the same reference environment
+
+| Implementation | Path | Median time per call | Allocations per call | Allocated bytes per call | Peak additional live bytes | Retained bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | visible subtree | 0.005 ms | 169 | 11,318 | 11,141 | 0 |
+| Rust | bounded failure over 100,000-node input | 0.012 ms | 383 | 53,307 | 37,829 | 0 |
+| Go | visible subtree | 0.013 ms | 98 | 21,440 | not measured | not measured |
+| Go | bounded failure over 100,000-node input | 0.026 ms | 257 | 114,528 | not measured | not measured |
+
+The failure path visits at most 129 Content occurrences and drops all partial
+output. Its measured CPU and allocation therefore depend on the configured
+limit rather than the complete 100,000-child input. The visible path performs
+one rule resolution per Element and does not resolve per grapheme
+
+These numbers measure newly owned frame Nodes and styled spans, so non-zero
+allocation is expected. Go's projector passes its owned span slices directly
+to the internal Paragraph construction path; the public Paragraph constructor
+continues to defensively copy caller-owned slices
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and
@@ -125,6 +169,15 @@ heap after two 256-frame variable-height windows with the same 1 MiB tolerance
 Both implementations also verify that initial stick-to-end rendering and
 content growth invoke the fragment builder once per frame, construct only the
 visible rows, and preserve a manual offset after the user leaves the end
+
+Content projection shares 15 rendering and failure fixtures across Rust and
+Go. They cover inline style inheritance, Paragraph wrapping and alignment,
+Flow and Sequence boundaries, Length, display override, ignored Inline box
+properties, HardBreak, semantic-boundary separation, identity and annotation
+non-mapping, and all structured resource failures. Go additionally compares
+retained heap after two 512-projection windows with a 1 MiB runtime-noise
+tolerance. The Rust projection benchmark reports zero retained bytes for both
+paths
 
 The text implementations retain their materialized APIs while exposing
 streaming grapheme and wrapped-line APIs for allocation-sensitive paths. Shared

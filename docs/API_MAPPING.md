@@ -86,6 +86,11 @@ states unrepresentable
 | Immutable sheet | `PresentationSheet::new` | `tui.NewPresentationSheet` |
 | Resolution | `PresentationSheet::resolve` | `PresentationSheet.Resolve` |
 | Computed result | `ComputedPresentation` | `tui.ComputedPresentation` |
+| Projection without states | `project_content` | `tui.ProjectContent[M]` |
+| Projection with per-element states | `project_content_with_states` | `tui.ProjectContentWithStates[M]` |
+| Projection options | `ContentProjectionOptions` | `tui.ContentProjectionOptions` |
+| Projection limits | `ContentProjectionLimits` | `tui.ContentProjectionLimits` |
+| Projection failure | `ContentProjectionError` / `ContentProjectionErrorKind` | `tui.ContentProjectionError` / `ContentProjectionErrorKind` |
 
 Both implementations resolve `(element, inherited Style, active States)` in
 that order. Rule order is the only cascade priority. Text Style fields inherit;
@@ -93,6 +98,10 @@ layout fields do not. The result is a value and does not create a Node
 
 Rust computed results borrow a concrete visual separator from the Sheet. Go
 computed results retain the immutable string storage as a value
+
+Both projection APIs return ordinary frame-owned Nodes and apply the same five
+resource limits. Neither API derives Node identity from Content identity or
+turns annotations into application actions
 
 ## Core nodes
 

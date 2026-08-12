@@ -83,6 +83,11 @@ Goのmodifier errorはinvalidなzero-value identifierと未知のnumeric boundar
 | Immutable Sheet | `PresentationSheet::new` | `tui.NewPresentationSheet` |
 | Resolution | `PresentationSheet::resolve` | `PresentationSheet.Resolve` |
 | Computed result | `ComputedPresentation` | `tui.ComputedPresentation` |
+| Stateなしprojection | `project_content` | `tui.ProjectContent[M]` |
+| Element単位State付きprojection | `project_content_with_states` | `tui.ProjectContentWithStates[M]` |
+| Projection option | `ContentProjectionOptions` | `tui.ContentProjectionOptions` |
+| Projection limit | `ContentProjectionLimits` | `tui.ContentProjectionLimits` |
+| Projection failure | `ContentProjectionError` / `ContentProjectionErrorKind` | `tui.ContentProjectionError` / `ContentProjectionErrorKind` |
 
 両実装は`element`、inherited Style、active Stateの順で解決します
 
@@ -93,6 +98,10 @@ ResultはvalueでありNodeを生成しません
 Rustのcomputed resultはconcreteなvisual separatorをSheetからborrowします
 
 Goのcomputed resultはimmutableなstring storageをvalueとして保持します
+
+両projection APIは通常のframe-owned Nodeを返し、同じ5個のresource limitを適用します
+
+Content identityからNode identityを導出せず、annotationをapplication actionへ変換しません
 
 ## Core Node
 

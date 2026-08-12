@@ -21,7 +21,7 @@ Presentation belongs to the terminal backend because its declarations use VT
 Color and Style plus TUI layout values. The source-neutral `nagi-content` crate
 and Go `content` package remain independent from VT and TUI
 
-Run the complete value-resolution examples from each implementation
+Run the complete resolution and projection examples from each implementation
 repository:
 
 - [Rust Presentation example](../nagi-rs/crates/nagi-tui/examples/presentation/main.rs)
@@ -63,11 +63,33 @@ element
 The computed result contains a concrete VT Style and terminal layout values.
 It does not mutate Content and does not create a TUI Node
 
-Content-to-Node projection is intentionally a separate contract. It still
-needs explicit rules for inline and block nesting, eager-work limits, Node ID
-namespacing, annotations, and VirtualFlow item boundaries. Applications can
-continue constructing ordinary Nodes and applying resolved values directly
-while that projection remains separate
+Content-to-Node projection is a separate operation with its own
+[observable specification](../spec/content-node-projection.md). Keeping rule
+resolution pure lets applications inspect computed values or construct custom
+Nodes without using the standard projection
+
+## Content-to-Node projection
+
+Rust `project_content` and Go `ProjectContent` resolve every visited Element
+and create ordinary Paragraph, Column, Row, and Gap Nodes. The state-aware
+variants accept one synchronous callback whose returned States apply only to
+the current Element
+
+Paragraph and Inline displays form inline formatting contexts. A block display
+inside one of those contexts returns a structured `invalid-layout-tree`
+failure. Flow maps to Column and Sequence maps to Row. An inline root or an
+inline direct child of either block container is promoted to its own anonymous
+Paragraph
+
+Projection never maps Element IDs to Node IDs or annotations to actions. Add
+namespaced Node identity, handlers, SelectableText, and application policy
+outside the returned Node
+
+Every projection bounds visited Content nodes, generated Nodes, styled spans,
+tree depth, and emitted UTF-8 bytes. Default limits are suitable for an eager
+visible subtree and can be lowered or raised through
+`ContentProjectionLimits`; depth remains capped at 256 because Node layout and
+rendering are recursive
 
 ## Resource behavior
 
@@ -81,10 +103,11 @@ Rust `ComputedPresentation` borrows a concrete visual separator from its
 string value backed by immutable storage. Neither implementation copies a
 separator during resolution
 
-Large feeds should continue to use VirtualFlow and resolve only visible item
-subtrees. Element IDs and opaque revisions alone are not a correct computed
-presentation cache key because revisions carry no automatic metadata-change
-contract
+Large feeds should continue to use VirtualFlow and project only item subtrees
+requested by its visible-item builder. Projection does not create VirtualFlow
+or retain a Node cache. Element IDs and opaque revisions alone are not a
+correct computed presentation cache key because revisions carry no automatic
+metadata-change contract
 
 The computed Hidden attribute is visual presentation, not redaction. Remove
 sensitive values before they enter Content

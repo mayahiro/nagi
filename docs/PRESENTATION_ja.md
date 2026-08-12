@@ -19,7 +19,7 @@ DeclarationがVTのColorとStyle、TUIのlayout valueを使用するため、Pre
 
 Source-neutralな`nagi-content` crateとGoの`content` packageはVTとTUIから独立したまま維持します
 
-各実装repositoryから完全なvalue resolution exampleを実行できます
+各実装repositoryから完全なvalue resolutionとprojection exampleを実行できます
 
 - [Rust Presentation example](../nagi-rs/crates/nagi-tui/examples/presentation/main.rs)
 - [Go Presentation example](../nagitui-go/examples/presentation/main.go)
@@ -58,11 +58,31 @@ Computed resultはconcreteなVT Styleとterminal layout valueを保持します
 
 Contentを変更せず、TUI Nodeも生成しません
 
-ContentからNodeへのprojectionは意図的に別契約としています
+ContentからNodeへのprojectionは独立したoperationとし、外部から観測できる挙動を[専用仕様](../spec/content-node-projection.md)で定義します
 
-Inlineとblockのnesting、eager work limit、Node ID namespace、annotation、VirtualFlow item境界を明示的に確定する必要があります
+Rule resolutionをpureに保つため、applicationは標準projectionを使わずcomputed valueを検査し、custom Nodeを構築することもできます
 
-Projectionを分離している間もapplicationは通常のNodeを構築し、resolved valueを直接適用できます
+## ContentからNodeへのprojection
+
+Rustの`project_content`とGoの`ProjectContent`は訪問する各Elementをresolveし、通常のParagraph、Column、Row、Gap Nodeを生成します
+
+State対応variantは同期callbackを1個受け取り、返されたStateを現在のElementだけへ適用します
+
+ParagraphとInline displayはinline formatting contextを作ります
+
+このcontext内のblock displayはstructuredな`invalid-layout-tree` errorになります
+
+FlowはColumn、SequenceはRowへ対応し、inline rootまたはblock container直下のinline childはchildごとに匿名Paragraphへ昇格します
+
+ProjectionはElement IDをNode IDへ、annotationをactionへ変換しません
+
+Namespace付きNode identity、handler、SelectableText、application policyは返されたNodeの外側で追加します
+
+各projectionは訪問Content node数、生成Node数、styled span数、tree depth、emitted UTF-8 byte数を制限します
+
+既定limitはeagerなvisible subtree向けであり`ContentProjectionLimits`から調整できます
+
+Node layoutとrenderが再帰的であるためdepthは256を上限とします
 
 ## Resource挙動
 
@@ -78,7 +98,9 @@ Goはimmutable storageを参照するstring valueを返します
 
 Untrustedなrule dataを受け取るsource adapterはsheet構築前にinputを制限する必要があります
 
-大規模feedは引き続きVirtualFlowを使い、visible item subtreeだけを解決します
+大規模feedは引き続きVirtualFlowを使い、visible item builderが要求したitem subtreeだけをprojectionします
+
+ProjectionはVirtualFlowを生成せずNode cacheを保持しません
 
 Element IDとopaque revisionだけではmetadata変更を自動追跡しないため、computed presentation cacheの正しいkeyにはなりません
 
