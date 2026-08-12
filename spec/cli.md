@@ -116,6 +116,120 @@ when a root version is configured. Flag actions ignore remaining arguments and
 required-value validation. A version option is unknown when the root has no
 version. An unknown target after `help` is an `unknown-command` error.
 
+## Completion
+
+Completion is a handler-free projection of a validated Command Graph. An
+implementation MUST build an immutable Completion Engine before serving
+requests. Later mutation of a language-native Command builder MUST NOT change
+an existing Engine. The Engine contains command and option spellings,
+descriptions, finite Value Parser candidates, inherited visibility, and
+explicit Option or Argument completion providers. It MUST NOT retain or invoke
+command handlers or Invocation validators.
+
+### Tokenized input
+
+A Completion Input contains:
+
+- completed arguments after the program name and before the cursor token; and
+- the current token prefix up to the cursor.
+
+Shell adapters own tokenization and quoting. Core completion MUST NOT parse a
+raw shell command line. This split represents an empty token after whitespace,
+an incomplete long or short option, and a cursor in the middle of a token
+without treating the request as a normal parse failure.
+
+Completion scans completed arguments with the ordinary command, alias,
+option, inherited-option, positional, short-cluster, attached-value, and `--`
+recognition rules where the next state is unambiguous. It MUST NOT resolve
+environment or default values, run a Value Parser, enforce required values,
+relations, or groups, or run an Invocation validator. Unknown or malformed
+completed syntax MUST NOT produce an ordinary parsing Diagnostic. An
+implementation MAY stop producing candidates after such syntax rather than
+guessing whether later tokens are values or commands.
+
+The built-in `help` path completes canonical child names and aliases. A
+committed built-in Help or Version option ends useful completion. Subcommands
+are candidates only before a positional starts and while option recognition is
+enabled. Visible inherited options remain candidates in selected descendants.
+A non-repeatable Flag or Value option already recognized in completed argv is
+omitted; Count and repeatable Value options remain candidates.
+
+For `--option=PREFIX`, `-oPREFIX`, and a short cluster ending in a Value option,
+the provider receives only the target-local `PREFIX`; returned insertion text
+restores the option prefix. A Value option at the end of completed arguments
+targets the current token even when that token begins with a hyphen.
+
+### Request and partial occurrences
+
+A normalized Completion Request contains the original completed arguments and
+current token, selected canonical command path, selected stable command-ID
+path, active target, target-local prefix, and recognized partial occurrences
+in argv order. A target is one of:
+
+- Command, identified by the active stable command-ID path;
+- Option, identified by its declaring stable command-ID path and local value
+  ID; or
+- Argument, identified by its declaring stable command-ID path and local value
+  ID.
+
+Partial occurrences distinguish Flag, Count, and raw Value occurrences. They
+do not contain typed parser results. When a positional slot and child commands
+are both valid at an empty or partial token, command candidates MAY be combined
+with the positional candidates and that positional remains the provider target.
+
+### Static and dynamic candidates
+
+Canonical child names and aliases, visible long and short options, built-in
+actions, and finite Value Parser values are static candidates. A Value option
+or Argument MAY have one dynamic completion provider. Only the active target's
+provider runs. Unselected branches and unrelated providers MUST NOT run.
+Command handlers MUST NOT run through either the Core API or generated shell
+protocol.
+
+Go providers receive the caller's `context.Context`. Rust providers receive a
+cooperative Cancellation Token. Cancellation is checked before and after the
+provider call. A provider is responsible for stopping its own I/O promptly.
+Provider failures and cancellation are Completion errors, not handler errors
+or parsing Diagnostics.
+
+Static candidates precede dynamic candidates. Implementations preserve source
+order, filter by the exact current prefix, and remove duplicate final insertion
+values with first-wins semantics. A candidate contains insertion value,
+display label, optional description, Command, Option, or Value kind, and an
+append-space policy.
+
+Candidate values MUST be non-empty valid UTF-8. Candidate values, display
+labels, and descriptions MUST NOT contain Unicode control characters, including
+C0, DEL, and C1. An empty display label or description is treated as absent.
+Unsafe dynamic or static metadata produces an Invalid Candidate completion
+error before a shell protocol writes it.
+
+### Generated shell protocol
+
+The optional completion package or crate generates deterministic Bash, Zsh,
+Fish, and PowerShell scripts. A generated script invokes the same application
+with the reserved `__nagi_complete` token, a shell identifier, the current
+token, and completed arguments. Applications MUST pass this request to the
+completion protocol helper before ordinary Command Graph parsing. The reserved
+token is outside the portable command-name grammar.
+
+The protocol writes newline-delimited candidate records without evaluating
+candidate text as shell source. Bash uses programmable completion word state,
+Zsh uses compsys word state, Fish uses `commandline` token state, and
+PowerShell uses native Argument Completer AST extents. The generated Zsh and
+PowerShell adapters map append-space policy explicitly. Bash exposes no
+per-candidate suffix policy through `COMPREPLY`, so its generated adapter uses
+no-space behavior for every candidate and leaves delimiter insertion to the
+user. Fish's public completion definition also cannot represent an arbitrary
+per-candidate no-space flag, so its generated adapter uses Fish's default
+insertion behavior.
+
+Adapters pass only the current token prefix before the cursor. The Bash adapter
+reconstructs that prefix from `COMP_LINE`, `COMP_POINT`, and `COMP_WORDS`, then
+removes shell quote delimiters and escapes lexically without evaluating
+expansions. It shell-quotes returned insertion values. The Zsh adapter uses
+`PREFIX` and delegates insertion quoting to compsys.
+
 ## Options and values
 
 An option has one of three kinds:

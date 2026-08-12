@@ -17,6 +17,7 @@ Nagiは外部から観測できるContent、TUI、CLIの挙動を揃えながら
 | 標準Widget | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
+| CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonicalなGeometry型とStyle型を再公開します
@@ -385,6 +386,7 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Flag、count、value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
 | Optionを継承可能にする | `OptionSpec::inherited` | `OptionSpec.Inherited` |
 | 継承状態の参照 | `OptionSpec::is_inherited` | `OptionSpec.IsInherited` |
+| Value completion providerの設定 | `OptionSpec::completion_provider` / `Argument::completion_provider` | `OptionSpec.CompletionProvider` / `Argument.CompletionProvider` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
 | Raw、string、integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
@@ -415,6 +417,14 @@ Allocationを抑えたいVT append APIは`nagi_vt::append_encoded`と`vt.AppendE
 | Parser-only renderingとstatus | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process実行 | `Command::run_process` | `Command.RunProcess` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel`と`NewContextWithCancellation` |
+| Immutable completion model | `CompletionEngine::new` | `cli.NewCompletionEngine` |
+| Tokenize済みcompletion input | `CompletionInput::new` | `cli.NewCompletionInput` |
+| Completion解決 | `CompletionEngine::complete` | `CompletionEngine.Complete` |
+| Dynamic provider | `CompletionProvider` | `cli.CompletionProvider` |
+| Completion requestとpartial argv | `CompletionRequest` / `CompletionOccurrence` | `cli.CompletionRequest` / `cli.CompletionOccurrence` |
+| Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
+| Shell script生成 | `nagi_cli_completion::generate` | `completion.Generate` |
+| 予約protocol処理 | `nagi_cli_completion::handle` | `completion.Handle` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
@@ -424,6 +434,12 @@ Goはraw byteをstringへ保持し、parser resultを`any`とgenericな`ValueAs`
 両実装は再利用されたlocal IDをstable command-ID pathで区別します
 
 Rust cancellationはatomic token、Go cancellationは`context.Context`を使用します
+
+両completion engineは検証済みgraphをsnapshotし、選択pathだけを解決してactiveなvalue targetに設定されたproviderだけを呼びます
+
+Rustのcompletion candidateは構造上valid UTF-8であり、Goはresultを返す前にUTF-8を検証します
+
+Shell層はcommand runtimeから分離され、通常dispatchより前に予約protocolを処理します
 
 これらの表現差はparsing、structured Help、Diagnostic semanticsを変更しません
 

@@ -8,13 +8,14 @@ Nagi CLIは外部から観測できるcommand semanticsを揃えたnative Rust A
 
 言語非依存の[command application specification](../spec/cli.md)をpublic behaviorの契約とします
 
-`fixtures/cli`配下の共有fixtureでparsing、Diagnostic、Help、runtime output、cancellation、byte保持を確認します
+`fixtures/cli`配下の共有fixtureでparsing、completion、Diagnostic、Help、runtime output、cancellation、byte保持を確認します
 
 ## Package
 
 | 責務 | Rust | Go |
 | --- | --- | --- |
 | Command Graph、parser、runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go`の`cli` package |
+| Shell completion生成とprotocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | Processなしのapplication test | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -34,6 +35,7 @@ Command、option、positionalは各言語に自然なbuilderで定義します
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
+| Dynamic value completion | `.completion_provider(provider)` | `.CompletionProvider(provider)` |
 | Typed validator | `.validator(validator)` | `.Validator(validator)` |
 | Help Usage Variant | `.usage_variant(id, syntax)` | `.UsageVariant(id, syntax)` |
 | Help example | `.example(name, invocation)` | `.Example(name, invocation)` |
@@ -125,6 +127,60 @@ Schema上必要なvalueのmappingには、Rustの`Invocation::require_value`ま�
 `ValueAccessError`はmissing valueとparser-result type mismatchを区別し、stable lookup scopeとlocal value IDを保持します
 
 どのaccessorもdynamic typeをcoerceしません
+
+## Shellとdynamic completion
+
+`CompletionEngine::new`と`cli.NewCompletionEngine`はCommand Graphを検証し、handlerを含まないimmutableなcompletion modelとしてsnapshotします
+
+Engineを1個構築してrequest間で再利用でき、構築後に元のgraphを変更してもEngineには影響しません
+
+1個のrequestはshellが確定したtoken列とcursor位置のtoken prefixを分けて渡します
+
+Rustは`CompletionInput::new(arguments, current)`と`CompletionEngine::complete`、Goは`cli.NewCompletionInput(arguments, current)`と`CompletionEngine.Complete`を使用します
+
+Engineは選択されたcommand pathとそこから見える継承Optionだけを解決します
+
+Alias、`--`、short option cluster、`--profile=dev`のようなattached value、repeated positional、built-in `help` pathを扱います
+
+Finite parser valueはstatic candidateになります
+
+Value OptionまたはArgumentには1個のdynamic `CompletionProvider`を設定でき、active targetのproviderだけを実行します
+
+Providerは選択されたcanonicalとstable command path、target-local prefix、argv順の認識済みraw occurrenceを受け取ります
+
+CompletionはValue Parser、fallback、validator、command handlerを実行しません
+
+Rust providerは`CancellationToken`、Go providerはcallerの`context.Context`を受け取ります
+
+長時間動くproviderはcancellationを協調的に確認する必要があります
+
+Engineはsource順を維持し、exact prefixでfilterし、同じ挿入値では最初のcandidateを残します
+
+空のdisplay labelとdescriptionは未指定として扱います
+
+空value、Goの不正UTF-8、Unicode control文字はprotocol出力前にcompletion固有errorとなります
+
+Shell統合は任意です
+
+Rustの`nagi-cli-completion` crateとGoの`completion` packageはBash、Zsh、Fish、PowerShell向けの決定的scriptを生成します
+
+`handle`または`Handle` helperは通常のCommand Graph dispatchより前に予約済みcompletion requestを処理し、処理したかを返します
+
+Applicationは`Command::run_process`または`Command.RunProcess`より先にこのhelperを呼びます
+
+生成adapterは各shellのnative completion registrationを使い、shellがtokenizeしたargumentをEngineへ渡します
+
+Candidate textをshell sourceとしてevalしません
+
+Bash adapterはexpansionを評価せずにcursor prefixを復元し、挿入値をshell quoteします
+
+Zshは`PREFIX` stateとcompsysのquote処理を使用します
+
+ZshとPowerShellはcandidate単位のappend policyを保持します
+
+Bashは全candidateをno-spaceとして扱い、Fishはnative defaultを使用します
+
+どちらもpublic adapter surfaceで任意のcandidate単位suffixを表現できません
 
 ## Structured Help
 
@@ -251,13 +307,15 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)を参照してください
 
 ## 制約
 
-Coreは設定file読み込み、shell completion生成、interactive prompt、TUI統合を行いません
+Coreは設定file読み込み、interactive prompt、TUI統合を行いません
 
-長時間実行するHandlerは注入されたcancellation sourceを確認して協調的に停止する必要があります
+Shell固有の生成とprotocol I/Oは任意のcompletion packageまたはcrateに留まります
+
+長時間実行するHandlerとcompletion providerは注入されたcancellation sourceを確認して協調的に停止する必要があります
 
 Portable graphは任意のinvocation grammarやparser-generator productionを表現しません
 

@@ -14,7 +14,7 @@ CLI applications, and independently reusable Content, Text, and VT foundations
 | [`nagi-rs`](nagi-rs/README.md) | All Rust Content, Text, VT, Surface, TUI, CLI, Widget, and test-support crates | One coordinated Cargo workspace version |
 | [`nagi-go`](nagi-go/README.md) | Shared Go `content`, `text`, and `vt` packages | `github.com/mayahiro/nagi-go` |
 | [`nagitui-go`](nagitui-go/README.md) | Go Surface, TUI runtime, Widgets, and TUI Test | `github.com/mayahiro/nagitui-go` |
-| [`nagicli-go`](nagicli-go/README.md) | Go Command Graph, parser, runtime, and CLI Test | `github.com/mayahiro/nagicli-go` |
+| [`nagicli-go`](nagicli-go/README.md) | Go Command Graph, parser, runtime, shell completion, and CLI Test | `github.com/mayahiro/nagicli-go` |
 
 This repository coordinates the four implementation repositories as
 submodules and owns the language-neutral specifications and conformance
@@ -47,7 +47,9 @@ Nagi CLI provides native Rust and Go Command Graphs, local and inherited
 options, command-local typed value scopes, portable option groups and
 validators, structured deterministic Help with controllable Help-only Usage
 Variants, targeted semantic Diagnostics, staged runtime policies, cooperative
-SIGINT cancellation, process-free test drivers, and matching examples
+SIGINT cancellation, immutable handler-free completion engines, Bash, Zsh,
+Fish, and PowerShell generators, process-free test drivers, and matching
+examples
 
 ## Usage and contracts
 

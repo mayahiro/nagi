@@ -10,13 +10,15 @@ Status through a configurable Runtime Policy
 
 The language-neutral [command application specification](../spec/cli.md) is
 the public behavioral contract. Shared fixtures under `fixtures/cli` verify
-parsing, diagnostics, help, runtime output, cancellation, and byte preservation
+parsing, completion, diagnostics, Help, runtime output, cancellation, and byte
+preservation
 
 ## Packages
 
 | Responsibility | Rust | Go |
 | --- | --- | --- |
 | Command graph, parser, and runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` package `cli` |
+| Shell completion generation and protocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | Process-free application tests | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -37,6 +39,7 @@ Commands, options, and positionals use language-native builders
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
+| Dynamic value completion | `.completion_provider(provider)` | `.CompletionProvider(provider)` |
 | Typed validator | `.validator(validator)` | `.Validator(validator)` |
 | Help Usage Variant | `.usage_variant(id, syntax)` | `.UsageVariant(id, syntax)` |
 | Help example | `.example(name, invocation)` | `.Example(name, invocation)` |
@@ -120,6 +123,50 @@ mapping, use `Invocation::require_value` in Rust or
 `ValueAccessError` distinguishes a missing value from a parser-result type
 mismatch and includes the stable lookup scope and local value ID. No accessor
 coerces dynamic types
+
+## Shell and dynamic completion
+
+`CompletionEngine::new` and `cli.NewCompletionEngine` validate and snapshot a
+Command Graph as an immutable, handler-free completion model. Build one Engine
+and reuse it across requests. Changes to the original graph after construction
+do not affect the Engine
+
+One request separates completed shell tokens from the token prefix at the
+cursor. Rust uses `CompletionInput::new(arguments, current)` and
+`CompletionEngine::complete`; Go uses `cli.NewCompletionInput(arguments,
+current)` and `CompletionEngine.Complete`. The Engine resolves only the selected
+command path and its visible inherited options. It understands aliases, `--`,
+short-option clusters, attached values such as `--profile=dev`, repeated
+positionals, and the built-in `help` path
+
+Finite parser values are static candidates. A value Option or Argument may also
+install one dynamic `CompletionProvider`. Only the provider for the active
+target runs. It receives the selected canonical and stable command paths, the
+target-local prefix, and recognized raw occurrences in argv order. Completion
+does not run Value Parsers, fallbacks, validators, or command handlers
+
+Rust providers receive a `CancellationToken`; Go providers receive the caller's
+`context.Context`. Providers must poll cancellation during long-running work.
+The Engine preserves source order, filters by exact prefix, and keeps the first
+candidate for each insertion value. Empty display labels and descriptions are
+treated as absent. Empty values, invalid UTF-8 in Go, and Unicode control
+characters produce a completion-specific error before protocol output
+
+Shell integration is optional. Rust crate `nagi-cli-completion` and Go package
+`completion` generate deterministic Bash, Zsh, Fish, and PowerShell scripts.
+Their `handle` or `Handle` helper intercepts the reserved completion request
+before ordinary Command Graph dispatch and returns whether it handled the
+request. Applications should call it before `Command::run_process` or
+`Command.RunProcess`
+
+Generated adapters use each shell's native completion registration and pass
+already tokenized arguments to the Engine. They do not evaluate candidate text
+as shell source. The Bash adapter reconstructs the cursor prefix without
+evaluating expansions and shell-quotes insertion values; Zsh uses its `PREFIX`
+state and compsys quoting. Zsh and PowerShell preserve per-candidate append
+policy. Bash uses no-space behavior for every candidate, and Fish uses its
+native default because neither public adapter surface can represent arbitrary
+per-candidate suffix behavior
 
 ## Structured Help
 
@@ -251,16 +298,19 @@ handler
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
+[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Go basic example](../nagicli-go/examples/basic/main.go),
-[Go subcommand example](../nagicli-go/examples/subcommands/main.go), and
-[Go staged-adoption example](../nagicli-go/examples/staged/main.go) as complete
+[Go subcommand example](../nagicli-go/examples/subcommands/main.go),
+[Go staged-adoption example](../nagicli-go/examples/staged/main.go), and
+[Go completion example](../nagicli-go/examples/completion/main.go) as complete
 entry points
 
 ## Limitations
 
-The core does not load configuration files, generate shell completions, run
-interactive prompts, or integrate a TUI. Long-running handlers must poll their
-injected cancellation source and stop cooperatively
+The core does not load configuration files, run interactive prompts, or
+integrate a TUI. Shell-specific generation and protocol I/O remain in the
+optional completion package or crate. Long-running handlers and completion
+providers must poll their injected cancellation source and stop cooperatively
 
 The portable graph does not model arbitrary invocation grammars or
 parser-generator productions. Use option groups and typed validators for

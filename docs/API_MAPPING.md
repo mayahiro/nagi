@@ -20,6 +20,7 @@ for complete method signatures
 | Standard widgets | `nagi-tui-widgets` | `github.com/mayahiro/nagitui-go/widget` |
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
+| CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 The Rust `nagi-tui` facade and Go `tui` package re-export the canonical
@@ -402,6 +403,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Flag, count, value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
 | Make an option inherited | `OptionSpec::inherited` | `OptionSpec.Inherited` |
 | Query inherited state | `OptionSpec::is_inherited` | `OptionSpec.IsInherited` |
+| Install a value completion provider | `OptionSpec::completion_provider` / `Argument::completion_provider` | `OptionSpec.CompletionProvider` / `Argument.CompletionProvider` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
 | Raw, string, integer parser | `raw_parser` / `string_parser` / `integer_parser` | `cli.RawParser` / `StringParser` / `IntegerParser` |
@@ -432,6 +434,14 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Parser-only rendering and status | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process execution | `Command::run_process` | `Command.RunProcess` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel` with `NewContextWithCancellation` |
+| Immutable completion model | `CompletionEngine::new` | `cli.NewCompletionEngine` |
+| Tokenized completion input | `CompletionInput::new` | `cli.NewCompletionInput` |
+| Completion resolution | `CompletionEngine::complete` | `CompletionEngine.Complete` |
+| Dynamic provider | `CompletionProvider` | `cli.CompletionProvider` |
+| Completion request and partial argv | `CompletionRequest` / `CompletionOccurrence` | `cli.CompletionRequest` / `cli.CompletionOccurrence` |
+| Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
+| Shell script generation | `nagi_cli_completion::generate` | `completion.Generate` |
+| Reserved protocol handling | `nagi_cli_completion::handle` | `completion.Handle` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rust stores raw platform values as `OsString` and typed parser results behind
@@ -439,6 +449,12 @@ Rust stores raw platform values as `OsString` and typed parser results behind
 `any` plus generic `ValueAs` and `RequireValueAs` helpers. Both use stable
 command-ID paths to disambiguate reused local IDs. Rust cancellation is an
 atomic token; Go cancellation is a `context.Context`
+
+Both completion engines snapshot the validated graph, resolve only the selected
+path, and call only the provider attached to the active value target. Rust
+completion candidates contain valid UTF-8 by construction; Go validates UTF-8
+before returning a result. The shell layers remain separate from the command
+runtime and intercept their reserved protocol before normal dispatch
 
 These representation differences do not change parsing, structured Help, or
 Diagnostic semantics. Each implementation applies the same default Runtime

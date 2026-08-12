@@ -205,6 +205,49 @@ allocation, while the option-resolution loop remains proportional to selected
 path depth and options on that path. Rust drops each measured Invocation with
 zero retained bytes
 
+## CLI completion purpose
+
+This benchmark measures one warmed completion resolution against an immutable
+`CompletionEngine`. The request has selected `root run` and completes `--v` to
+the root-declared inherited `--verbose` option. Engine construction and Command
+Graph validation are outside the measured path
+
+Two graph shapes use the same selected path and request
+
+- The selected-path graph contains only `run`
+- The unrelated-branches graph additionally contains 100 unselected sibling
+  commands with eight options each
+
+Rust reports the median of 12 groups of 1,000 requests with allocation count,
+total allocated bytes, peak additional live bytes, and retained bytes. Go
+reports the median of three reports, each measured over 100 requests with
+standard `testing` allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench completion
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkCompletion(SelectedPath|100UnrelatedBranches)$' -benchmem -benchtime=100x -count=3 .
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-12 in the same reference environment
+
+| Implementation | Graph | Median time per request | Allocations per request | Allocated bytes per request | Peak additional live bytes | Retained bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | Selected path only | 1,032 ns | 28 | 821 | 641 | 0 |
+| Rust | 100 unrelated branches | 1,030 ns | 28 | 821 | 641 | 0 |
+| Go | Selected path only | 493 ns | 14 | 536 | not measured | not measured |
+| Go | 100 unrelated branches | 664 ns | 14 | 536 | not measured | not measured |
+
+Unselected branches do not change per-request allocation in either
+implementation. Short-run elapsed values vary, while the stable property is
+that resolution does not scan or allocate for candidates from unrelated
+branches. Rust releases every result with zero retained bytes
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and

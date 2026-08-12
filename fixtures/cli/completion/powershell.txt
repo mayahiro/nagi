@@ -1,0 +1,39 @@
+# Nagi completion for qed
+Register-ArgumentCompleter -Native -CommandName 'qed' -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    $completed = @()
+    $elements = @($commandAst.CommandElements)
+    for ($index = 1; $index -lt $elements.Count; $index++) {
+        $element = $elements[$index]
+        if ($element.Extent.StartOffset -ge $cursorPosition) { break }
+        if ($element.Extent.EndOffset -gt $cursorPosition) { break }
+        if ($wordToComplete -ne '' -and $element.Extent.EndOffset -eq $cursorPosition) { break }
+        if ($element -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
+            $completed += [string]$element.Value
+        } else {
+            $completed += $element.Extent.Text
+        }
+    }
+
+    $lines = & 'qed' '__nagi_complete' 'powershell' $wordToComplete @completed 2>$null
+    foreach ($line in $lines) {
+        $fields = $line -split "`t", 5
+        if ($fields.Count -ne 5 -or $fields[0] -eq '') { continue }
+        $completionText = $fields[0]
+        if ($completionText -notmatch '^[a-zA-Z0-9_./:=+@%,-]+$') {
+            $completionText = "'" + $completionText.Replace("'", "''") + "'"
+        }
+        if ($fields[4] -eq 'space') { $completionText += ' ' }
+        $listItem = if ($fields[1] -ne '') { $fields[1] } else { $fields[0] }
+        $toolTip = if ($fields[2] -ne '') { $fields[2] } else { $listItem }
+        $resultType = switch ($fields[3]) {
+            'command' { 'Command' }
+            'option' { 'ParameterName' }
+            default { 'ParameterValue' }
+        }
+        [System.Management.Automation.CompletionResult]::new(
+            $completionText, $listItem, $resultType, $toolTip
+        )
+    }
+}

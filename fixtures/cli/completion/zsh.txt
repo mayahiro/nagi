@@ -1,0 +1,21 @@
+#compdef qed
+# Nagi completion for qed
+_nagi_completion_qed() {
+    local current="$PREFIX"
+    local -a completed=()
+    local value label description kind append
+
+    if (( CURRENT > 2 )); then
+        completed=("${(@)words[2,CURRENT-1]}")
+    fi
+
+    while IFS=$'\t' read -r value label description kind append; do
+        [[ -z "$value" ]] && continue
+        if [[ "$append" == "space" ]]; then
+            compadd -S ' ' -- "$value"
+        else
+            compadd -S '' -- "$value"
+        fi
+    done < <(command qed __nagi_complete zsh "$current" "${completed[@]}" 2>/dev/null)
+}
+compdef _nagi_completion_qed qed

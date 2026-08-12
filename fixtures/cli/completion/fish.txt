@@ -1,0 +1,10 @@
+# Nagi completion for qed
+function __nagi_completion_qed
+    set -l tokens (commandline -xpc)
+    set -l current (commandline -ct)
+    if test (count $tokens) -gt 0
+        set -e tokens[1]
+    end
+    command qed __nagi_complete fish "$current" $tokens 2>/dev/null
+end
+complete -c qed -f -a '(__nagi_completion_qed)'
