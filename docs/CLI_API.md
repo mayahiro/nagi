@@ -38,6 +38,8 @@ Commands, options, and positionals use language-native builders
 | Count | `OptionSpec::count("id")` | `cli.Count("id")` |
 | Value option | `OptionSpec::value("id")` | `cli.ValueOption("id")` |
 | Inherited option | `.inherited()` | `.Inherited()` |
+| Hidden command or option | `.hidden()` | `.Hidden()` |
+| Deprecated command or option | `.deprecated(replacement)` | `.Deprecated(replacement)` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
@@ -75,6 +77,57 @@ cross-command option relations return an `invalid-specification` Diagnostic.
 Parent and child commands may reuse the same value ID. They may also reuse an
 option spelling when the ancestor declaration is local. A descendant cannot
 reuse a visible inherited spelling, while unrelated branches remain independent
+
+## Command and option lifecycle
+
+Command and Option builders expose independent Hidden and Deprecated metadata.
+The metadata is generic to command applications and does not add Agent,
+authorization, credential, or migration-policy concepts
+
+Hidden omits a declaration from generated projections while keeping its exact
+syntax parseable. Parent Help, generated Usage Variants, local and inherited
+Option entries, completion candidates, and future graph-derived documentation
+omit Hidden declarations. A relation whose source or target is Hidden is
+omitted from Help, as is an option group containing a Hidden member. A Hidden
+Value Option's finite candidates are not returned and its dynamic completion
+provider does not run, even when completed input explicitly names that Option
+
+Direct Help for a known Hidden Command remains available. A root with only
+Hidden children does not expose a generic `<COMMAND>` Usage form or generated
+`help` candidate. Hidden is not a security or redaction boundary: known hidden
+syntax can still be parsed, so applications must enforce access control and
+sensitive-value handling separately
+
+Deprecated accepts a non-empty valid UTF-8 replacement hint without Unicode
+control characters. Parsing and handler execution continue. Structured Help
+and static completion candidates expose a `Deprecation` value. The plain Help
+renderer adds replacement hints, and optional shell protocol adapters decorate
+candidate descriptions without changing insertion values
+
+In Go, lifecycle metadata on `HelpEntry` and `HelpInheritedOption` is opaque
+and is populated by `HelpDocument`. Direct keyed literals can represent only
+synthetic non-deprecated entries. The added private metadata also means an
+external unkeyed composite literal written for an earlier field list is not
+source compatible
+
+Each successful Invocation exposes structured `DeprecationNotice` values in
+deterministic first-use order. A deprecated root comes first; later Command and
+Option targets follow their first successful argv occurrence. Stable targets
+are deduplicated, while the first alias, long spelling, or short spelling is
+retained. Environment and default fallbacks do not create Option notices.
+Help, version, and failed parsing or validation do not return notices through a
+Diagnostic
+
+The default Runtime Policy keeps notices silent. Install
+`PlainDeprecationNoticeRenderer` through
+`RuntimePolicy::with_deprecation_notice_renderer` or
+`RuntimePolicy.WithDeprecationNoticeRenderer` to write them to standard error
+before handler execution. An output failure is returned and prevents the
+handler from starting. Applications that own output routing can inspect
+`Invocation::deprecation_notices` or `Invocation.DeprecationNotices` directly
+
+See the [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle/README.md)
+and [Go lifecycle example](../nagicli-go/examples/lifecycle/README.md)
 
 ## Parsing and typed values
 
@@ -394,6 +447,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
 [Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs),
+[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
 [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
@@ -401,6 +455,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Go subcommand example](../nagicli-go/examples/subcommands/main.go),
 [Go staged-adoption example](../nagicli-go/examples/staged/main.go),
 [Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go),
+[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go),
 [Go completion example](../nagicli-go/examples/completion/main.go),
 [Go Prompt example](../nagicli-go/examples/prompt/main.go), and
 [Go Status example](../nagicli-go/examples/status/main.go) as complete

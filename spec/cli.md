@@ -47,11 +47,83 @@ is true:
 - a usage variant has an invalid or duplicate ID, has an invalid syntax
   suffix, conflicts with a generated usage variant, or is attached to a
   command that requires a subcommand; or
+- a configured deprecation replacement is empty, is not valid UTF-8, or
+  contains a Unicode control character; or
 - an application definition uses the reserved `help`, `version`, `h`, or `V`
   option spelling.
 
 Aliases select the canonical command and never appear in the resulting command
 path.
+
+## Command and option lifecycle metadata
+
+A Command or Option MAY independently be marked Hidden, Deprecated, both, or
+neither. These markers are generic Command Graph metadata. They MUST NOT add
+application-specific policy, authorization, redaction, or data retention
+meaning.
+
+Hidden controls generated projections while preserving exact parsing. A Hidden
+child name or alias remains selectable, and a Hidden Option remains recognized
+where its ordinary local or inherited visibility permits. Direct Help for an
+explicitly selected Hidden Command remains available. Hidden MUST NOT be
+treated as a security boundary because a caller that knows the spelling can
+still use and inspect the declaration.
+
+The following projections MUST omit Hidden declarations:
+
+- parent Help command entries, command Usage Variants, and the generated root
+  `help` command entry when no visible child exists;
+- local and inherited Help option entries;
+- Help option relations whose source or target is Hidden, and option groups
+  containing a Hidden member;
+- command, alias, long-option, short-option, and finite-value completion
+  candidates; and
+- dynamic completion results for a Hidden Value Option. Its provider MUST NOT
+  run, including after that Hidden Option was explicitly recognized in the
+  completed input.
+
+A command with only Hidden children does not gain a generic `<COMMAND>` Help
+form or a built-in `help` completion candidate. Explicit `help HIDDEN` remains
+valid because parsing is unchanged.
+
+Deprecated preserves parsing, validation, and handler execution. It carries an
+application-provided replacement hint that MUST be non-empty valid UTF-8 and
+MUST NOT contain Unicode control characters. Deprecated declarations remain
+visible unless they are also Hidden. Structured Help exposes replacement
+metadata for the selected command, command entries, local Option entries, and
+inherited Option entries. Static completion candidates expose the same
+metadata. The standard Help renderer appends `[deprecated: use REPLACEMENT]`
+to an entry and renders `Deprecated: use REPLACEMENT` for the selected
+command. Shell protocol adapters append the same entry annotation to candidate
+descriptions without changing insertion values.
+
+A successful Invocation owns ordered structured Deprecation Notices. A notice
+contains Command or Option target kind, the canonical command path when the
+use was recognized, the stable command-ID path of the declaration, the local
+Option ID when applicable, the first recognized spelling, and the replacement
+hint. A deprecated root Command produces the first notice and uses its
+canonical name as the spelling because public parsing input excludes the
+executable. Other targets follow their first successful occurrence in argv.
+Each stable target appears at most once. An alias, long spelling, or short
+spelling used first remains the notice spelling.
+
+Only command-line occurrences produce Option notices. Environment and default
+fallbacks do not. Help, version, failed parsing, portable validation failure,
+and Invocation validator failure do not return an Invocation and therefore do
+not expose accumulated notices through a failure Diagnostic. A Deprecation
+Notice is non-fatal metadata and MUST NOT be added to Diagnostic codes,
+categories, targets, or hints.
+
+The default Runtime Policy leaves notices silent. An application MAY install a
+Deprecation Notice Renderer. When installed, Runtime writes notices to standard
+error in Invocation order after cancellation has been checked and before the
+handler starts. Notice output failure is returned as an I/O failure and the
+handler MUST NOT run. The standard plain renderer emits:
+
+```text
+warning[deprecated-option]: option '--old' is deprecated
+hint: use --new
+```
 
 ## Argument parsing
 

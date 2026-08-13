@@ -34,6 +34,8 @@ Command、option、positionalは各言語に自然なbuilderで定義します
 | Count | `OptionSpec::count("id")` | `cli.Count("id")` |
 | Value option | `OptionSpec::value("id")` | `cli.ValueOption("id")` |
 | 継承Option | `.inherited()` | `.Inherited()` |
+| HiddenなCommandまたはOption | `.hidden()` | `.Hidden()` |
+| DeprecatedなCommandまたはOption | `.deprecated(replacement)` | `.Deprecated(replacement)` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
@@ -75,6 +77,60 @@ ParentとchildのCommandは同じvalue IDを再利用できます
 Ancestorの宣言がlocalなら同じoption spellingも再利用できますが、descendantは可視な継承Optionのspellingを再利用できません
 
 互いに無関係なbranchは独立しています
+
+## CommandとOptionのlifecycle
+
+CommandとOptionのbuilderは互いに独立したHiddenとDeprecated metadataを公開します
+
+このmetadataはcommand applicationへ汎用的なものであり、Agent、authorization、credential、migration policyの概念を追加しません
+
+Hiddenは正確なsyntaxをparse可能なままgenerated projectionから宣言を省略します
+
+Parent Help、generated Usage Variant、localと継承Option entry、completion candidate、将来のgraph派生documentはHiddenな宣言を省略します
+
+SourceまたはtargetがHiddenなrelationと、Hiddenなmemberを含むoption groupもHelpから省略します
+
+HiddenなValue Optionのfinite candidateは返さず、completed inputがそのOptionを明示していてもdynamic completion providerを実行しません
+
+既知のHidden Commandへのdirect Helpは利用できます
+
+Hidden childしかないrootは汎用`<COMMAND>` Usage formとgenerated `help` candidateを公開しません
+
+Hiddenはsecurityまたはredaction境界ではありません
+
+既知のHidden syntaxはparseできるため、access controlとsensitive value処理はApplicationが別に強制します
+
+DeprecatedはUnicode control文字を含まない空でないvalid UTF-8のreplacement hintを受け取ります
+
+Parsingとhandler実行は継続します
+
+Structured Helpとstatic completion candidateは`Deprecation` valueを公開し、plain Help rendererはreplacement hintを追加し、任意のshell protocol adapterは挿入値を変えずcandidate descriptionを装飾します
+
+Goの`HelpEntry`と`HelpInheritedOption`が持つlifecycle metadataはopaqueであり、`HelpDocument`だけが設定します
+
+直接のkeyed literalで表現できるのはsyntheticなnon-deprecated entryだけです
+
+Private metadata fieldが追加されたため、以前のfield listに対するexternal unkeyed composite literalはsource compatibleではありません
+
+成功した各Invocationは決定的な初回使用順のstructured `DeprecationNotice`を公開します
+
+Deprecatedなrootが最初になり、後続のCommandとOption targetはargvで最初に成功したoccurrenceの順になります
+
+Stable targetは重複を除き、最初のalias、long spelling、short spellingを維持します
+
+Environmentとdefault fallbackはOption noticeを生成しません
+
+Help、version、失敗したparseまたはvalidationはDiagnosticを通してnoticeを返しません
+
+既定のRuntime Policyはnoticeを出力しません
+
+`PlainDeprecationNoticeRenderer`を`RuntimePolicy::with_deprecation_notice_renderer`または`RuntimePolicy.WithDeprecationNoticeRenderer`から設定すると、handler実行前にstandard errorへ出力します
+
+出力に失敗するとerrorを返し、handlerを開始しません
+
+Output routingを所有するApplicationは`Invocation::deprecation_notices`または`Invocation.DeprecationNotices`を直接参照できます
+
+[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle/README.md)と[Go lifecycle example](../nagicli-go/examples/lifecycle/README.md)を参照してください
 
 ## Parsingとtyped value
 
@@ -403,7 +459,7 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
 
 ## 制約
 

@@ -1,0 +1,20 @@
+nagi-fixture-v1	cli-lifecycle
+root-help	arrangement=root-help	expected=command=none;commands=old-id:nagi run,run-id:none,help:none;options=quiet:none,legacy:--verbose,verbose:none,help:none;inherited=none;relations=none;groups=verbosity
+old-help	arrangement=old-help	expected=command=nagi run;commands=none;options=help:none;inherited=quiet:none,legacy:--verbose,verbose:none;relations=none;groups=none
+hidden-help	arrangement=hidden-help	expected=command=none;commands=none;options=help:none;inherited=quiet:none,legacy:--verbose,verbose:none;relations=none;groups=none
+root-completion	arrangement=root-completion	expected=old:nagi run,o:nagi run,run:none,help:none,--quiet:none,--legacy:--verbose,-l:--verbose,--verbose:none,-v:none,--help:none,-h:none
+hidden-completion	arrangement=hidden-completion	expected=--quiet:none,--legacy:--verbose,-l:--verbose,--verbose:none,-v:none,--help:none,-h:none
+hidden-value-completion	arrangement=hidden-value-completion	expected=
+only-hidden-help	arrangement=only-hidden-help	expected=command=none;commands=none;options=help:none;inherited=none;relations=none;groups=none
+only-hidden-completion	arrangement=only-hidden-completion	expected=--help:none,-h:none
+hidden-parse	arrangement=hidden-parse	expected=path=nagi/internal;internal=true;trace=true;notices=none
+deprecated-alias	arrangement=deprecated-alias	expected=command@nagi/old@root-id/old-id@-@o@nagi run
+deprecated-root	arrangement=deprecated-root	expected=command@nagi@root-id@-@nagi@qed
+deprecated-command-order	arrangement=deprecated-command-order	expected=option@nagi@root-id@legacy@--legacy@--verbose,command@nagi/old@root-id/old-id@-@old@nagi run
+deprecated-order	arrangement=deprecated-order	expected=option@nagi@root-id@legacy@--legacy@--verbose,option@nagi/run@root-id/run-id@old-mode@-m@--mode
+deprecated-default	arrangement=deprecated-default	expected=none
+deprecated-environment	arrangement=deprecated-environment	expected=none
+runtime-enabled	arrangement=runtime-enabled	expected=warning[deprecated-option]: option '--legacy' is deprecated\nhint: use --verbose\nwarning[deprecated-option]: option '-m' is deprecated\nhint: use --mode\n
+runtime-default	arrangement=runtime-default	expected=
+invalid-command	arrangement=invalid-command	expected=invalid-specification
+invalid-option	arrangement=invalid-option	expected=invalid-specification

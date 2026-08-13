@@ -535,6 +535,10 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Flag, count, value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
 | Make an option inherited | `OptionSpec::inherited` | `OptionSpec.Inherited` |
 | Query inherited state | `OptionSpec::is_inherited` | `OptionSpec.IsInherited` |
+| Hide a Command or Option projection | `Command::hidden` / `OptionSpec::hidden` | `Command.Hidden` / `OptionSpec.Hidden` |
+| Deprecate a Command or Option | `Command::deprecated` / `OptionSpec::deprecated` | `Command.Deprecated` / `OptionSpec.Deprecated` |
+| Query lifecycle metadata | `is_hidden` / `deprecation` | `IsHidden` / `Deprecation` |
+| Replacement metadata | `Deprecation` | `cli.Deprecation` |
 | Install a value completion provider | `OptionSpec::completion_provider` / `Argument::completion_provider` | `OptionSpec.CompletionProvider` / `Argument.CompletionProvider` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
@@ -542,6 +546,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Structured deprecation uses | `Invocation::deprecation_notices` / `DeprecationNotice` | `Invocation.DeprecationNotices` / `cli.DeprecationNotice` |
 | Stable selected command path | `Invocation::command_id_path` | `Invocation.CommandIDPath` |
 | Exact command-local scope | `Invocation::scope` / `InvocationScope` | `Invocation.Scope` / `cli.InvocationScope` |
 | Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
@@ -554,6 +559,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured inherited Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
+| Help lifecycle metadata | `HelpDocument::deprecation` / `HelpEntry::deprecation` / `HelpInheritedOption::deprecation` | `HelpDocument.Deprecation` / `HelpEntry.Deprecation` / `HelpInheritedOption.Deprecation` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime services | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
@@ -564,6 +570,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
 | Optional usage presence | `Diagnostic::usage` | `Diagnostic.UsageValue` |
 | Runtime compatibility | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
+| Optional deprecation notice output | `DeprecationNoticeRenderer` / `PlainDeprecationNoticeRenderer` | `cli.DeprecationNoticeRenderer` / `cli.PlainDeprecationNoticeRenderer` |
 | Execute a Parse Result | `Command::run_parsed_with_policy` | `Command.RunParsedWithPolicy` |
 | Execute an Invocation | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
 | Parser-only rendering and status | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
@@ -575,6 +582,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Dynamic provider | `CompletionProvider` | `cli.CompletionProvider` |
 | Completion request and partial argv | `CompletionRequest` / `CompletionOccurrence` | `cli.CompletionRequest` / `cli.CompletionOccurrence` |
 | Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
+| Completion replacement metadata | `CompletionCandidate::deprecation` | `CompletionCandidate.Deprecation` |
 | Shell script generation | `nagi_cli_completion::generate` | `completion.Generate` |
 | Reserved protocol handling | `nagi_cli_completion::handle` | `completion.Handle` |
 | Prompt executor | `Prompter` | `prompt.Prompter` |
@@ -611,7 +619,9 @@ atomic token; Go cancellation is a `context.Context`
 Both completion engines snapshot the validated graph, resolve only the selected
 path, and call only the provider attached to the active value target. Rust
 completion candidates contain valid UTF-8 by construction; Go validates UTF-8
-before returning a result. The shell layers remain separate from the command
+before returning a result. Hidden declarations do not become candidates or
+run a value provider. Deprecated static candidates carry replacement metadata
+to the shell protocol. The shell layers remain separate from the command
 runtime and intercept their reserved protocol before normal dispatch
 
 Both Prompt implementations keep terminal I/O outside CLI Core and accept the

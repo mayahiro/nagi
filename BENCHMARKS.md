@@ -254,11 +254,13 @@ validation and Invocation construction. The selected command is `root run`,
 and 1,000 occurrences of a root-declared inherited Count option appear after
 the child selection
 
-Two graph shapes use the same selected path and argv
+Three graph and metadata shapes use the same selected path and argv
 
 - The selected-path graph contains only `run`
 - The unrelated-branches graph additionally contains 100 unselected sibling
   commands with eight inherited options each
+- The deprecated graph matches the selected-path graph and marks the repeated
+  Count option Deprecated. Its Invocation owns one deduplicated notice
 
 The complete graph is validated once per parse. Argument-token option lookup
 uses only the selected root-to-active path, so the additional siblings add a
@@ -268,14 +270,14 @@ long-running state
 
 Rust reports the median of 12 parses with allocation count, total allocated
 bytes, peak additional live bytes, and retained bytes. Go reports the median
-of three reports, each measured over 100 parses with standard `testing`
+of three reports, each measured over 1,000 parses with standard `testing`
 allocation metrics
 
 Run only these benchmarks from the superproject root
 
 ```sh
 cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench inherited_options
-GOWORK="$PWD/go.work" make -C nagicli-go bench
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^(BenchmarkInheritedOptions(SelectedPath|100UnrelatedBranches)|BenchmarkDeprecatedOption1000Occurrences)$' -benchmem -benchtime=1000x -count=3 .
 ```
 
 The root `make bench` command includes these paths together with the TUI
@@ -283,21 +285,26 @@ benchmarks
 
 ### Reference results
 
-Results recorded on 2026-08-12 in the same reference environment
+Results recorded on 2026-08-13 in the same reference environment
 
 | Implementation | Graph | Median time per parse | Allocations per parse | Allocated bytes per parse | Peak additional live bytes | Retained bytes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Rust | Selected path only | 0.059 ms | 2,043 | 44,183 | 34,301 | 0 |
-| Rust | 100 unrelated branches | 0.270 ms | 7,375 | 246,399 | 34,301 | 0 |
-| Go | Selected path only | 0.051 ms | 20 | 17,728 | not measured | not measured |
-| Go | 100 unrelated branches | 0.156 ms | 638 | 99,120 | not measured | not measured |
+| Rust | Selected path only | 0.057 ms | 2,043 | 44,182 | 34,301 | 0 |
+| Rust | 100 unrelated branches | 0.282 ms | 7,375 | 246,398 | 34,301 | 0 |
+| Rust | Deprecated Count, 1,000 occurrences | 0.059 ms | 2,052 | 44,765 | 34,880 | 0 |
+| Go | Selected path only | 0.033 ms | 20 | 17,760 | not measured | not measured |
+| Go | 100 unrelated branches | 0.148 ms | 638 | 99,152 | not measured | not measured |
+| Go | Deprecated Count, 1,000 occurrences | 0.033 ms | 24 | 17,936 | not measured | not measured |
 
 The 1,000-occurrence selected-path case completes below 0.1 ms in both
 implementations on the reference machine. Adding 800 declarations on
 unselected branches increases whole-graph validation work and transient
 allocation, while the option-resolution loop remains proportional to selected
-path depth and options on that path. Rust drops each measured Invocation with
-zero retained bytes
+path depth and options on that path. One deduplicated notice adds nine
+allocations and 583 allocated bytes in Rust, and four allocations and 176
+allocated bytes in Go. Repeating the deprecated target does not allocate one
+notice or replacement per occurrence. Rust drops each measured Invocation
+with zero retained bytes
 
 ## CLI completion purpose
 
@@ -306,41 +313,52 @@ This benchmark measures one warmed completion resolution against an immutable
 the root-declared inherited `--verbose` option. Engine construction and Command
 Graph validation are outside the measured path
 
-Two graph shapes use the same selected path and request
+Four graph shapes cover selected-path isolation and Hidden filtering
 
 - The selected-path graph contains only `run`
 - The unrelated-branches graph additionally contains 100 unselected sibling
   commands with eight options each
+- The no-visible-declarations graph contains no application declarations and
+  resolves only the built-in Help options for an empty prefix
+- The Hidden graph adds 1,000 Hidden commands and 1,000 Hidden options to that
+  root. The same request must return the same two built-in candidates
 
 Rust reports the median of 12 groups of 1,000 requests with allocation count,
 total allocated bytes, peak additional live bytes, and retained bytes. Go
-reports the median of three reports, each measured over 100 requests with
+reports the median of three reports, each measured over 10,000 requests with
 standard `testing` allocation metrics
 
 Run only these benchmarks from the superproject root
 
 ```sh
 cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench completion
-GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkCompletion(SelectedPath|100UnrelatedBranches)$' -benchmem -benchtime=100x -count=3 .
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkCompletion(SelectedPath|100UnrelatedBranches|NoVisibleDeclarations|1000HiddenPairs)$' -benchmem -benchtime=10000x -count=3 .
 ```
 
 The root `make bench` command includes these paths
 
 ### Reference results
 
-Results recorded on 2026-08-12 in the same reference environment
+Results recorded on 2026-08-13 in the same reference environment
 
 | Implementation | Graph | Median time per request | Allocations per request | Allocated bytes per request | Peak additional live bytes | Retained bytes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Rust | Selected path only | 1,032 ns | 28 | 821 | 641 | 0 |
-| Rust | 100 unrelated branches | 1,030 ns | 28 | 821 | 641 | 0 |
-| Go | Selected path only | 493 ns | 14 | 536 | not measured | not measured |
-| Go | 100 unrelated branches | 664 ns | 14 | 536 | not measured | not measured |
+| Rust | Selected path only | 710 ns | 28 | 901 | 721 | 0 |
+| Rust | 100 unrelated branches | 699 ns | 28 | 901 | 721 | 0 |
+| Rust | No visible declarations | 532 ns | 20 | 776 | 732 | 0 |
+| Rust | 1,000 Hidden command and option pairs | 2,288 ns | 20 | 776 | 732 | 0 |
+| Go | Selected path only | 619 ns | 14 | 584 | not measured | not measured |
+| Go | 100 unrelated branches | 587 ns | 14 | 584 | not measured | not measured |
+| Go | No visible declarations | 486 ns | 11 | 760 | not measured | not measured |
+| Go | 1,000 Hidden command and option pairs | 2,630 ns | 11 | 760 | not measured | not measured |
 
 Unselected branches do not change per-request allocation in either
 implementation. Short-run elapsed values vary, while the stable property is
 that resolution does not scan or allocate for candidates from unrelated
-branches. Rust releases every result with zero retained bytes
+branches. Hidden declarations on the active root require a linear metadata
+scan, but 2,000 Hidden declarations add no request allocation or allocated
+bytes over the no-visible-declarations path. Rust releases every result with
+zero retained bytes
 
 ## CLI JSON Diagnostic purpose
 

@@ -509,6 +509,10 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Flag、count、value option | `OptionSpec::flag` / `count` / `value` | `cli.Flag` / `Count` / `ValueOption` |
 | Optionを継承可能にする | `OptionSpec::inherited` | `OptionSpec.Inherited` |
 | 継承状態の参照 | `OptionSpec::is_inherited` | `OptionSpec.IsInherited` |
+| CommandまたはOptionのprojectionをHiddenにする | `Command::hidden` / `OptionSpec::hidden` | `Command.Hidden` / `OptionSpec.Hidden` |
+| CommandまたはOptionをDeprecatedにする | `Command::deprecated` / `OptionSpec::deprecated` | `Command.Deprecated` / `OptionSpec.Deprecated` |
+| Lifecycle metadataの参照 | `is_hidden` / `deprecation` | `IsHidden` / `Deprecation` |
+| Replacement metadata | `Deprecation` | `cli.Deprecation` |
 | Value completion providerの設定 | `OptionSpec::completion_provider` / `Argument::completion_provider` | `OptionSpec.CompletionProvider` / `Argument.CompletionProvider` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
@@ -516,6 +520,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Structuredなdeprecation使用 | `Invocation::deprecation_notices` / `DeprecationNotice` | `Invocation.DeprecationNotices` / `cli.DeprecationNotice` |
 | Stable selected command path | `Invocation::command_id_path` | `Invocation.CommandIDPath` |
 | Exact command-local scope | `Invocation::scope` / `InvocationScope` | `Invocation.Scope` / `cli.InvocationScope` |
 | Command-line presence | `Invocation::supplied` | `Invocation.Supplied` |
@@ -528,6 +533,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured継承Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
+| Help lifecycle metadata | `HelpDocument::deprecation` / `HelpEntry::deprecation` / `HelpInheritedOption::deprecation` | `HelpDocument.Deprecation` / `HelpEntry.Deprecation` / `HelpInheritedOption.Deprecation` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime service | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
@@ -538,6 +544,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
 | 任意usageのpresence | `Diagnostic::usage` | `Diagnostic.UsageValue` |
 | Runtime互換性 | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
+| 任意のdeprecation notice出力 | `DeprecationNoticeRenderer` / `PlainDeprecationNoticeRenderer` | `cli.DeprecationNoticeRenderer` / `cli.PlainDeprecationNoticeRenderer` |
 | Parse Result実行 | `Command::run_parsed_with_policy` | `Command.RunParsedWithPolicy` |
 | Invocation実行 | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
 | Parser-only renderingとstatus | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
@@ -549,6 +556,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Dynamic provider | `CompletionProvider` | `cli.CompletionProvider` |
 | Completion requestとpartial argv | `CompletionRequest` / `CompletionOccurrence` | `cli.CompletionRequest` / `cli.CompletionOccurrence` |
 | Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
+| Completion replacement metadata | `CompletionCandidate::deprecation` | `CompletionCandidate.Deprecation` |
 | Shell script生成 | `nagi_cli_completion::generate` | `completion.Generate` |
 | 予約protocol処理 | `nagi_cli_completion::handle` | `completion.Handle` |
 | Prompt実行 | `Prompter` | `prompt.Prompter` |
@@ -587,6 +595,10 @@ Rust cancellationはatomic token、Go cancellationは`context.Context`を使用�
 両completion engineは検証済みgraphをsnapshotし、選択pathだけを解決してactiveなvalue targetに設定されたproviderだけを呼びます
 
 Rustのcompletion candidateは構造上valid UTF-8であり、Goはresultを返す前にUTF-8を検証します
+
+Hiddenな宣言はcandidateにならずvalue providerを実行しません
+
+Deprecatedなstatic candidateはreplacement metadataをshell protocolへ渡します
 
 Shell層はcommand runtimeから分離され、通常dispatchより前に予約protocolを処理します
 
