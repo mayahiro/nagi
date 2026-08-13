@@ -41,6 +41,7 @@ Commands, options, and positionals use language-native builders
 | Hidden command or option | `.hidden()` | `.Hidden()` |
 | Deprecated command or option | `.deprecated(replacement)` | `.Deprecated(replacement)` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
+| Sensitive value option or positional | `.sensitive()` | `.Sensitive()` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
 | Dynamic value completion | `.completion_provider(provider)` | `.CompletionProvider(provider)` |
@@ -129,6 +130,50 @@ handler from starting. Applications that own output routing can inspect
 See the [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle/README.md)
 and [Go lifecycle example](../nagicli-go/examples/lifecycle/README.md)
 
+## Sensitive Value metadata
+
+A Value Option or positional Argument can carry generic Sensitive metadata.
+This metadata controls framework presentation only: it does not identify a
+credential type or add authorization policy. Applying it to a Flag or Count is
+invalid value-only configuration and graph validation rejects it
+
+Generated Help preserves labels, descriptions, required state, and environment
+variable names while replacing a configured default or finite value set with
+the public `<redacted>` marker. A framework-generated parser failure omits both
+the raw value and parser reason. Structured Help entries, parsed values,
+Diagnostic targets, and Completion targets expose the marker as queryable
+metadata rather than requiring display-text inspection. Stable JSON Diagnostic
+schema `nagi-diagnostic-v1` remains unchanged because it has no raw-value field
+
+Parser targets and matching targets returned by Invocation validators or
+Handlers inherit the declaration marker. Resolution uses target kind, stable
+command-ID path, and local value ID; an unknown or mismatched target remains
+non-Sensitive
+
+Completion returns no finite-value candidates for a Sensitive target and does
+not retain or invoke that target's dynamic provider. A completed Sensitive
+occurrence remains available through explicit raw `CompletionRequest` access
+when a provider for another target needs it; the occurrence and target stay
+marked Sensitive. Raw `CompletionInput` formatting treats every token as opaque
+because that input has not yet been interpreted against a Command Graph
+
+Explicit Invocation raw and typed access returns the original value and source.
+Sensitive metadata does not zeroize memory, hide OS argv or shell history,
+protect transport, or stop application code from logging a value it reads.
+Application-authored Diagnostic text, Help text, parser objects, and runtime
+output are opaque, so applications must redact those strings themselves
+
+Go defines safe formatting for value-bearing CLI and completion types instead
+of relying on recursive default struct formatting. Code that compared their
+undocumented formatting text is not source-level affected but observes
+different output before v1. Go framework-generated non-Sensitive Invalid Value
+messages now use the same single-quoted stable value ID as Rust and the shared
+fixture; consumers should continue branching on the Diagnostic code rather
+than its human-readable message
+
+See the [Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values/README.md)
+and [Go Sensitive Value example](../nagicli-go/examples/sensitive-values/README.md)
+
 ## Parsing and typed values
 
 Public parse methods receive arguments after the program name. Rust preserves
@@ -198,7 +243,8 @@ Finite parser values are static candidates. A value Option or Argument may also
 install one dynamic `CompletionProvider`. Only the provider for the active
 target runs. It receives the selected canonical and stable command paths, the
 target-local prefix, and recognized raw occurrences in argv order. Completion
-does not run Value Parsers, fallbacks, validators, or command handlers
+does not run Value Parsers, fallbacks, validators, or command handlers.
+Sensitive targets return no value candidates and do not run their provider
 
 Rust providers receive a `CancellationToken`; Go providers receive the caller's
 `context.Context`. Providers must poll cancellation during long-running work.
@@ -448,6 +494,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
 [Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs),
 [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs),
+[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
 [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
@@ -456,6 +503,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Go staged-adoption example](../nagicli-go/examples/staged/main.go),
 [Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go),
 [Go lifecycle example](../nagicli-go/examples/lifecycle/main.go),
+[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go),
 [Go completion example](../nagicli-go/examples/completion/main.go),
 [Go Prompt example](../nagicli-go/examples/prompt/main.go), and
 [Go Status example](../nagicli-go/examples/status/main.go) as complete

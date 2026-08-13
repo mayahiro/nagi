@@ -513,6 +513,8 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | CommandまたはOptionをDeprecatedにする | `Command::deprecated` / `OptionSpec::deprecated` | `Command.Deprecated` / `OptionSpec.Deprecated` |
 | Lifecycle metadataの参照 | `is_hidden` / `deprecation` | `IsHidden` / `Deprecation` |
 | Replacement metadata | `Deprecation` | `cli.Deprecation` |
+| Value宣言をSensitiveにする | `OptionSpec::sensitive` / `Argument::sensitive` | `OptionSpec.Sensitive` / `Argument.Sensitive` |
+| 宣言のsensitivity参照 | `OptionSpec::is_sensitive` / `Argument::is_sensitive` | `OptionSpec.IsSensitive` / `Argument.IsSensitive` |
 | Value completion providerの設定 | `OptionSpec::completion_provider` / `Argument::completion_provider` | `OptionSpec.CompletionProvider` / `Argument.CompletionProvider` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
@@ -520,6 +522,9 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Parsed valueのsensitivity | `ParsedValue::is_sensitive` | `ParsedValue.IsSensitive` |
+| Visibleまたはexact scopeのsensitivity | `Invocation::value_is_sensitive` / `InvocationScope::value_is_sensitive` | `Invocation.ValueIsSensitive` / `InvocationScope.ValueIsSensitive` |
+| 公開redaction marker | `REDACTED_VALUE` | `cli.RedactedValue` |
 | Structuredなdeprecation使用 | `Invocation::deprecation_notices` / `DeprecationNotice` | `Invocation.DeprecationNotices` / `cli.DeprecationNotice` |
 | Stable selected command path | `Invocation::command_id_path` | `Invocation.CommandIDPath` |
 | Exact command-local scope | `Invocation::scope` / `InvocationScope` | `Invocation.Scope` / `cli.InvocationScope` |
@@ -534,11 +539,13 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Structured継承Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help lifecycle metadata | `HelpDocument::deprecation` / `HelpEntry::deprecation` / `HelpInheritedOption::deprecation` | `HelpDocument.Deprecation` / `HelpEntry.Deprecation` / `HelpInheritedOption.Deprecation` |
+| Help valueのsensitivity | `HelpEntry::is_sensitive` / `HelpInheritedOption::is_sensitive` | `HelpEntry.IsSensitive` / `HelpInheritedOption.IsSensitive` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime service | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
 | Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
+| Diagnostic targetのsensitivity | `DiagnosticTarget::is_sensitive` | `DiagnosticTarget.IsSensitive` |
 | Diagnosticの意味 | `DiagnosticCategory` | `cli.DiagnosticCategory` |
 | Stable JSON Diagnostic renderer | `JsonDiagnosticRenderer` | `cli.JSONDiagnosticRenderer` |
 | JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
@@ -555,6 +562,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Completion解決 | `CompletionEngine::complete` | `CompletionEngine.Complete` |
 | Dynamic provider | `CompletionProvider` | `cli.CompletionProvider` |
 | Completion requestとpartial argv | `CompletionRequest` / `CompletionOccurrence` | `cli.CompletionRequest` / `cli.CompletionOccurrence` |
+| Completion targetのsensitivity | `CompletionTarget::is_sensitive` | `CompletionTarget.IsSensitive` |
 | Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
 | Completion replacement metadata | `CompletionCandidate::deprecation` | `CompletionCandidate.Deprecation` |
 | Shell script生成 | `nagi_cli_completion::generate` | `completion.Generate` |
@@ -599,6 +607,8 @@ Rustのcompletion candidateは構造上valid UTF-8であり、Goはresultを返�
 Hiddenな宣言はcandidateにならずvalue providerを実行しません
 
 Deprecatedなstatic candidateはreplacement metadataをshell protocolへ渡します
+
+Sensitive targetはfinite-value candidateとproviderのどちらも保持せず、完了済みSensitive occurrenceはquery可能なmetadataを伴う明示的なraw request dataとして維持されます
 
 Shell層はcommand runtimeから分離され、通常dispatchより前に予約protocolを処理します
 

@@ -254,13 +254,17 @@ validation and Invocation construction. The selected command is `root run`,
 and 1,000 occurrences of a root-declared inherited Count option appear after
 the child selection
 
-Three graph and metadata shapes use the same selected path and argv
+Five graph and metadata shapes cover inherited lookup, lifecycle metadata, and
+Sensitive Value storage
 
 - The selected-path graph contains only `run`
 - The unrelated-branches graph additionally contains 100 unselected sibling
   commands with eight inherited options each
 - The deprecated graph matches the selected-path graph and marks the repeated
   Count option Deprecated. Its Invocation owns one deduplicated notice
+- The value graph parses 1,000 occurrences of one repeated Value option
+- The Sensitive value graph differs only by marking that Value option
+  Sensitive. Raw values remain in the Invocation with one Boolean marker each
 
 The complete graph is validated once per parse. Argument-token option lookup
 uses only the selected root-to-active path, so the additional siblings add a
@@ -277,7 +281,7 @@ Run only these benchmarks from the superproject root
 
 ```sh
 cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench inherited_options
-GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^(BenchmarkInheritedOptions(SelectedPath|100UnrelatedBranches)|BenchmarkDeprecatedOption1000Occurrences)$' -benchmem -benchtime=1000x -count=3 .
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^(BenchmarkInheritedOptions(SelectedPath|100UnrelatedBranches)|BenchmarkDeprecatedOption1000Occurrences|Benchmark(Sensitive)?ValueOption1000Occurrences)$' -benchmem -benchtime=1000x -count=3 .
 ```
 
 The root `make bench` command includes these paths together with the TUI
@@ -289,12 +293,16 @@ Results recorded on 2026-08-13 in the same reference environment
 
 | Implementation | Graph | Median time per parse | Allocations per parse | Allocated bytes per parse | Peak additional live bytes | Retained bytes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Rust | Selected path only | 0.057 ms | 2,043 | 44,182 | 34,301 | 0 |
-| Rust | 100 unrelated branches | 0.282 ms | 7,375 | 246,398 | 34,301 | 0 |
-| Rust | Deprecated Count, 1,000 occurrences | 0.059 ms | 2,052 | 44,765 | 34,880 | 0 |
-| Go | Selected path only | 0.033 ms | 20 | 17,760 | not measured | not measured |
-| Go | 100 unrelated branches | 0.148 ms | 638 | 99,152 | not measured | not measured |
-| Go | Deprecated Count, 1,000 occurrences | 0.033 ms | 24 | 17,936 | not measured | not measured |
+| Rust | Selected path only | 0.058 ms | 2,043 | 44,198 | 34,317 | 0 |
+| Rust | 100 unrelated branches | 0.271 ms | 7,375 | 246,414 | 34,317 | 0 |
+| Rust | Deprecated Count, 1,000 occurrences | 0.059 ms | 2,052 | 44,781 | 34,896 | 0 |
+| Rust | Value, 1,000 occurrences | 0.179 ms | 8,030 | 243,124 | 148,254 | 0 |
+| Rust | Sensitive Value, 1,000 occurrences | 0.186 ms | 8,030 | 243,124 | 148,254 | 0 |
+| Go | Selected path only | 0.034 ms | 20 | 17,760 | not measured | not measured |
+| Go | 100 unrelated branches | 0.151 ms | 638 | 99,152 | not measured | not measured |
+| Go | Deprecated Count, 1,000 occurrences | 0.034 ms | 24 | 17,936 | not measured | not measured |
+| Go | Value, 1,000 occurrences | 0.102 ms | 2,023 | 188,072 | not measured | not measured |
+| Go | Sensitive Value, 1,000 occurrences | 0.103 ms | 2,023 | 188,072 | not measured | not measured |
 
 The 1,000-occurrence selected-path case completes below 0.1 ms in both
 implementations on the reference machine. Adding 800 declarations on
@@ -305,6 +313,12 @@ allocations and 583 allocated bytes in Rust, and four allocations and 176
 allocated bytes in Go. Repeating the deprecated target does not allocate one
 notice or replacement per occurrence. Rust drops each measured Invocation
 with zero retained bytes
+
+The Sensitive marker adds no measured allocation, allocated bytes, peak live
+bytes, or retained bytes over the matching 1,000-value parse in either
+implementation. The small elapsed-time differences are treated as run-to-run
+noise rather than a confirmed CPU change. Sensitivity is carried directly
+beside each Parsed Value and does not require a second lookup structure
 
 ## CLI completion purpose
 

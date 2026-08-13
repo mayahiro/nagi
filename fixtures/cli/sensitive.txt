@@ -1,0 +1,20 @@
+nagi-fixture-v1	cli-sensitive
+metadata	arrangement=metadata	expected=option=true;argument=true;plain=false
+help	arrangement=help	expected=option=true:Token [env: NAGI_TOKEN] [default: <redacted>] [possible: <redacted>];argument=true:Credential;plain=false:Mode [default: safe] [possible: safe, fast]
+inherited-help	arrangement=inherited-help	expected=true:Token [env: NAGI_TOKEN] [default: <redacted>] [possible: <redacted>]
+invalid-option	arrangement=invalid-option	expected=message=invalid value <redacted> for 'token';target=true
+invalid-attached	arrangement=invalid-attached	expected=message=invalid value <redacted> for 'token';target=true
+invalid-environment	arrangement=invalid-environment	expected=message=invalid value <redacted> for 'token';target=true
+invalid-default	arrangement=invalid-default	expected=message=invalid value <redacted> for 'token';target=true
+invalid-argument	arrangement=invalid-argument	expected=message=invalid value <redacted> for 'credential';target=true
+nonsensitive-invalid	arrangement=nonsensitive-invalid	expected=message=invalid value 'bad' for 'mode': expected one of safe, fast;target=false
+raw-access	arrangement=raw-access	expected=raw=733363723374;typed=s3cr3t;sensitive=true;visible=true;scope=true;source=command-line
+completion-option	arrangement=completion-option	expected=target=true;candidates=0;provider=0
+completion-argument	arrangement=completion-argument	expected=target=true;candidates=0;provider=0
+completion-partial	arrangement=completion-partial	expected=target=false;raw=s3cr3t;partial-sensitive=true;provider=1
+validator-target	arrangement=validator-target	expected=true
+inherited-validator-target	arrangement=inherited-validator-target	expected=true
+handler-target	arrangement=handler-target	expected=true
+unmatched-target	arrangement=unmatched-target	expected=unknown=false;mismatched=false
+invalid-flag	arrangement=invalid-flag	expected=invalid-specification
+invalid-count	arrangement=invalid-count	expected=invalid-specification

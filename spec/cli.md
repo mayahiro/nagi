@@ -125,6 +125,59 @@ warning[deprecated-option]: option '--old' is deprecated
 hint: use --new
 ```
 
+## Sensitive value metadata
+
+A Value Option or positional Argument MAY be marked Sensitive. Sensitive is
+generic value-presentation metadata and MUST NOT identify a credential type,
+own authorization policy, or change the raw or typed Invocation value. A Flag
+or Count marked Sensitive is invalid value-only configuration and MUST be
+rejected before argv parsing.
+
+The public redaction marker is the ASCII string `<redacted>`. Implementations
+MUST carry the Sensitive marker into Parsed Values, structured Help entries,
+Diagnostic Targets produced for that declaration, and Completion Targets.
+Callers MUST be able to query this metadata without comparing display text.
+
+Framework-controlled projections MUST behave as follows:
+
+- Help preserves the option or argument label, description, required marker,
+  and environment variable name. A Sensitive default is rendered as
+  `default: <redacted>`, and a non-empty finite value set is rendered as
+  `possible: <redacted>` without retaining the values in the Help Document;
+- a Value Parser failure for a Sensitive declaration uses the stable message
+  `invalid value <redacted> for 'ID'`. It MUST NOT include the raw value or the
+  parser-provided failure reason in the Diagnostic;
+- Debug or Go formatting of a Parsed Value, Invocation, Parse Result, normalized
+  Completion Request, or Completion Result MUST NOT expose a Sensitive raw or
+  typed value. Raw Completion Input has no Command Graph metadata and its debug
+  representation MUST treat every token as opaque;
+- finite value completion candidates MUST NOT be returned for a Sensitive
+  target, and its dynamic completion provider MUST NOT run; and
+- completed Sensitive occurrences remain available through explicit raw
+  Completion Request access so an application provider for another target can
+  make an authorized decision. Their structured occurrence and target metadata
+  MUST remain marked Sensitive.
+
+Parser-generated Diagnostic Targets MUST carry the declaration marker. When an
+Invocation validator or Handler returns a Diagnostic, the framework MUST also
+resolve each matching target by target kind, stable command-ID path, and local
+value ID. An omitted path uses the validator's defining scope or the Handler's
+selected scope. An explicit unknown path, unknown value ID, or mismatched target
+kind MUST remain non-Sensitive
+
+Explicit Invocation raw and typed access MUST return the original value and
+source. Sensitive does not zeroize memory, remove values from OS process
+inspection or shell history, protect transport, or prevent a handler,
+validator, or completion provider from logging a value it explicitly reads.
+Applications SHOULD prefer an injected environment value, standard input, or a
+Secret Prompt over argv when process-level disclosure matters.
+
+Application-authored Diagnostic messages and hints, Help descriptions,
+examples, custom sections, parser objects, and runtime output are opaque text.
+The framework MUST NOT guess which substrings are secrets. Applications MUST
+redact those values before constructing public output. Environment variable
+names are metadata rather than resolved values and remain visible.
+
 ## Argument parsing
 
 Parsing starts at the root command and scans arguments from left to right.

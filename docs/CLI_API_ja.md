@@ -37,6 +37,7 @@ Command、option、positionalは各言語に自然なbuilderで定義します
 | HiddenなCommandまたはOption | `.hidden()` | `.Hidden()` |
 | DeprecatedなCommandまたはOption | `.deprecated(replacement)` | `.Deprecated(replacement)` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
+| Sensitiveなvalue optionまたはpositional | `.sensitive()` | `.Sensitive()` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
 | Dynamic value completion | `.completion_provider(provider)` | `.CompletionProvider(provider)` |
@@ -132,6 +133,48 @@ Output routingを所有するApplicationは`Invocation::deprecation_notices`ま�
 
 [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle/README.md)と[Go lifecycle example](../nagicli-go/examples/lifecycle/README.md)を参照してください
 
+## Sensitive Value metadata
+
+Value Optionまたはpositional Argumentには汎用のSensitive metadataを設定できます
+
+このmetadataはframework presentationだけを制御し、credential typeの識別やauthorization policyを追加しません
+
+FlagまたはCountへの設定は不正なvalue-only configurationとしてgraph validationが拒否します
+
+Generated Helpはlabel、description、required state、environment変数名を維持し、設定済みdefaultまたはfinite value setを公開`<redacted>` markerへ置換します
+
+Frameworkが生成するparser failureはraw値とparser reasonの両方を省略します
+
+Structured Help entry、parsed value、Diagnostic target、Completion targetはdisplay textの検査を不要にするquery可能なmetadataを公開します
+
+Stable JSON Diagnostic schema `nagi-diagnostic-v1`はraw value fieldを持たないため変更しません
+
+Parser targetとInvocation validatorまたはHandlerが返す一致targetは宣言のmarkerを継承します
+
+解決にはtarget kind、stable command-ID path、local value IDを使用し、未知または不一致のtargetはnon-Sensitiveのままです
+
+CompletionはSensitive targetのfinite-value candidateを返さず、そのtargetのdynamic providerを保持も実行もしません
+
+別targetのproviderが必要とする場合、完了済みSensitive occurrenceは明示的なraw `CompletionRequest` accessから引き続き参照でき、occurrenceとtargetのSensitive markerも維持されます
+
+Raw `CompletionInput`はCommand Graphによる解釈前なので、format時は全tokenをopaqueとして扱います
+
+明示的なInvocation raw／typed accessは元の値とsourceを返します
+
+Sensitive metadataはmemory zeroization、OS argvやshell historyからの隠蔽、transport保護、明示的に値を読んだApplication codeのlogging防止を行いません
+
+Applicationが作るDiagnostic text、Help text、parser object、runtime outputはopaqueなため、Application自身がこれらの文字列をredactする必要があります
+
+Goは値を保持するCLIとcompletion typeにsafe formattingを定義し、再帰的なdefault struct formattingへ依存しなくなりました
+
+未文書のformat textを比較していたcodeはsource-levelでは影響を受けませんが、v1前の観測出力は変わります
+
+Goでframeworkが生成するnon-SensitiveなInvalid Value messageは、Rustと共有fixtureに合わせてstable value IDをsingle quoteで囲むようになりました
+
+Consumerはhuman-readable messageではなくDiagnostic codeで分岐する必要があります
+
+[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values/README.md)と[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/README.md)を参照してください
+
 ## Parsingとtyped value
 
 Public parse methodはprogram nameを除いたargumentを受け取ります
@@ -207,6 +250,8 @@ Value OptionまたはArgumentには1個のdynamic `CompletionProvider`を設定�
 Providerは選択されたcanonicalとstable command path、target-local prefix、argv順の認識済みraw occurrenceを受け取ります
 
 CompletionはValue Parser、fallback、validator、command handlerを実行しません
+
+Sensitive targetはvalue candidateを返さず、そのproviderを実行しません
 
 Rust providerは`CancellationToken`、Go providerはcallerの`context.Context`を受け取ります
 
@@ -459,7 +504,7 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
 
 ## 制約
 

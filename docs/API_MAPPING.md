@@ -539,6 +539,8 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Deprecate a Command or Option | `Command::deprecated` / `OptionSpec::deprecated` | `Command.Deprecated` / `OptionSpec.Deprecated` |
 | Query lifecycle metadata | `is_hidden` / `deprecation` | `IsHidden` / `Deprecation` |
 | Replacement metadata | `Deprecation` | `cli.Deprecation` |
+| Mark a Value declaration Sensitive | `OptionSpec::sensitive` / `Argument::sensitive` | `OptionSpec.Sensitive` / `Argument.Sensitive` |
+| Query declaration sensitivity | `OptionSpec::is_sensitive` / `Argument::is_sensitive` | `OptionSpec.IsSensitive` / `Argument.IsSensitive` |
 | Install a value completion provider | `OptionSpec::completion_provider` / `Argument::completion_provider` | `OptionSpec.CompletionProvider` / `Argument.CompletionProvider` |
 | Positional argument | `Argument::new` | `cli.Positional` |
 | Option cardinality group | `OptionGroup` | `cli.OptionGroup` |
@@ -546,6 +548,9 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Finite-value parser | `possible_values_parser` | `cli.PossibleValuesParser` |
 | Custom parser | `value_parser` | `cli.CustomParser` |
 | Parsed command | `Invocation` | `cli.Invocation` |
+| Parsed value sensitivity | `ParsedValue::is_sensitive` | `ParsedValue.IsSensitive` |
+| Visible or exact-scope sensitivity | `Invocation::value_is_sensitive` / `InvocationScope::value_is_sensitive` | `Invocation.ValueIsSensitive` / `InvocationScope.ValueIsSensitive` |
+| Public redaction marker | `REDACTED_VALUE` | `cli.RedactedValue` |
 | Structured deprecation uses | `Invocation::deprecation_notices` / `DeprecationNotice` | `Invocation.DeprecationNotices` / `cli.DeprecationNotice` |
 | Stable selected command path | `Invocation::command_id_path` | `Invocation.CommandIDPath` |
 | Exact command-local scope | `Invocation::scope` / `InvocationScope` | `Invocation.Scope` / `cli.InvocationScope` |
@@ -560,11 +565,13 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Structured inherited Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
 | Help lifecycle metadata | `HelpDocument::deprecation` / `HelpEntry::deprecation` / `HelpInheritedOption::deprecation` | `HelpDocument.Deprecation` / `HelpEntry.Deprecation` / `HelpInheritedOption.Deprecation` |
+| Help value sensitivity | `HelpEntry::is_sensitive` / `HelpInheritedOption::is_sensitive` | `HelpEntry.IsSensitive` / `HelpInheritedOption.IsSensitive` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
 | Runtime services | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
 | Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
+| Diagnostic target sensitivity | `DiagnosticTarget::is_sensitive` | `DiagnosticTarget.IsSensitive` |
 | Diagnostic meaning | `DiagnosticCategory` | `cli.DiagnosticCategory` |
 | Stable JSON Diagnostic renderer | `JsonDiagnosticRenderer` | `cli.JSONDiagnosticRenderer` |
 | JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
@@ -581,6 +588,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Completion resolution | `CompletionEngine::complete` | `CompletionEngine.Complete` |
 | Dynamic provider | `CompletionProvider` | `cli.CompletionProvider` |
 | Completion request and partial argv | `CompletionRequest` / `CompletionOccurrence` | `cli.CompletionRequest` / `cli.CompletionOccurrence` |
+| Completion target sensitivity | `CompletionTarget::is_sensitive` | `CompletionTarget.IsSensitive` |
 | Completion candidate | `CompletionCandidate` | `cli.CompletionCandidate` |
 | Completion replacement metadata | `CompletionCandidate::deprecation` | `CompletionCandidate.Deprecation` |
 | Shell script generation | `nagi_cli_completion::generate` | `completion.Generate` |
@@ -621,8 +629,10 @@ path, and call only the provider attached to the active value target. Rust
 completion candidates contain valid UTF-8 by construction; Go validates UTF-8
 before returning a result. Hidden declarations do not become candidates or
 run a value provider. Deprecated static candidates carry replacement metadata
-to the shell protocol. The shell layers remain separate from the command
-runtime and intercept their reserved protocol before normal dispatch
+to the shell protocol. Sensitive targets retain neither finite-value candidates
+nor their provider, while completed Sensitive occurrences remain explicit raw
+request data with queryable metadata. The shell layers remain separate from the
+command runtime and intercept their reserved protocol before normal dispatch
 
 Both Prompt implementations keep terminal I/O outside CLI Core and accept the
 caller's cancellation source per request. Rust uses a closed `ReadResult` enum;
