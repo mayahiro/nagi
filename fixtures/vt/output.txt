@@ -1,11 +1,14 @@
 nagi-fixture-v1	vt-output
 movement	capabilities=modern	operations=move-to,4,2;move-relative,-2,3	expected=\x1B[3;5H\x1B[3B\x1B[2D
 cursor-query-next-line	capabilities=baseline	operations=request-cursor-position;next-line	expected=\x1B[6n\x1BE
+keyboard-negotiation	capabilities=baseline	operations=query-keyboard-enhancements;request-primary-device-attributes;push-keyboard-enhancements,nagi;pop-keyboard-enhancements	expected=\x1B[?u\x1B[c\x1B[>27u\x1B[<u
 erase	capabilities=modern	operations=erase-line,after;erase-line,before;erase-line,all;erase-display,after;erase-display,before;erase-display,all	expected=\x1B[0K\x1B[1K\x1B[2K\x1B[0J\x1B[1J\x1B[2J
 visibility-shape	capabilities=modern	operations=hide-cursor;show-cursor;cursor-shape,steady-bar	expected=\x1B[?25l\x1B[?25h\x1B[6 q
 indexed-style	capabilities=modern	operations=set-style,fg-indexed-7+bg-indexed-4+bold+underline;reset-style	expected=\x1B[0;38;5;7;48;5;4;1;4m\x1B[0m
 rgb-style	capabilities=modern	operations=set-style,fg-rgb-102030+bg-rgb-405060+underline-color-rgb-AABBCC+italic+strikethrough	expected=\x1B[0;38;2;16;32;48;48;2;64;80;96;58;2;170;187;204;3;9m
 rgb-baseline	capabilities=baseline	operations=set-style,fg-rgb-1080FF+underline-color-rgb-AABBCC	expected=\x1B[0;38;5;39m
+rgb-ansi16	capabilities=ansi16	operations=set-style,fg-rgb-1080FF+bg-indexed-4	expected=\x1B[0;96;44m
+rgb-monochrome	capabilities=monochrome	operations=set-style,fg-rgb-1080FF+bg-indexed-4	expected=\x1B[0m
 underline-default	capabilities=modern	operations=set-style,underline-color-default	expected=\x1B[0;59m
 safe-text	capabilities=modern	operations=write,0041+001B+0042+007F+009B	expected=A\u{FFFD}B\u{FFFD}\u{FFFD}
 screen-modes	capabilities=modern	operations=enter-alternate;enable-paste;enable-mouse,button;enable-focus;begin-sync;end-sync;disable-focus;disable-mouse;disable-paste;leave-alternate	expected=\x1B[?1049h\x1B[?2004h\x1B[?1002h\x1B[?1006h\x1B[?1004h\x1B[?2026h\x1B[?2026l\x1B[?1004l\x1B[?1000l\x1B[?1002l\x1B[?1003l\x1B[?1006l\x1B[?2004l\x1B[?1049l

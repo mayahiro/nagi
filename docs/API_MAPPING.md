@@ -180,6 +180,7 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | --- | --- | --- |
 | Action identity | `ActionId` | `ActionID` |
 | Key stroke | `KeyStroke::new` / `character` / `function` | `NewKeyStroke` / `NewCharacterKeyStroke` / `NewFunctionKeyStroke` |
+| Protocol functional-key stroke | `KeyStroke::new(KeyCode::Functional(...), ...)` | `NewFunctionalKeyStroke` |
 | Event normalization | `KeyStroke::from_event` | `KeyStrokeFromEvent` |
 | Key binding | `KeyBinding::new` | `NewKeyBinding` |
 | Stroke-only blocking match | `KeyBinding::matches_stroke` | `KeyBinding.MatchesStroke` |
@@ -430,9 +431,18 @@ contract; Rust uses unsigned indices
 | Purpose | Rust | Go |
 | --- | --- | --- |
 | Application contract | `App` with associated `Message` | `App[Message]` |
-| View environment | `ViewContext { size, width_profile }` | `ViewContext{Size: ..., WidthProfile: ...}` |
+| View environment | `ViewContext { size, width_profile, terminal_capabilities }` | `ViewContext{Size: ..., WidthProfile: ..., TerminalCapabilities: ...}` |
 | Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
 | Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
+| Runtime capability profile | `RuntimeConfig::terminal_capabilities` | `RuntimeConfig.TerminalCapabilities` |
+| Terminal capability profile | `TerminalCapabilityProfile` | `TerminalCapabilityProfile` |
+| VT output color level | `nagi_vt::ColorLevel` | `vt.ColorLevel` |
+| Capability evidence | `TerminalFeatureSupport` | `TerminalFeatureSupport` |
+| Advertised color level | `TerminalColorLevel` | `TerminalColorLevel` |
+| Active keyboard protocol | `TerminalKeyboardProtocol` | `TerminalKeyboardProtocol` |
+| Binding metadata from keyboard evidence | `TerminalCapabilityProfile::modified_key_support` | `TerminalCapabilityProfile.ModifiedKeySupport` |
+| Terminal capability detection | `TerminalOptions::capability_detection` / `TerminalCapabilityDetection` | `TerminalOptions.CapabilityDetection` / `TerminalCapabilityDetection` |
+| Capability query timeout | `TerminalOptions::capability_query_timeout` | `TerminalOptions.CapabilityQueryTimeout` |
 | Terminal clipboard mode | `TerminalOptions::clipboard` / `TerminalClipboard` | `TerminalOptions.Clipboard` / `TerminalClipboard` |
 | Context-aware Runtime construction | Language-specific caller integration | `NewRuntimeContext` / `NewRuntimeWithClockContext` |
 | Run a terminal app | `run_terminal` | `RunTerminal[M]` |
@@ -475,13 +485,26 @@ contract; Rust uses unsigned indices
 | Invalidate terminal diff baseline | `Runtime::invalidate_terminal_surface` | `Runtime.InvalidateTerminalSurface` |
 | Test-harness terminal task | `Harness::pending_terminal_tasks` / `run_terminal_task` | `Harness.PendingTerminalTasks` / `RunTerminalTask` |
 | Discard incomplete terminal input | `TimedInputDecoder::reset` | `TimedInputDecoder.Reset` |
+| Ambiguous Kitty modifier mode | `Decoder::set_kitty_keyboard_mode` / `TimedInputDecoder::set_kitty_keyboard_mode` | `vt.Decoder.SetKittyKeyboardMode` / `TimedInputDecoder.SetKittyKeyboardMode` |
 | No Subscription | `Subscription::none()` | `NoneSubscription[M]()` |
+| Kitty key source protocol | `KeyProtocol::Kitty` | `vt.KeyProtocolKitty` |
+| Kitty progressive flags | `KeyboardEnhancements::NAGI` | `vt.NagiKeyboardEnhancements` |
+| Primary device attributes query | `TerminalOp::RequestPrimaryDeviceAttributes` | `vt.RequestPrimaryDeviceAttributes()` |
+| Kitty flag query | `TerminalOp::QueryKeyboardEnhancements` | `vt.QueryKeyboardEnhancements()` |
+| Kitty mode stack | `TerminalOp::PushKeyboardEnhancements` / `PopKeyboardEnhancements` | `vt.PushKeyboardEnhancements(...)` / `vt.PopKeyboardEnhancements()` |
 
 Both terminal runners route and apply each Event decoded from one input chunk
 before routing the next Event, then coalesce only the render. A terminal-
 suspending Effect discards later decoded Events from that chunk before handing
 the ordinary terminal to the task. Width-sensitive widgets receive the Runtime
 profile explicitly from `ViewContext`; Core nodes use it automatically
+
+Capability detection is disabled by default. When enabled, both standard
+runners apply conservative environment hints, query Kitty keyboard support,
+balance Nagi's enhancement stack across suspend and restore, and expose the
+resulting immutable profile to the Runtime. Profile evidence is not output
+permission; OSC 52 remains controlled by the independent clipboard option.
+Detected color bounds the configured four-level VT encoder without promotion
 
 The standard terminal runners execute each terminal task only after restoring
 the original terminal and leaving the alternate screen or finalizing an inline

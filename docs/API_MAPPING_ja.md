@@ -175,6 +175,7 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | --- | --- | --- |
 | Action identity | `ActionId` | `ActionID` |
 | Key stroke | `KeyStroke::new` / `character` / `function` | `NewKeyStroke` / `NewCharacterKeyStroke` / `NewFunctionKeyStroke` |
+| Protocol functional-key stroke | `KeyStroke::new(KeyCode::Functional(...), ...)` | `NewFunctionalKeyStroke` |
 | Event normalization | `KeyStroke::from_event` | `KeyStrokeFromEvent` |
 | Key binding | `KeyBinding::new` | `NewKeyBinding` |
 | Strokeだけを使うblocking match | `KeyBinding::matches_stroke` | `KeyBinding.MatchesStroke` |
@@ -421,9 +422,18 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | 用途 | Rust | Go |
 | --- | --- | --- |
 | Application contract | associated `Message`を持つ`App` | `App[Message]` |
-| View環境 | `ViewContext { size, width_profile }` | `ViewContext{Size: ..., WidthProfile: ...}` |
+| View環境 | `ViewContext { size, width_profile, terminal_capabilities }` | `ViewContext{Size: ..., WidthProfile: ..., TerminalCapabilities: ...}` |
 | Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
 | Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
+| Runtime capability profile | `RuntimeConfig::terminal_capabilities` | `RuntimeConfig.TerminalCapabilities` |
+| Terminal capability profile | `TerminalCapabilityProfile` | `TerminalCapabilityProfile` |
+| VT output color level | `nagi_vt::ColorLevel` | `vt.ColorLevel` |
+| Capabilityの根拠 | `TerminalFeatureSupport` | `TerminalFeatureSupport` |
+| 公示color level | `TerminalColorLevel` | `TerminalColorLevel` |
+| 有効keyboard protocol | `TerminalKeyboardProtocol` | `TerminalKeyboardProtocol` |
+| Keyboard根拠からbinding metadataへの変換 | `TerminalCapabilityProfile::modified_key_support` | `TerminalCapabilityProfile.ModifiedKeySupport` |
+| Terminal capability検出 | `TerminalOptions::capability_detection` / `TerminalCapabilityDetection` | `TerminalOptions.CapabilityDetection` / `TerminalCapabilityDetection` |
+| Capability query timeout | `TerminalOptions::capability_query_timeout` | `TerminalOptions.CapabilityQueryTimeout` |
 | Terminal clipboard mode | `TerminalOptions::clipboard` / `TerminalClipboard` | `TerminalOptions.Clipboard` / `TerminalClipboard` |
 | Context-aware Runtime構築 | 言語固有のcaller integration | `NewRuntimeContext` / `NewRuntimeWithClockContext` |
 | Terminal application実行 | `run_terminal` | `RunTerminal[M]` |
@@ -466,9 +476,20 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Terminal diff baselineをinvalidate | `Runtime::invalidate_terminal_surface` | `Runtime.InvalidateTerminalSurface` |
 | Test harnessのterminal task | `Harness::pending_terminal_tasks` / `run_terminal_task` | `Harness.PendingTerminalTasks` / `RunTerminalTask` |
 | 未完terminal inputを破棄 | `TimedInputDecoder::reset` | `TimedInputDecoder.Reset` |
+| 曖昧なKitty modifier mode | `Decoder::set_kitty_keyboard_mode` / `TimedInputDecoder::set_kitty_keyboard_mode` | `vt.Decoder.SetKittyKeyboardMode` / `TimedInputDecoder.SetKittyKeyboardMode` |
 | Subscriptionなし | `Subscription::none()` | `NoneSubscription[M]()` |
+| Kitty keyのsource protocol | `KeyProtocol::Kitty` | `vt.KeyProtocolKitty` |
+| Kitty progressive flag | `KeyboardEnhancements::NAGI` | `vt.NagiKeyboardEnhancements` |
+| Primary device attributes query | `TerminalOp::RequestPrimaryDeviceAttributes` | `vt.RequestPrimaryDeviceAttributes()` |
+| Kitty flag query | `TerminalOp::QueryKeyboardEnhancements` | `vt.QueryKeyboardEnhancements()` |
+| Kitty mode stack | `TerminalOp::PushKeyboardEnhancements` / `PopKeyboardEnhancements` | `vt.PushKeyboardEnhancements(...)` / `vt.PopKeyboardEnhancements()` |
 
 両terminal runnerは1個のinput chunkからdecodeした各Eventをrouteしてupdateへ適用してから次のEventを処理し、renderだけをcoalesceします。Terminal suspend Effectが生じた場合は通常terminalをtaskへ渡す前に同じchunkの後続decode済みEventを破棄します。幅計算を行うWidgetは`ViewContext`からRuntime profileを明示的に受け取り、Core Nodeは同じprofileを自動的に使用します
+
+Capability検出は既定で無効です
+有効時は両標準runnerが保守的なenvironment hintを適用し、Kitty keyboard対応をqueryし、suspendとrestoreにまたがってNagiのenhancement stackを釣り合わせ、immutableなprofileをRuntimeへ公開します
+Profileの根拠はoutput permissionではなく、OSC 52は独立したclipboard optionで制御します
+検出colorは設定済みの4段階VT encoderを昇格せず上限として制約します
 
 標準terminal runnerはoriginal terminalを復元し、alternate screenを離れるかinline viewportを確定してからterminal taskを1個ずつ実行します。Resumeでは設定済みviewportとmodeへ戻り、local sizeを読み、未完decoder stateをresetし、diff baselineをinvalidateして再描画します。Manual Runtime driverは同等の境界を所有します
 

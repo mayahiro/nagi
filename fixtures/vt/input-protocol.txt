@@ -1,0 +1,7 @@
+nagi-fixture-v1	vt-input-protocol
+
+# The second Kitty form is byte-identical to legacy xterm input when a press
+# omits its event type, so the configured protocol determines modifier meaning
+legacy-modifier-nine	protocol=legacy	input=\x1B[1;9A	expected=key:up:meta:-:unknown:legacy
+kitty-super-press	protocol=kitty	input=\x1B[1;9A	expected=key:up:super:-:press:kitty
+kitty-meta-press	protocol=kitty	input=\x1B[1;33A	expected=key:up:meta:-:press:kitty

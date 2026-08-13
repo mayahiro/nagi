@@ -57,14 +57,26 @@ Applicationは4個のoperationを実装します
 1. `init`は起動時のEffectを1個返す
 2. `update`はMessageを1個適用して後続Effectを返す
 3. `subscriptions`は現在の安定key付き長期sourceを宣言する
-4. `view`はapplication stateと現在のterminal `Size`および`WidthProfile`を持つ`ViewContext`からsemantic Node treeを再構築する
+4. `view`はapplication stateと現在のterminal `Size`、`WidthProfile`、`TerminalCapabilityProfile`を持つ`ViewContext`からsemantic Node treeを再構築する
 
 `update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります。1回のterminal readから複数Eventがdecodeされた場合も、各Eventのrouting、fallback mapping、入力由来update、semantic tree更新を完了してから次のEventを処理し、Surface描画だけをbatch全体でcoalesceします。Terminal suspend Effectが生じた場合は通常terminalをtaskへ渡す前に同じdecode batchの後続Eventを破棄します
 
 `RuntimeConfig`と`TerminalOptions`はRuntime lifetime全体で使用するNagi Textの`WidthProfile`を1個選択します。Coreのmeasure、wrap、draw、hit geometry、cursor配置は自動的に同じprofileを使います。幅計算を行うWidgetはRustの`width_profile`とGoの`WidthProfile`を提供するため、RuntimeがModern以外を使う場合は`ViewContext`の値を渡します。Custom overrideは同じgraphemeに対してRuntime lifetime中に安定した幅を返す必要があります
 
-Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`clipboard`、`viewport`、`cursor_query_timeout` fieldも指定する必要があります
-`..TerminalOptions::default()`を使うliteralは追加設定なしでdisabled clipboardとfull-screen viewportの既定値を維持します
+Terminal capability検出はopt-inであり既定では無効です
+Rustの`TerminalOptions::capability_detection`またはGoの`TerminalOptions.CapabilityDetection`をEnabledにすると、保守的な`TERM`、`COLORTERM`、`NO_COLOR` hintを読み、設定したcapability query timeout内でKitty keyboard protocol対応をactive queryします
+対応terminalではmodified keyの曖昧性除去、event type、全key report、associated textを含むNagiのenhancement setを有効にし、suspend、resume、restoreにまたがってmode stackを釣り合わせます
+
+`TerminalCapabilityProfile`はcolor level、独立したno-color preference、hyperlinkとclipboardの根拠、extended keyboardの根拠、有効なkeyboard protocolを保持します
+各`ViewContext`から参照でき、手動Runtimeでは`RuntimeConfig`から注入できます
+VTの`Capabilities`は`ColorLevel`でMonochrome、ANSI 16、Indexed 256、True Color outputを選択します
+検出値は設定済みlevelの上限としてだけ使い、機能を昇格させません
+副作用のないportableなqueryがないため、hyperlinkとclipboardのpositive supportはUnknownのままです
+Profile metadataはOSC 52やその他のoutput policyを有効にしません
+対応する[Rust example](../nagi-rs/crates/nagi-tui/examples/terminal_capabilities/main.rs)、[Go example](../nagitui-go/examples/terminal-capabilities/main.go)、[terminal session仕様](../spec/terminal-session.md)を参照してください
+
+Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`capability_detection`、`capability_query_timeout`、`clipboard`、`viewport`、`cursor_query_timeout` fieldも指定する必要があります
+`..TerminalOptions::default()`を使うliteralは追加設定なしでcapability検出とclipboard outputを無効にし、Indexed 256 encoder baselineとfull-screen viewportの既定値を維持します
 
 Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
 
@@ -338,6 +350,7 @@ Rust commandは`nagi-rs`、Go commandは`nagitui-go`から実terminalで実行�
 | Example | Rust | Go |
 | --- | --- | --- |
 | Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
+| Terminal capability | `cargo run -p nagi-tui --example terminal_capabilities` | `go run ./examples/terminal-capabilities` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | JSON inspector | `cargo run -p nagi-tui-widgets --example json_inspector` | `go run ./examples/json-inspector` |

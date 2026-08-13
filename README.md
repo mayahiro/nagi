@@ -45,7 +45,10 @@ inspection, memoized bounded code and unified diff views, virtual
 ScrollViewports, and stable variable-height VirtualFeeds for large content.
 Applications can route semantic copy requests through a
 coalesced Clipboard Effect, with write-only OSC 52 available as an explicit
-terminal opt-in
+terminal opt-in. Standard terminal runners also provide opt-in conservative
+capability detection, an immutable profile for views, and balanced Kitty
+keyboard enhancements for distinct modified keys without granting output
+permission
 
 Nagi CLI provides native Rust and Go Command Graphs, local and inherited
 options, command-local typed value scopes, portable option groups and

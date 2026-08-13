@@ -769,6 +769,47 @@ warmed across calls
 These values are directional framework baselines, not estimates of editor,
 shell, browser, authentication, or other application-selected work
 
+## Enhanced keyboard input purpose
+
+This benchmark measures one warmed Kitty keyboard protocol report,
+`CSI 97;2:1;65u`, representing a Shift-modified logical `a` key with associated
+text `A`
+
+- Each call feeds one complete sequence into a persistent VT Decoder, validates
+  one normalized Key Event, and drops the owned result
+- The measured path includes streaming state transitions, decimal parsing,
+  modifier and action normalization, associated-text construction, and Event
+  collection allocation
+- It excludes terminal I/O, capability querying, Runtime routing, application
+  update, and rendering
+- Recognized sequence scratch storage is warmed before sampling and retained at
+  no more than the 4,096-byte VT sequence limit. Unit tests separately verify
+  that a large paste buffer is not retained as sequence scratch
+
+Run only this benchmark from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-vt --bench input
+GOWORK=off GOTOOLCHAIN=local go test -C nagi-go -run '^$' -bench '^BenchmarkDecoderKittyKey$' -benchmem -benchtime=1s -count=3 ./vt
+```
+
+The root `make bench` command includes both paths
+
+### Reference results
+
+Results recorded on 2026-08-13 in the same reference environment
+
+| Implementation | Median time per key | Allocations per key | Allocated bytes per key |
+| --- | ---: | ---: | ---: |
+| Rust | 205 ns | 2 | 200 |
+| Go | 126.4 ns | 2 | 136 |
+
+Both measured allocations belong to the returned Event collection and its
+associated text. The decoder reuses recognized control-sequence storage after
+warm-up. Rust allocation tracking uses benchmark-local atomic counters, so the
+timings are directional CPU measurements rather than a cross-language latency
+ranking
+
 ## Regression checks
 
 Deterministic tests in both implementations scroll through 256 frames and

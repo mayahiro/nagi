@@ -13,6 +13,7 @@ Runtimeを独自のpolling loopやrender loopで囲みません
 | 責務 | 所有者 |
 | --- | --- |
 | Terminal input、resize、wait、wake-up、render timing | Nagi terminal runner |
+| Opt-inの起動時capability観測とkeyboard mode lifecycle | Nagi terminal runner |
 | One-shot asynchronous work | Effect |
 | 通常terminalを必要とする1個のblocking operation | SuspendTerminal Effectとterminal runner |
 | Process outputなどの長期external input | Stream Subscription |
@@ -32,6 +33,9 @@ terminal input --------------------/                         |
 ```
 
 1回のterminal readから複数のUnicodeまたはkey Eventがdecodeされる場合があります。Nagiは1個のEventから生じるroutingと全updateを完了してから次のEventをrouteするため、controlled Widgetは常に最新stateから再構築されます。Input batch全体でcoalesceするのは結果のrenderだけです
+
+Opt-inのcapability検出はterminal sessionを開いた後、最初のapplication viewより前に1回だけ実行します
+UI loopへpolling sourceを追加せず、上限付きquery中に読んだ無関係なbyteは保持してsetup後に通常decoderへ渡します
 
 1個のEventがterminal suspendを要求した場合、同じreadからdecode済みの後続Eventは破棄します。Runnerは通常terminalを復元し、Application所有taskをdriver threadで実行し、設定済みviewportを再開し、未完decoder stateをresetしてfull redrawを強制します
 
@@ -123,6 +127,13 @@ Terminal以外のhostへNagiを組み込む場合はRuntimeの手動driveが必�
   `cargo run -p nagi-tui --example terminal_suspend`
 - [Go source](../nagitui-go/examples/terminal-suspend/main.go):
   `go run ./examples/terminal-suspend`
+
+Terminal capability exampleは起動時queryをopt-inし、各viewへ渡るimmutable profileを表示します
+
+- [Rust source](../nagi-rs/crates/nagi-tui/examples/terminal_capabilities/main.rs):
+  `cargo run -p nagi-tui --example terminal_capabilities`
+- [Go source](../nagitui-go/examples/terminal-capabilities/main.go):
+  `go run ./examples/terminal-capabilities`
 
 Exampleを自己完結させるためsimulated producerはtimerを使います
 Productではproducer本体だけをblocking process-output readerへ置き換え、application lifecycleとrenderの所有関係は維持します

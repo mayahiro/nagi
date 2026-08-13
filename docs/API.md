@@ -64,7 +64,8 @@ An application implements four operations
 2. `update` applies one Message and returns follow-up Effects
 3. `subscriptions` declares the current stable-key long-lived sources
 4. `view` rebuilds a semantic Node tree from application state and a
-   `ViewContext` containing the current terminal `Size` and `WidthProfile`
+   `ViewContext` containing the current terminal `Size`, `WidthProfile`, and
+   `TerminalCapabilityProfile`
 
 `update` always runs sequentially. Effects and subscriptions may produce work
 concurrently, but their results enter the bounded runtime queue before another
@@ -81,10 +82,34 @@ cursor placement use it automatically. Width-sensitive widgets expose
 `ViewContext` when the Runtime does not use Modern width. A Custom override must
 return a stable width for the same grapheme throughout the Runtime lifetime
 
+Terminal capability detection is opt-in and disabled by default. Setting
+`TerminalOptions::capability_detection` or
+`TerminalOptions.CapabilityDetection` to Enabled reads conservative
+`TERM`, `COLORTERM`, and `NO_COLOR` hints and actively queries Kitty keyboard
+protocol support within the configured capability-query timeout. A supported
+terminal receives Nagi's enhancement set for unambiguous modified keys,
+explicit event types, all-key reports, and associated text. The session
+balances that mode across suspension, resume, and restoration
+
+`TerminalCapabilityProfile` keeps color level, the independent no-color
+preference, hyperlink and clipboard evidence, extended-keyboard evidence, and
+the active keyboard protocol. It is available from every `ViewContext`, and a
+manual Runtime can inject it through `RuntimeConfig`. VT `Capabilities` use
+`ColorLevel` to select Monochrome, ANSI 16, Indexed 256, or True Color output.
+Detection only bounds that configured level and never promotes it. Positive
+hyperlink and clipboard support remain Unknown because there is no portable
+side-effect-free query. Profile metadata never enables OSC 52 or another
+output policy. See the matching
+[Rust example](../nagi-rs/crates/nagi-tui/examples/terminal_capabilities/main.rs),
+[Go example](../nagitui-go/examples/terminal-capabilities/main.go), and
+[terminal-session specification](../spec/terminal-session.md)
+
 Rust callers using an exhaustive `TerminalOptions` struct literal must provide
-the `clipboard`, `viewport`, and `cursor_query_timeout` fields. A literal using
-`..TerminalOptions::default()` keeps the disabled clipboard and full-screen
-viewport defaults without further configuration
+the `capability_detection`, `capability_query_timeout`, `clipboard`, `viewport`,
+and `cursor_query_timeout` fields. A literal using
+`..TerminalOptions::default()` keeps capability detection and clipboard output
+disabled, preserves the Indexed 256 encoder baseline, and preserves the
+full-screen viewport without further configuration
 
 Rust uses the `App` trait and an associated `Message` type. Go uses the generic
 `App[Message]` interface. See the matching
@@ -617,6 +642,7 @@ terminal
 | Example | Rust | Go |
 | --- | --- | --- |
 | Counter | `cargo run -p nagi-tui --example counter` | `go run ./examples/counter` |
+| Terminal capabilities | `cargo run -p nagi-tui --example terminal_capabilities` | `go run ./examples/terminal-capabilities` |
 | Command palette | `cargo run -p nagi-tui --example command_palette` | `go run ./examples/command-palette` |
 | Async search | `cargo run -p nagi-tui --example async_search` | `go run ./examples/async-search` |
 | JSON inspector | `cargo run -p nagi-tui-widgets --example json_inspector` | `go run ./examples/json-inspector` |

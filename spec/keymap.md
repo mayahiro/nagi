@@ -31,8 +31,10 @@ the candidate and conflict semantics used by Runtime integrations
 ## Key strokes and bindings
 
 A Key stroke contains one normalized logical key and an exact Shift, Alt,
-Control, and Meta modifier set. Press, repeat, release, associated text, and
-the source protocol are not part of stroke identity
+Control, Meta, Super, and Hyper modifier set. Caps Lock and Num Lock remain
+observable on the source `KeyEvent` but are removed from stroke identity.
+Press, repeat, release, associated text, and the source protocol are not part
+of stroke identity
 
 A key binding combines a stroke with
 
@@ -64,10 +66,12 @@ outside this specification
 
 ### Canonical notation
 
-Key notation uses modifier order `Ctrl`, `Alt`, `Shift`, `Meta`, followed by
-the logical key. Named keys use stable English names such as `Enter`, `Tab`,
-`Left`, `PageUp`, and `F5`. Character Space is `Space`. Other control
-characters use uppercase `U+` notation with at least four hexadecimal digits
+Key notation uses modifier order `Ctrl`, `Alt`, `Shift`, `Meta`, `Super`,
+`Hyper`, followed by the logical key. Named keys use stable English names such
+as `Enter`, `Tab`, `Left`, `PageUp`, and `F5`. Character Space is `Space`.
+Otherwise unmapped protocol functional keys use `Functional(number)`. Other
+control characters use uppercase `U+` notation with at least four hexadecimal
+digits
 
 ## Key-map layers and scopes
 

@@ -16,6 +16,7 @@ owner
 | Responsibility | Owner |
 | --- | --- |
 | Terminal input, resize, waiting, wake-up, and render timing | Nagi terminal runner |
+| Opt-in startup capability observation and keyboard mode lifecycle | Nagi terminal runner |
 | One-shot asynchronous work | Effect |
 | One blocking operation requiring the ordinary terminal | SuspendTerminal Effect and terminal runner |
 | Long-lived external input such as process output | Stream subscription |
@@ -40,6 +41,11 @@ One terminal read may decode several Unicode or key Events. Nagi completes
 routing and every input-derived update for one Event before routing the next,
 so controlled widgets always rebuild from the latest state. Only the resulting
 render is coalesced across that input batch
+
+Opt-in capability detection runs once after the terminal session opens and
+before the initial application view. It does not add a polling source to the UI
+loop. The runner retains unrelated bytes read during the bounded query and
+routes them through the ordinary decoder after setup
 
 If one Event requests terminal suspension, later Events already decoded from
 the same read are discarded. The runner restores the ordinary terminal, runs
@@ -166,6 +172,14 @@ interactive shell and resume after it exits
   `cargo run -p nagi-tui --example terminal_suspend`
 - [Go source](../nagitui-go/examples/terminal-suspend/main.go):
   `go run ./examples/terminal-suspend`
+
+The terminal-capability examples opt into the startup query and show the
+immutable profile supplied to each view
+
+- [Rust source](../nagi-rs/crates/nagi-tui/examples/terminal_capabilities/main.rs):
+  `cargo run -p nagi-tui --example terminal_capabilities`
+- [Go source](../nagitui-go/examples/terminal-capabilities/main.go):
+  `go run ./examples/terminal-capabilities`
 
 The simulated producer uses a timer so the example needs no external process.
 A product adapter should replace only that producer body with its blocking

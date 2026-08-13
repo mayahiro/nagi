@@ -36,6 +36,52 @@ and full-screen or inline viewport lifecycle
 - Resize signals are coalesced into a Boolean pending state. A newly opened
   session reports one initial resize so layout establishes its starting size
 
+## Terminal capability detection
+
+The standard runner keeps capability observation separate from feature
+activation and application output permission. Detection is opt-in and disabled
+by default, preserving the explicit legacy input and configured output
+baseline. When enabled, one immutable capability profile is passed through
+Runtime configuration and every `ViewContext`
+
+Environment hints establish only conservative observations:
+
+- `TERM=dumb` reports monochrome color and unsupported hyperlinks and
+  clipboard integration
+- case-insensitive `truecolor` or `24bit` in `COLORTERM` reports true color
+- `256color` in `TERM` reports indexed 256-color support
+- any other nonempty `TERM` reports the ANSI 16-color baseline
+- a nonempty `NO_COLOR` is retained as a user color preference independently
+  from the detected color level
+- positive hyperlink and clipboard support remain unknown because the standard
+  runner has no portable, side-effect-free OSC 8 or OSC 52 capability query
+
+The detected color level is an upper bound on the caller-configured output
+encoder. Detection may downgrade configured output through true color, indexed
+256, ANSI 16, and monochrome, but never promotes the configured encoder.
+Clipboard output remains disabled unless the Application explicitly selects
+the write-only OSC 52 policy; a capability profile never grants output
+permission
+
+For enhanced keyboard input, the active Unix session sends the Kitty keyboard
+flag query followed by Primary Device Attributes. A Kitty flag response before
+the device-attribute response reports support; a device-attribute response
+without a Kitty response reports unsupported; timeout or EOF before either
+classification reports unknown. Query responses are removed from normal input,
+while unrelated bytes read during detection are retained in their original
+order. Retained input is bounded to 65,536 bytes, and resource exhaustion or an
+I/O failure is a terminal error
+
+When support is reported, the session pushes enhancement flags 27 before
+normal event routing. It pops that stack entry before suspension and final
+restoration, and pushes the same flags again after resume. Main-screen and
+alternate-screen terminal stacks remain terminal-owned; Nagi balances only its
+own push and pop lifecycle
+
+The keyboard query and mode contract follows the
+[Kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/).
+The environment preference follows [NO_COLOR](https://no-color.org/)
+
 ## Inline viewport
 
 An inline viewport integrates a short interactive application with ordinary
