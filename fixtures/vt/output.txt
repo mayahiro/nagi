@@ -1,5 +1,6 @@
 nagi-fixture-v1	vt-output
 movement	capabilities=modern	operations=move-to,4,2;move-relative,-2,3	expected=\x1B[3;5H\x1B[3B\x1B[2D
+cursor-query-next-line	capabilities=baseline	operations=request-cursor-position;next-line	expected=\x1B[6n\x1BE
 erase	capabilities=modern	operations=erase-line,after;erase-line,before;erase-line,all;erase-display,after;erase-display,before;erase-display,all	expected=\x1B[0K\x1B[1K\x1B[2K\x1B[0J\x1B[1J\x1B[2J
 visibility-shape	capabilities=modern	operations=hide-cursor;show-cursor;cursor-shape,steady-bar	expected=\x1B[?25l\x1B[?25h\x1B[6 q
 indexed-style	capabilities=modern	operations=set-style,fg-indexed-7+bg-indexed-4+bold+underline;reset-style	expected=\x1B[0;38;5;7;48;5;4;1;4m\x1B[0m

@@ -43,8 +43,8 @@ render is coalesced across that input batch
 
 If one Event requests terminal suspension, later Events already decoded from
 the same read are discarded. The runner restores the ordinary terminal, runs
-the application-owned task on its driver thread, resumes the full-screen
-session, resets incomplete input, and forces a full redraw
+the application-owned task on its driver thread, resumes the configured
+viewport, resets incomplete decoder state, and forces a full redraw
 
 ## Choose the source by lifetime
 
@@ -123,14 +123,16 @@ application state, combine the Clipboard Effect with `without_redraw` or
 `WithoutRedraw`
 
 `SuspendTerminal` does not start a worker either. It remains pending until the
-terminal driver can safely leave raw mode and the alternate screen. Existing
-workers and Streams continue using their bounded delivery contracts while the
-driver task blocks, but application update and rendering resume only after that
-task returns. The task maps its own process status or domain error to a Message
+terminal driver can safely leave raw mode and its configured viewport. A
+full-screen session leaves the alternate screen; an inline session finalizes
+its current main-screen region. Existing workers and Streams continue using
+their bounded delivery contracts while the driver task blocks, but application
+update and rendering resume only after that task returns. The task maps its own
+process status or domain error to a Message
 
 ## Avoid a second UI loop
 
-Avoid these patterns in a standard full-screen terminal application
+Avoid these patterns in a standard terminal application
 
 - Calling runtime step or render from an application ticker
 - Polling channels with short sleeps when a Stream can block for input

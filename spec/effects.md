@@ -24,13 +24,14 @@ Clipboard reads, raw terminal sequences, redaction policy, and OS-specific
 clipboard commands are not part of this Effect
 
 `SuspendTerminal` retains one blocking task for execution by a Runtime driver.
-The standard full-screen terminal runner restores the original terminal mode
-and leaves its alternate screen before running the task on the driver thread,
-then resumes the full-screen session after it returns. The task selects no
-editor, shell, browser, process, or domain error policy in Nagi; it only receives
-the same cooperative cancellation value as a normal task and returns one
-application Message. A custom Runtime driver MUST provide an equivalent safe
-boundary before calling the public terminal-task execution method
+The standard terminal runner restores the original terminal mode and leaves
+its full-screen alternate screen or finalizes its inline viewport before
+running the task on the driver thread. It resumes the configured viewport
+after the task returns. The task selects no editor, shell, browser, process, or
+domain error policy in Nagi; it only receives the same cooperative cancellation
+value as a normal task and returns one application Message. A custom Runtime
+driver MUST provide an equivalent safe boundary before calling the public
+terminal-task execution method
 
 Terminal tasks run one at a time and do not occupy asynchronous worker slots.
 They remain pending until a driver executes them. `Scoped` cancellation can

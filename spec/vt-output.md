@@ -21,6 +21,13 @@ Absolute positions are zero-based at the API and encoded as one-based CUP
 coordinates. Relative motion emits vertical movement before horizontal
 movement. Erasure uses the standard after, before, and all parameters
 
+An encoder call MAY supply an origin for a bounded terminal viewport. The
+origin is added only to absolute positions, saturating each coordinate at the
+unsigned 32-bit maximum. Relative movement and every other operation remain
+unchanged. Cursor-position requests use DSR `CSI 6 n`. Next-line movement uses
+NEL `ESC E`, moves to column zero, and scrolls when the cursor is at the bottom
+margin
+
 `SetStyle` resets existing SGR state and then emits foreground, background,
 optional underline color, and enabled attributes in canonical order. Baseline
 capabilities reduce RGB values deterministically to the 6 by 6 by 6 indexed

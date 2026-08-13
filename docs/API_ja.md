@@ -63,8 +63,8 @@ Applicationは4個のoperationを実装します
 
 `RuntimeConfig`と`TerminalOptions`はRuntime lifetime全体で使用するNagi Textの`WidthProfile`を1個選択します。Coreのmeasure、wrap、draw、hit geometry、cursor配置は自動的に同じprofileを使います。幅計算を行うWidgetはRustの`width_profile`とGoの`WidthProfile`を提供するため、RuntimeがModern以外を使う場合は`ViewContext`の値を渡します。Custom overrideは同じgraphemeに対してRuntime lifetime中に安定した幅を返す必要があります
 
-Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`clipboard` fieldも指定する必要があります
-`..TerminalOptions::default()`を使うliteralは追加設定なしでdisabled defaultを維持します
+Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`clipboard`、`viewport`、`cursor_query_timeout` fieldも指定する必要があります
+`..TerminalOptions::default()`を使うliteralは追加設定なしでdisabled clipboardとfull-screen viewportの既定値を維持します
 
 Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
 
@@ -72,7 +72,13 @@ Production terminal applicationにおけるprocess output、timer、wake-up、re
 
 Applicationはstate更新後に`Effect::exit()`または`ExitEffect`を返して終了できます。Terminal runnerは復元前に最後のdirty viewを描画します。Goは外部`context.Context` cancellation用の`RunTerminalContext`も提供し、terminal復元後に`ctx.Err()`を返します。Caller contextはEffectとStream contextの親にもなり、value、deadline、cancellation、cancel causeを維持します。手動driveするGo Runtimeでは`NewRuntimeContext`または`NewRuntimeWithClockContext`を使用できます
 
-Applicationは通常terminalを必要とするeditorやinteractive shellなどのblocking operationに`Effect::suspend_terminal`または`SuspendTerminalEffect`を返せます。標準runnerはdriver threadでtaskを実行する前にoriginal terminalを復元してalternate screenを離れ、終了後に設定済みmodeを再開し、sizeを再取得し、suspend前の未完inputを破棄してfull redrawを強制します。Nagiは外部operationの選択や意味付けを行いません
+`TerminalOptions::viewport`と`TerminalOptions.Viewport`の既定値はalternate screenを使うfull-screen sessionです
+`TerminalViewport::inline(height)`と`NewInlineTerminalViewport(height)`は正の高さを持つmain-screen viewportを選択します
+Runnerは高さをclampし、絶対描画座標とmouse座標を変換し、resizeへ追従して、最終frameをterminal historyへ残します
+Cursor positionの取得はcursor query timeoutで上限を持ち、response以外のinputを保持します
+[Rust inline example](../nagi-rs/crates/nagi-tui/examples/inline_terminal/main.rs)と[Go inline example](../nagitui-go/examples/inline-terminal/main.go)を参照してください
+
+Applicationは通常terminalを必要とするeditorやinteractive shellなどのblocking operationに`Effect::suspend_terminal`または`SuspendTerminalEffect`を返せます。標準runnerはdriver threadでtaskを実行する前にoriginal terminalを復元し、alternate screenを離れるか現在のinline viewportを確定します。終了後は設定済みviewportとmodeを再開し、local sizeを再取得し、suspend前の未完decoder stateを破棄してfull redrawを強制します。Nagiは外部operationの選択や意味付けを行いません
 
 Messageを処理しても`view`が参照する内容が変わらない場合、Rustでは`Effect::none().without_redraw()`、Goでは`tui.NoneEffect[Message]().WithoutRedraw()`を返せます。後続Effectの処理とSubscriptionの再調整は継続します。Modifierは`update`が返す最外側のEffectへ適用し、既存のdirty stateと同期UI commandは必要なframeを生成します
 
@@ -256,7 +262,7 @@ Effectはone-shot workを表します
 
 - `Exit`、`Focus`、`ScrollTo`、`SetClipboard`はRuntimeが同期適用するUI commandで、worker threadやgoroutineを起動しない
 - `SetClipboard`はviewのdirty状態と独立して、pendingなsemantic UTF-8 textを最新1件だけ保持する
-- `SuspendTerminal`はfull-screen suspendとresumeの間にApplication所有のblocking taskをterminal driver threadで1個実行する
+- `SuspendTerminal`は設定済みviewportのsuspendとresumeの間にApplication所有のblocking taskをterminal driver threadで1個実行する
 - `Run`は匿名workを開始する
 - `Latest`はkey付きworkを置換してstale resultを抑止する
 - `Cancel`とscope cancelは協調的な終了を要求する

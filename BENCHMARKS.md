@@ -179,7 +179,8 @@ cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui --bench clipboard
 GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkClipboardEncoding(Small|1MiB)$' -benchmem -benchtime=1s -count=3 .
 ```
 
-The root `make bench` command includes both paths
+The Rust bench target also reports the inline viewport encoder described below.
+The root `make bench` command includes all paths
 
 ### Reference results
 
@@ -208,6 +209,43 @@ memory by request count
 These measurements do not establish OSC 52 payload limits. Terminals and
 intermediate multiplexers may enforce their own limits, and direct OSC 52
 remains disabled unless the application opts in
+
+## Inline viewport origin encoding purpose
+
+This benchmark measures the warmed output-encoding work added by an inline
+terminal viewport. A representative two-line frame contains 11 UTF-8 text
+bytes, three absolute cursor positions, and a hidden-cursor park operation. The
+encoder adds a 17-row viewport origin to absolute positions and appends into the
+standard terminal session's already-sized reusable output buffer
+
+The workload excludes Surface diffing, cursor-position discovery, row
+reservation, resize handling, and terminal I/O. It therefore isolates the
+per-frame coordinate translation and VT serialization cost rather than the
+complete frame cost. Rust reports the median of 12 samples with 10,000 calls
+per sample. Go reports the median of three one-second benchmark runs
+
+Run only this path from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-tui --bench clipboard
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagitui-go -run '^$' -bench '^BenchmarkViewportOriginEncoding$' -benchmem -benchtime=1s -count=3 .
+```
+
+The Rust command also reports clipboard encoding because both standalone paths
+share one benchmark binary
+
+### Reference results
+
+Results recorded on 2026-08-13 in the same reference environment
+
+| Implementation | Median time per call | Allocations per call | Allocated bytes per call | Peak additional live bytes | Retained bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | 61 ns | 0 | 0 | 0 | 0 |
+| Go | 71.81 ns | 0 | 0 | not measured | not measured |
+
+The warmed path performs no measured allocation in either implementation.
+Origin translation remains a constant amount of work per absolute cursor
+operation and does not add work per terminal cell
 
 ## CLI inherited-option purpose
 

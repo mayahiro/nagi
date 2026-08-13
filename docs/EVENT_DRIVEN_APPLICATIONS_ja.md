@@ -33,7 +33,7 @@ terminal input --------------------/                         |
 
 1回のterminal readから複数のUnicodeまたはkey Eventがdecodeされる場合があります。Nagiは1個のEventから生じるroutingと全updateを完了してから次のEventをrouteするため、controlled Widgetは常に最新stateから再構築されます。Input batch全体でcoalesceするのは結果のrenderだけです
 
-1個のEventがterminal suspendを要求した場合、同じreadからdecode済みの後続Eventは破棄します。Runnerは通常terminalを復元し、Application所有taskをdriver threadで実行し、full-screen sessionを再開し、未完inputをresetしてfull redrawを強制します
+1個のEventがterminal suspendを要求した場合、同じreadからdecode済みの後続Eventは破棄します。Runnerは通常terminalを復元し、Application所有taskをdriver threadで実行し、設定済みviewportを再開し、未完decoder stateをresetしてfull redrawを強制します
 
 ## Lifetimeに応じたsource選択
 
@@ -91,11 +91,11 @@ Runtimeはpending requestを最新1件だけ保持するため、custom driver�
 標準terminal runnerはdirectかつwrite-onlyのOSC 52を明示的に有効化しない限りrequestを破棄します
 Copy Messageが表示中のapplication stateを変更しない場合はClipboard Effectへ`without_redraw`または`WithoutRedraw`を組み合わせます
 
-`SuspendTerminal`もworkerを起動しません。Terminal driverがraw modeとalternate screenを安全に離れられるまでpendingのまま保持します。既存workerとStreamはdriver taskがblockしている間も上限付きdelivery contractを維持しますが、Application updateとrenderはtask return後に再開します。Task自身がprocess statusまたはdomain errorをMessageへ変換します
+`SuspendTerminal`もworkerを起動しません。Terminal driverがraw modeと設定済みviewportを安全に離れられるまでpendingのまま保持します。Full-screen sessionはalternate screenを離れ、Inline sessionは現在のmain-screen領域を確定します。既存workerとStreamはdriver taskがblockしている間も上限付きdelivery contractを維持しますが、Application updateとrenderはtask return後に再開します。Task自身がprocess statusまたはdomain errorをMessageへ変換します
 
 ## 第2のUI loopを避ける
 
-標準的なfull-screen terminal applicationでは次のpatternを避けます
+標準的なterminal applicationでは次のpatternを避けます
 
 - Application tickerからruntime stepまたはrenderを呼ぶ
 - Streamでinputをblockできる場所を短いsleepでchannel pollingする

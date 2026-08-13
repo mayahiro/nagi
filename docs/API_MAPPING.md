@@ -462,6 +462,10 @@ contract; Rust uses unsigned indices
 | Scroll Effect | `Effect::scroll_to(id, offset)` | `ScrollToEffect[M](id, offset)` |
 | Clipboard Effect | `Effect::set_clipboard(text)` | `SetClipboardEffect[M](text)` |
 | Terminal-suspending Effect | `Effect::suspend_terminal(task)` | `SuspendTerminalEffect[M](task)` |
+| Full-screen terminal viewport | `TerminalViewport::FULLSCREEN` | zero `TerminalViewport` |
+| Inline terminal viewport | `TerminalViewport::inline(height)` | `NewInlineTerminalViewport(height)` |
+| Terminal viewport option | `TerminalOptions::viewport` | `TerminalOptions.Viewport` |
+| Cursor query timeout | `TerminalOptions::cursor_query_timeout` | `TerminalOptions.CursorQueryTimeout` |
 | Clipboard request | `ClipboardRequest` | `ClipboardRequest` |
 | Pending clipboard request | `Runtime::pending_clipboard_request` | `Runtime.PendingClipboardRequest` |
 | Take clipboard request | `Runtime::take_clipboard_request` | `Runtime.TakeClipboardRequest` |
@@ -480,13 +484,15 @@ the ordinary terminal to the task. Width-sensitive widgets receive the Runtime
 profile explicitly from `ViewContext`; Core nodes use it automatically
 
 The standard terminal runners execute each terminal task only after restoring
-the original terminal and leaving the alternate screen. Resume re-enters the
-configured modes, reads size, resets incomplete input, invalidates the diff
-baseline, and redraws. Manual Runtime drivers own the equivalent boundary
+the original terminal and leaving the alternate screen or finalizing an inline
+viewport. Resume re-enters the configured viewport and modes, reads local size,
+resets incomplete decoder state, invalidates the diff baseline, and redraws.
+Manual Runtime drivers own the equivalent boundary
 
 The allocation-sensitive VT append APIs are `nagi_vt::append_encoded` and
-`vt.AppendEncoded`. They append exactly the bytes produced by `encode` and
-`Encode` into caller-owned buffers
+`vt.AppendEncoded`. The origin-aware forms are `nagi_vt::append_encoded_at` and
+`vt.AppendEncodedAt`. They append exactly the bytes produced by the matching
+fresh-buffer encoder into caller-owned buffers
 
 The typed write-only clipboard operation is `TerminalOp::SetClipboard` in Rust
 and `vt.SetClipboard` in Go. Both encode normalized UTF-8 text as direct OSC 52;

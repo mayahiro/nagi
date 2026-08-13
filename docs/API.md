@@ -82,8 +82,9 @@ cursor placement use it automatically. Width-sensitive widgets expose
 return a stable width for the same grapheme throughout the Runtime lifetime
 
 Rust callers using an exhaustive `TerminalOptions` struct literal must provide
-the `clipboard` field. A literal using `..TerminalOptions::default()` keeps the
-disabled default without further configuration
+the `clipboard`, `viewport`, and `cursor_query_timeout` fields. A literal using
+`..TerminalOptions::default()` keeps the disabled clipboard and full-screen
+viewport defaults without further configuration
 
 Rust uses the `App` trait and an associated `Message` type. Go uses the generic
 `App[Message]` interface. See the matching
@@ -103,13 +104,24 @@ is also the parent of Effect and Stream contexts, preserving its values,
 deadline, cancellation, and cancellation cause. Manually driven Go runtimes can
 use `NewRuntimeContext` or `NewRuntimeWithClockContext` for the same behavior
 
+`TerminalOptions::viewport` and `TerminalOptions.Viewport` default to a
+full-screen alternate-screen session. `TerminalViewport::inline(height)` and
+`NewInlineTerminalViewport(height)` select a positive-height main-screen
+viewport. The runner clamps its height, translates absolute rendering and
+mouse coordinates, follows resize, and leaves the final frame in terminal
+history. Cursor-position discovery is bounded by the cursor-query timeout and
+preserves non-response input. See the matching
+[Rust inline example](../nagi-rs/crates/nagi-tui/examples/inline_terminal/main.rs)
+and [Go inline example](../nagitui-go/examples/inline-terminal/main.go)
+
 An application can return `Effect::suspend_terminal` or
 `SuspendTerminalEffect` for one blocking, application-owned operation that
 needs the ordinary terminal, such as an editor or interactive shell. The
-standard runner restores the original terminal and leaves the alternate screen
-before running the task on its driver thread. It then resumes configured modes,
-re-reads size, discards incomplete pre-suspension input, and forces a full
-redraw. Nagi does not select or interpret the external operation
+standard runner restores the original terminal, leaving the alternate screen
+or finalizing the current inline viewport before running the task on its driver
+thread. It then resumes the configured viewport and modes, re-reads local size,
+discards incomplete pre-suspension decoder state, and forces a full redraw.
+Nagi does not select or interpret the external operation
 
 When an update handles a Message without changing anything read by `view`, it
 can return `Effect::none().without_redraw()` in Rust or
@@ -450,7 +462,7 @@ Effects represent one-shot work
 - `SetClipboard` retains at most the latest pending semantic UTF-8 text,
   independently of view dirtiness
 - `SuspendTerminal` runs one application-owned blocking task on the terminal
-  driver thread between full-screen suspend and resume boundaries
+  driver thread between configured-viewport suspend and resume boundaries
 - `Run` starts anonymous work
 - `Latest` replaces keyed work and suppresses stale results
 - `Cancel` and scoped cancellation request cooperative termination
