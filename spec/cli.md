@@ -500,9 +500,36 @@ usage: USAGE
 ```
 
 One `hint:` line is rendered for each hint in insertion order. Hint lines and
-the usage line are omitted when unavailable. C0 controls, DEL, and invalid
-UTF-8 bytes originating in user input MUST render as uppercase `\xHH` escapes
-so a diagnostic cannot inject terminal controls.
+the usage line are omitted when unavailable. An explicitly present empty usage
+remains present. C0 controls, DEL, and invalid UTF-8 bytes originating in user
+input MUST render as uppercase `\xHH` escapes so a diagnostic cannot inject
+terminal controls.
+
+The JSON Diagnostic Renderer implements the same Runtime Policy boundary. It
+MUST emit one compact [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259.html)
+UTF-8 object and one final LF for each Diagnostic, without a byte-order mark.
+Multiple rendered Diagnostics therefore form a newline-delimited JSON stream.
+The schema identifier is `nagi.cli.diagnostic.v1`.
+
+The complete object shape and textual member order are:
+
+```json
+{"schema":"nagi.cli.diagnostic.v1","code":"CODE","category":"CATEGORY","message":"MESSAGE","command_path":[],"usage":null,"targets":[],"hints":[]}
+```
+
+`command_path`, `targets`, and `hints` MUST always be arrays, including when
+empty. A target object has `kind`, `command_id_path`, and `value_id` members in
+that order. Target and hint arrays preserve insertion order. `usage` is `null`
+when absent and a JSON string when present, including an explicitly present
+empty string. The renderer MUST NOT add an exit status, timestamp, severity,
+locale, or application-specific metadata.
+
+Quotation mark, reverse solidus, and U+0000 through U+001F MUST be escaped.
+The five predefined control escapes use `\b`, `\t`, `\n`, `\f`, and `\r`;
+other C0 controls use lowercase `\u00hh`. All other Unicode scalar values are
+emitted directly as UTF-8, including `/`, `<`, `>`, `&`, U+2028, and U+2029.
+Language-native strings that can contain invalid UTF-8 normalize each
+contiguous invalid run to one U+FFFD before JSON escaping.
 
 ## Help and version
 

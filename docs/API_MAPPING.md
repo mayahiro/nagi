@@ -560,6 +560,9 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
 | Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
 | Diagnostic meaning | `DiagnosticCategory` | `cli.DiagnosticCategory` |
+| Stable JSON Diagnostic renderer | `JsonDiagnosticRenderer` | `cli.JSONDiagnosticRenderer` |
+| JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
+| Optional usage presence | `Diagnostic::usage` | `Diagnostic.UsageValue` |
 | Runtime compatibility | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
 | Execute a Parse Result | `Command::run_parsed_with_policy` | `Command.RunParsedWithPolicy` |
 | Execute an Invocation | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |

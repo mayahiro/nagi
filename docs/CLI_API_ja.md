@@ -328,6 +328,20 @@ Plain rendererは任意usageの前にhintごとの`hint:`行を出力します
 
 Custom Diagnostic Rendererは完全なstructured Diagnosticを受け取ります
 
+`JsonDiagnosticRenderer`とGoの`JSONDiagnosticRenderer`はCI、GUI、process統合向けにstableなcompact newline-delimited JSONを出力します
+
+各recordはschema `nagi.cli.diagnostic.v1`と、固定された`code`、`category`、`message`、`command_path`、nullableな`usage`、順序付き`targets`、順序付き`hints` memberを持ちます
+
+Rendererはprocess status、timestamp、severity、Application metadataを追加しません
+
+RFC 8259のstring escapeに従い、byte-order markなしのUTF-8と最後のnewlineを出力します
+
+Goの`Diagnostic.UsageValue`はusageなしと明示的な空文字列を区別します
+
+既存の`Usage` accessorも維持します
+
+PureなRuntime Policy renderingは[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic/README.md)と[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/README.md)を参照してください
+
 ## Runtime
 
 Handlerは注入されたstdin、stdout、stderr、environment、current directory、協調的cancellationへmutable accessし、OutcomeまたはDiagnosticを返します
@@ -389,7 +403,7 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
 
 ## 制約
 

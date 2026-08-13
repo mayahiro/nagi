@@ -342,6 +342,49 @@ implementation. Short-run elapsed values vary, while the stable property is
 that resolution does not scan or allocate for candidates from unrelated
 branches. Rust releases every result with zero retained bytes
 
+## CLI JSON Diagnostic purpose
+
+This benchmark measures stable compact JSON rendering from one immutable
+Diagnostic. It excludes parsing, validation, Runtime routing, process I/O, and
+consumer-side JSON parsing
+
+Two inputs are measured
+
+- The structured record has a code, category, message, two command-path
+  elements, usage, two targets, and two hints
+- The large record has a 65,536-byte ASCII message and no optional metadata
+
+Each call returns a newly owned string because `DiagnosticRenderer` hands the
+complete record to the caller. Diagnostic construction occurs before
+measurement. Rust reports the median of 12 groups of 1,000 renders with a
+benchmark-only allocation counter. Go reports the median of three reports over
+100 renders with standard `testing` allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench diagnostic_json
+GOWORK=off GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkJSONDiagnosticRenderer$' -benchmem -benchtime=100x -count=3 .
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-13 in the same reference environment
+
+| Implementation | Input | Median time per render | Allocations per render | Allocated bytes per render |
+| --- | --- | ---: | ---: | ---: |
+| Rust | Structured record | 286 ns | 1 | 500 |
+| Rust | 65,536-byte message | 42,288 ns | 1 | 65,740 |
+| Go | Structured record | 562.5 ns | 1 | 512 |
+| Go | 65,536-byte message | 89,330 ns | 1 | 73,728 |
+
+All four paths allocate only the returned record buffer. Escaping scans input
+bytes once and copies unescaped UTF-8 runs directly. CPU and output memory are
+linear in the total Diagnostic string bytes; JSON escaping can expand C0,
+quotation-mark, and reverse-solidus input
+
 ## CLI Prompt purpose
 
 This benchmark measures the CPU and transient allocation of one Prompt request
@@ -900,6 +943,14 @@ ordered visible or secret input modes. Unix backend tests cover bounded line
 draining, cancellation while waiting without input, complete terminal-state
 restoration after Secret success, and restoration during stack unwinding. Go
 also injects a restoration failure and verifies that it is returned
+
+JSON Diagnostic tests share exact minimal, complete, and escaping records
+across Rust and Go. They cover the schema and member order, null and explicitly
+empty usage, ordered targets and hints, every predefined JSON control escape,
+lowercase Unicode control escapes, direct UTF-8, non-escaped HTML characters,
+and one final newline. Runtime tests verify that selecting JSON changes only
+rendering and preserves category-to-status mapping. Go additionally validates
+records with the standard JSON parser and verifies invalid UTF-8 normalization
 
 Status Reporter tests share terminal and non-terminal transcripts for status,
 spinner, progress, truncation, permanent log repainting, coalescing, finish,

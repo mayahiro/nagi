@@ -534,6 +534,9 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
 | Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
 | Diagnosticの意味 | `DiagnosticCategory` | `cli.DiagnosticCategory` |
+| Stable JSON Diagnostic renderer | `JsonDiagnosticRenderer` | `cli.JSONDiagnosticRenderer` |
+| JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
+| 任意usageのpresence | `Diagnostic::usage` | `Diagnostic.UsageValue` |
 | Runtime互換性 | `RuntimePolicy` / `ExitCodePolicy` | `cli.RuntimePolicy` / `cli.ExitCodePolicy` |
 | Parse Result実行 | `Command::run_parsed_with_policy` | `Command.RunParsedWithPolicy` |
 | Invocation実行 | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |

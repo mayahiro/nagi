@@ -315,6 +315,20 @@ selected scope
 The plain renderer writes one `hint:` line per hint before optional usage.
 Custom Diagnostic Renderers receive the complete structured Diagnostic
 
+`JsonDiagnosticRenderer` and Go `JSONDiagnosticRenderer` emit stable compact
+newline-delimited JSON for CI, GUI, and process integrations. Every record has
+schema `nagi.cli.diagnostic.v1` and fixed `code`, `category`, `message`,
+`command_path`, nullable `usage`, ordered `targets`, and ordered `hints`
+members. The renderer does not add process status, timestamps, severity, or
+application metadata. It follows RFC 8259 string escaping, emits UTF-8 without
+a byte-order mark, and writes one final newline
+
+Go `Diagnostic.UsageValue` distinguishes absent usage from an explicitly
+present empty string. The existing `Usage` accessor remains available. See the
+[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic/README.md)
+and [Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/README.md)
+for pure Runtime Policy rendering
+
 ## Runtime
 
 A Handler receives mutable access to injected stdin, stdout, stderr,
@@ -379,12 +393,14 @@ handler
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
+[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
 [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
 [Go basic example](../nagicli-go/examples/basic/main.go),
 [Go subcommand example](../nagicli-go/examples/subcommands/main.go),
 [Go staged-adoption example](../nagicli-go/examples/staged/main.go),
+[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go),
 [Go completion example](../nagicli-go/examples/completion/main.go),
 [Go Prompt example](../nagicli-go/examples/prompt/main.go), and
 [Go Status example](../nagicli-go/examples/status/main.go) as complete
