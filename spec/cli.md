@@ -708,18 +708,57 @@ Pairwise option-relation metadata retains requires or conflicts behavior,
 source and target stable IDs, display labels, and the presence basis.
 
 Help sections appear in this order when non-empty: description, Usage,
-Commands, Arguments, Options, Constraints, Examples, Notes, Links, then custom
-sections in definition order. Constraints list pairwise relations in option
-definition order followed by option groups in definition order. Entries
-preserve definition order. Labels are aligned by Nagi Text Modern terminal-cell
-width. Help always lists its built-in option; version is listed only when
-configured at the root. Root help lists the built-in `help` command when
-application subcommands exist.
+Commands, Arguments, Options, Inherited Options, Constraints, Examples, Notes,
+Links, then custom sections in definition order. Constraints list pairwise
+relations in option definition order followed by option groups in definition
+order. Entries preserve definition order. Labels are aligned by Nagi Text
+Modern terminal-cell width. Help always lists its built-in option; version is
+listed only when configured at the root. Root help lists the built-in `help`
+command when application subcommands exist.
 
 The default renderer is deterministic. Applications MAY provide another Help
 renderer without changing the Help Document. Raw or application-specific Help
 content belongs in an explicit custom section rather than changing parser
 semantics.
+
+An implementation MUST expose a synchronous whole-graph Help traversal. It
+validates the graph once, visits the root first, then visits visible descendants
+in definition-order preorder. A Hidden command and its complete subtree are
+omitted. The visitor receives one complete Help Document at a time and MAY stop
+successfully after any document. Traversal MUST NOT execute a command handler,
+Invocation validator, or Completion Provider. The Command Graph MUST NOT be
+mutated during traversal. A language-native null visitor is an invalid
+specification.
+
+Markdown and man page generation are optional pure renderers over one Help
+Document. They do not own filenames, output directories, filesystem I/O,
+timestamps, or shell completion. Both formats use the same section and entry
+order as standard Help, preserve definition order within custom blocks, and
+end with exactly one LF.
+
+The Markdown renderer targets
+[CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/). It emits a level-one
+command-path heading, level-two Help sections, four-space indented Usage and
+example code blocks, and Markdown links. Application-supplied text is plain
+text rather than Markdown source. ASCII punctuation is backslash-escaped in
+text contexts. The first application-supplied ASCII space on a text line is
+emitted as a numeric character reference so four leading spaces cannot create
+an unintended code block. Link destinations percent-encode whitespace,
+controls, `<`, `>`, and reverse solidus.
+
+The man renderer emits section 1 source using the portable `man` macro subset
+described by [groff_man(7)](https://man7.org/linux/man-pages/man7/groff_man.7.html).
+It emits a deterministic `.TH` without a date, conventional `NAME` and
+`SYNOPSIS` sections, `.SH` section headings, `.TP` entries, `.PP` paragraphs,
+and `.nf`/`.fi` literal command lines. Application text never becomes a roff
+request: a text line beginning with `.` or `'` is prefixed by `\&`, reverse
+solidus is emitted as `\e`, and hyphen is emitted as `\-`.
+
+Both optional renderers normalize CRLF and CR to LF, replace other Unicode
+control values with U+FFFD, and replace each invalid UTF-8 run with U+FFFD in a
+language-native string that can contain invalid UTF-8. A line break used in an
+inline-only position is represented by U+FFFD. The shared derived-document
+golden files define exact escaping and whitespace.
 
 Help and version are written to stdout with one final newline. Diagnostics are
 written to stderr.

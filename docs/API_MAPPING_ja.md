@@ -18,6 +18,7 @@ Nagiは外部から観測できるContent、TUI、CLIの挙動を揃えながら
 | Runtime test harness | `nagi-tui-test` | `github.com/mayahiro/nagitui-go/tuitest` |
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
 | CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| CLI Help派生document | `nagi-cli-document` | `github.com/mayahiro/nagicli-go/document` |
 | CLI軽量prompt | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | CLI TTY-aware status | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
@@ -538,9 +539,12 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
 | Structured継承Help option | `HelpInheritedOption` | `cli.HelpInheritedOption` |
 | Structured Help | `HelpDocument` | `cli.HelpDocument` |
+| Visible Help traversal | `Command::visit_help_documents` | `Command.VisitHelpDocuments` |
 | Help lifecycle metadata | `HelpDocument::deprecation` / `HelpEntry::deprecation` / `HelpInheritedOption::deprecation` | `HelpDocument.Deprecation` / `HelpEntry.Deprecation` / `HelpInheritedOption.Deprecation` |
 | Help valueのsensitivity | `HelpEntry::is_sensitive` / `HelpInheritedOption::is_sensitive` | `HelpEntry.IsSensitive` / `HelpInheritedOption.IsSensitive` |
 | Help rendering | `HelpRenderer` | `cli.HelpRenderer` |
+| Markdown Help rendering | `nagi_cli_document::MarkdownRenderer` | `document.MarkdownRenderer` |
+| Man Help rendering | `nagi_cli_document::ManRenderer` | `document.ManRenderer` |
 | Runtime service | `Context` | `cli.Context` |
 | Handler result | `Outcome` | `cli.Outcome` |
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |

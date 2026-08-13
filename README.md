@@ -54,7 +54,8 @@ Nagi CLI provides native Rust and Go Command Graphs, local and inherited
 options, generic Hidden, Deprecated, and Sensitive metadata, command-local
 typed value scopes, portable option groups and
 validators, structured deterministic Help with controllable Help-only Usage
-Variants, targeted semantic Diagnostics with stable JSON rendering, staged
+Variants, optional deterministic Markdown and man rendering, targeted semantic
+Diagnostics with stable JSON rendering, staged
 runtime policies, cooperative
 SIGINT cancellation, immutable handler-free completion engines, Bash, Zsh,
 Fish, and PowerShell generators, optional line-oriented prompts, process-free

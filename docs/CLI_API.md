@@ -19,6 +19,7 @@ preservation
 | --- | --- | --- |
 | Command graph, parser, and runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` package `cli` |
 | Shell completion generation and protocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| Markdown and man Help rendering | `nagi-cli-document` | `github.com/mayahiro/nagicli-go/document` |
 | Lightweight interactive prompts | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | TTY-aware status reporting | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | Process-free application tests | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
@@ -389,9 +390,40 @@ The default plain renderer preserves definition order and aligns labels by
 terminal Cell width. Applications can install a custom Help Renderer through
 the Runtime Policy without replacing parsing or validation
 
+`Command::visit_help_documents` and `Command.VisitHelpDocuments` validate the
+graph once and synchronously visit the root followed by visible descendants in
+definition-order preorder. Hidden command subtrees are omitted. Returning
+`false` stops successfully. The visitor receives one document at a time, so an
+application can write a large documentation set without retaining every page
+in memory. Do not mutate the Command Graph from the callback
+
 In addition to `-h` and `--help`, roots with subcommands provide
 `help [COMMAND...]`. Nested aliases are accepted and the selected command is
 reported by its canonical path
+
+## Derived Help documents
+
+The optional Rust `nagi-cli-document` crate and Go `document` package provide
+`MarkdownRenderer` and `ManRenderer`. Both implement the existing Help
+Renderer interface and also expose a direct `render` or `Render` method. They
+are pure adapters over one Help Document and perform no filesystem I/O. The
+application owns filenames, directories, page separation, and output routing
+
+Markdown output targets CommonMark 0.31.2. Usage and example invocations use
+indented code blocks. Application strings are escaped as plain text, and
+unsafe link-destination characters are percent-encoded. Man output uses a
+deterministic section 1 `.TH` plus conventional `NAME`, `SYNOPSIS`, `.SH`,
+`.TP`, `.PP`, `.nf`, and `.fi` structure. Roff request starts, reverse solidus,
+and hyphen in application text are escaped. Neither format contains the
+current date or invokes handlers, validators, Completion Providers, or shell
+completion generation
+
+Both renderers normalize line endings and controls, produce valid UTF-8, and
+end with exactly one LF. Hidden declarations, Deprecated hints, inherited
+origins, and Sensitive redaction come from the same structured Help Document
+as terminal Help. See the
+[Rust derived-document example](../nagi-rs/crates/nagi-cli-document/examples/documentation/README.md)
+and [Go derived-document example](../nagicli-go/examples/documentation/README.md)
 
 ## Structured Diagnostics
 

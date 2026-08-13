@@ -16,6 +16,7 @@ Nagi CLIは外部から観測できるcommand semanticsを揃えたnative Rust A
 | --- | --- | --- |
 | Command Graph、parser、runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go`の`cli` package |
 | Shell completion生成とprotocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| MarkdownとmanのHelp rendering | `nagi-cli-document` | `github.com/mayahiro/nagicli-go/document` |
 | 軽量interactive prompt | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
 | TTY-aware status report | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | Processなしのapplication test | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
@@ -403,9 +404,43 @@ Usage Variantはargv parsing、typed validation、Diagnostic usage、Invocation�
 
 Applicationはparsingやvalidationを置き換えずにRuntime Policyから独自Help Rendererを設定できます
 
+`Command::visit_help_documents`と`Command.VisitHelpDocuments`はgraphを一度だけ検証し、root、visible descendantの定義順preorderで同期的に訪問します
+
+Hidden commandのsubtreeは省略され、callbackがfalseを返すと成功として停止します
+
+Visitorは一度に一つのdocumentだけを受け取るため、Applicationは全pageをmemoryへ保持せず大規模なdocumentation setを書き出せます
+
+CallbackからCommand Graphを変更しないでください
+
 Rootにsubcommandがある場合は`-h`と`--help`に加えて`help [COMMAND...]`を提供します
 
 Nested aliasを受理し、選択結果はcanonical pathで表します
+
+## Help派生document
+
+任意のRust `nagi-cli-document` crateとGo `document` packageは`MarkdownRenderer`と`ManRenderer`を提供します
+
+どちらも既存Help Renderer interfaceを実装し、直接の`render`または`Render` methodも公開します
+
+一つのHelp Documentに対するpure adapterであり、filesystem I/Oを行いません
+
+Filename、directory、page separator、output routingはApplicationが所有します
+
+Markdown outputはCommonMark 0.31.2を対象とし、Usageとexample invocationをindent code blockで出力します
+
+Application stringはplain textとしてescapeし、安全でないlink destination文字をpercent encodeします
+
+Man outputは決定的なsection 1の`.TH`と、慣例的な`NAME`、`SYNOPSIS`、`.SH`、`.TP`、`.PP`、`.nf`、`.fi`構造を使用します
+
+Application text内のroff request開始文字、reverse solidus、hyphenはescapeされます
+
+どちらも現在日時を含めず、handler、validator、Completion Provider、shell completion生成を実行しません
+
+両rendererは改行とcontrolを正規化し、valid UTF-8と最後のLFを一つ生成します
+
+Hidden declaration、Deprecated hint、継承元、Sensitive redactionはterminal Helpと同じstructured Help Documentから得ます
+
+[Rust Help派生document example](../nagi-rs/crates/nagi-cli-document/examples/documentation/README.md)と[Go Help派生document example](../nagicli-go/examples/documentation/README.md)を参照してください
 
 ## Structured Diagnostic
 

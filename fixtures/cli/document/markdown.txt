@@ -1,0 +1,62 @@
+# qed run
+
+Run \*one\* task
+\.SH ATTACK
+
+**Deprecated:** use execute
+
+## Usage
+
+    qed run [OPTIONS] <TARGET>
+
+    qed run [OPTIONS] <COMMAND>
+
+## Commands
+
+- **inspect**: Inspect result
+
+## Arguments
+
+- **\<TARGET\>**: Target \<name\>
+
+## Options
+
+- **    \-\-profile \<VALUE\>**: Profile \`name\` \[default\: prod\] [deprecated: use context]
+- **    \-\-force**: Force \- carefully
+- **    \-\-json**: JSON output
+- **    \-\-yaml**: YAML output
+- **\-h\, \-\-help**: Print help
+- **\-V\, \-\-version**: Print version
+
+## Inherited Options
+
+- **    \-\-config \<VALUE\>**: Configuration \[path\] \[default\: \<redacted\>\] \[from qed\]
+
+## Constraints
+
+- **\-\-force**: requires \-\-profile \[command line\]
+- **format**: at most one of \-\-json\, \-\-yaml \[command line\]
+
+## Examples
+
+### Run \`once\`
+
+    qed run --profile dev target
+
+## Notes
+
+\'quoted
+\.danger
+&#32;   indented
+Use \# carefully
+
+## Links
+
+- [Guide \[stable\]](<https://example.test/a%20path?q=(x)%3Cunsafe%3E>)
+
+## More \*details\*
+
+Backslash \\ and \- dash
+\'quoted
+
+- **\.macro**: Value \| table
