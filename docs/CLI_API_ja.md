@@ -17,6 +17,7 @@ Nagi CLIは外部から観測できるcommand semanticsを揃えたnative Rust A
 | Command Graph、parser、runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go`の`cli` package |
 | Shell completion生成とprotocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | 軽量interactive prompt | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
+| TTY-aware status report | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | Processなしのapplication test | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label幅 | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -229,6 +230,40 @@ Credential管理、validation、authorization、approval policy、portable input
 
 完全なhandler統合は[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt/README.md)と[Go Prompt example](../nagicli-go/examples/prompt/README.md)を参照してください
 
+## TTY-aware status report
+
+Status reportもCLI Core外の任意layerです
+
+Rustの`nagi-cli-status` crateとGoの`status` packageはApplication所有のStatus、Spinner、Progress Snapshotを標準errorへ投影し、task、timer、cancellation source、Application上の意味を所有しません
+
+`Reporter`は同期的です
+
+Applicationはstate変更時に`update`または`Update`を呼び、同じstreamを使う他のwriterとReporterを直列化します
+
+安定したASCII spinner frameによりterminal fontの幅差を避け、determinate progressはtotalでclampしinteger overflowなしで完了Cellを計算します
+
+注入可能な`StatusIo`または`status.IO`境界はterminal接続と任意の現在列数を返します
+
+Terminalでは1本のtransient lineを消去して再描画し、同じ描画結果をcoalesceし、autowrap回避のため最終Cellを予約し、Nagi Textの設定済みModern、CJK、custom幅profileを使用します
+
+幅を取得できない場合は80列を使用します
+
+出力がredirectされるとterminal controlとspinner frameを出力しません
+
+StatusとSpinnerはplain message record、Progressはclamp済み`current/total` recordになります
+
+Tickだけが異なるSpinnerを含む同一recordはcoalesceされ、`finish`または`Finish`は最終stateをcommitしてcoalescingをresetし、`clear`または`Clear`はredirect済みoutputを消去しません
+
+MessageはUnicode control characterを含まないvalid UTF-8で、既定上限は65,536 byteです
+
+`log`または`Log`はactiveなtransient statusを維持しながらpermanent lineを出力します
+
+Reporterが保持するrendering bufferには上限があり、periodic wake-upを行いません
+
+Cancellation、更新頻度、progressの意味、Diagnosticとの調整は引き続きApplicationが所有します
+
+完全なprocess-backed usageは[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status/README.md)と[Go Status example](../nagicli-go/examples/status/README.md)を参照してください
+
 ## Structured Help
 
 `Command::help_document`と`Command.HelpDocument`はrendererに依存しないHelp Documentを返します
@@ -354,13 +389,17 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
 
 ## 制約
 
 Coreは設定file読み込み、interactive prompt、TUI統合を行いません
 
 Interactive terminal I/Oは任意のPrompt packageまたはcrateに留まります
+
+Transient status outputは任意のStatus packageまたはcrateに留まります
+
+Status Reporter自身はcancellationを確認しません
 
 Shell固有の生成とprotocol I/Oは任意のcompletion packageまたはcrateに留まります
 

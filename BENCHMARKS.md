@@ -388,6 +388,49 @@ language-native string owned by the application. The portable limit keeps this
 transient work bounded. Ordinary Confirm processing is below one microsecond in
 both implementations on the reference machine, before terminal I/O
 
+## CLI Status Reporter purpose
+
+This benchmark measures one warmed synchronous update through injected status
+I/O. It excludes terminal syscalls, terminal-width discovery, application work,
+timers, tasks, cancellation, and output-device latency
+
+Two paths are measured
+
+- The terminal path renders one changed spinner frame at a known 80-Cell width
+- The non-terminal path receives an unchanged status record and suppresses its
+  duplicate newline log
+
+Snapshot definitions and retained rendering buffers are warmed before
+measurement. Rust reports the median of 12 groups of 10,000 updates with a
+benchmark-only allocation counter. Go reports the median of three one-second
+benchmark runs with standard `testing` allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli-status --bench status
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkStatus(TerminalUpdate|LogCoalesced)$' -benchmem -benchtime=10000x -count=3 ./status
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-13 in the same reference environment
+
+| Implementation | Path | Median time per update | Allocations per update | Allocated bytes per update |
+| --- | --- | ---: | ---: | ---: |
+| Rust | Changed terminal spinner | 20 ns | 0 | 0 |
+| Rust | Coalesced non-terminal status | 17 ns | 0 | 0 |
+| Go | Changed terminal spinner | 38.13 ns | 0 | 0 |
+| Go | Coalesced non-terminal status | 24.52 ns | 0 | 0 |
+
+Both warmed paths perform no measured allocation. Long-run regression tests
+also verify that repeated terminal updates and coalesced fallback records do
+not increase the retained rendering-buffer capacities after warm-up. The
+terminal benchmark uses a fixed injected width, so these values characterize
+formatting and coalescing rather than operating-system terminal queries or I/O
+
 ## Pointer text-hit purpose
 
 This benchmark isolates one warmed geometry-aware pointer Move routed to a
@@ -857,6 +900,14 @@ ordered visible or secret input modes. Unix backend tests cover bounded line
 draining, cancellation while waiting without input, complete terminal-state
 restoration after Secret success, and restoration during stack unwinding. Go
 also injects a restoration failure and verifies that it is returned
+
+Status Reporter tests share terminal and non-terminal transcripts for status,
+spinner, progress, truncation, permanent log repainting, coalescing, finish,
+clear, empty messages, maximum counters, and progress clamping. Both
+implementations verify zero allocation on warmed common paths and stable
+retained buffer capacity over long runs. Process-backend tests additionally
+cover cached terminal classification and live width changes; Rust exercises a
+real pseudo-terminal and Go uses an injected system-call boundary
 
 SelectableText pointer fixtures share left press, Shift extension, capture
 across controlled view rebuilds, release, disabled and non-left pass-through,

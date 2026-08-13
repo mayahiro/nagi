@@ -22,6 +22,7 @@ for complete method signatures
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
 | CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | CLI lightweight prompts | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
+| CLI TTY-aware status | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 The Rust `nagi-tui` facade and Go `tui` package re-export the canonical
@@ -583,6 +584,19 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Prompt terminal policy | `TerminalPolicy` | `prompt.TerminalPolicy` |
 | Prompt resource limits | `Limits` | `prompt.Limits` |
 | Prompt failure | `PromptError` / `PromptErrorKind` | `prompt.Error` / `prompt.ErrorKind` |
+| Status reporter | `Reporter` | `status.Reporter` |
+| Status construction | `Reporter::new` | `status.New` |
+| Status snapshot | `Snapshot` / `SnapshotKind` | `status.Snapshot` / `status.SnapshotKind` |
+| Plain status | `Snapshot::status` | `status.NewStatus` |
+| Application-driven spinner | `Snapshot::spinner` | `status.NewSpinner` |
+| Spinner frame count | `SPINNER_FRAME_COUNT` | `status.SpinnerFrameCount` |
+| Determinate progress | `Snapshot::progress` | `status.NewProgress` |
+| Update and final commit | `Reporter::update` / `finish` | `Reporter.Update` / `Finish` |
+| Clear and permanent log | `Reporter::clear` / `log` | `Reporter.Clear` / `Log` |
+| Injected status I/O | `StatusIo` | `status.IO` |
+| Unix process status I/O | `ProcessIo::default` | `status.NewProcessIO` / `NewProcess` |
+| Status options | `Options` | `status.Options` |
+| Status failure | `StatusError` / `StatusErrorKind` | `status.Error` / `status.ErrorKind` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rust stores raw platform values as `OsString` and typed parser results behind
@@ -604,6 +618,13 @@ return the same Line, End Of File, Input Too Long, or Canceled outcome. Rust
 `Limits::default` and Go's zero `prompt.Limits` select the portable limits.
 Secret values are ordinary `String` or `string` values in both implementations
 and are not memory-zeroized by Prompt
+
+Both Status implementations are synchronous and application-driven. Rust
+`Options::default` and Go's zero `status.Options` select the portable limits
+and Modern width profile. Both coalesce final rendered terminal lines or plain
+fallback records, retain bounded scratch buffers, and leave cancellation and
+update timing to the application. Rust Snapshot messages borrow valid `str`;
+Go validates string UTF-8 before output
 
 These representation differences do not change parsing, structured Help, or
 Diagnostic semantics. Each implementation applies the same default Runtime

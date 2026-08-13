@@ -19,6 +19,7 @@ Nagiは外部から観測できるContent、TUI、CLIの挙動を揃えながら
 | CLI command runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` |
 | CLI shell completion | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | CLI軽量prompt | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
+| CLI TTY-aware status | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | CLI test driver | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 
 Rustの`nagi-tui` facadeとGoの`tui` packageはapplication向けAPIでcanonicalなGeometry型とStyle型を再公開します
@@ -557,6 +558,19 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Prompt terminal policy | `TerminalPolicy` | `prompt.TerminalPolicy` |
 | Prompt resource上限 | `Limits` | `prompt.Limits` |
 | Prompt failure | `PromptError` / `PromptErrorKind` | `prompt.Error` / `prompt.ErrorKind` |
+| Status reporter | `Reporter` | `status.Reporter` |
+| Status構築 | `Reporter::new` | `status.New` |
+| Status snapshot | `Snapshot` / `SnapshotKind` | `status.Snapshot` / `status.SnapshotKind` |
+| Plain status | `Snapshot::status` | `status.NewStatus` |
+| Application駆動spinner | `Snapshot::spinner` | `status.NewSpinner` |
+| Spinner frame数 | `SPINNER_FRAME_COUNT` | `status.SpinnerFrameCount` |
+| Determinate progress | `Snapshot::progress` | `status.NewProgress` |
+| 更新と最終commit | `Reporter::update` / `finish` | `Reporter.Update` / `Finish` |
+| Clearとpermanent log | `Reporter::clear` / `log` | `Reporter.Clear` / `Log` |
+| 注入可能なstatus I/O | `StatusIo` | `status.IO` |
+| Unix process status I/O | `ProcessIo::default` | `status.NewProcessIO` / `NewProcess` |
+| Status option | `Options` | `status.Options` |
+| Status failure | `StatusError` / `StatusErrorKind` | `status.Error` / `status.ErrorKind` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 
 Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
@@ -580,6 +594,14 @@ Rustはclosedな`ReadResult` enum、Goは`ReadResult`と`ReadResultKind`を使�
 Rustの`Limits::default`とGoのzero `prompt.Limits`はportableな既定上限を選択します
 
 Secret valueは両実装とも通常の`String`または`string`であり、Promptはmemory zeroizationを行いません
+
+両Status実装は同期的でApplicationから駆動します
+
+Rustの`Options::default`とGoのzero `status.Options`はportableな上限とModern幅profileを選択します
+
+両実装は最終的に描画したterminal lineまたはplain fallback recordをcoalesceし、上限付きscratch bufferを保持し、cancellationと更新時点をApplicationへ委ねます
+
+RustのSnapshot messageはvalidな`str`をborrowし、Goは出力前にstringのUTF-8を検証します
 
 これらの表現差はparsing、structured Help、Diagnostic semanticsを変更しません
 

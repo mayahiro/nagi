@@ -292,6 +292,73 @@ Prompt never interprets it as a command, path, credential, or policy decision.
 Secret values use ordinary language-native strings and the component does not
 claim memory zeroization after return.
 
+## TTY-aware status reporting
+
+Status reporting is an optional package or crate layered above CLI Core. CLI
+Core MUST NOT depend on the status component. The component MUST NOT own an
+application task, clock, cancellation source, Agent concept, or progress
+meaning. An application supplies immutable Status, Spinner, or Progress
+Snapshots when its own state changes.
+
+A Reporter is synchronous and MUST NOT create a thread, goroutine, timer, or
+periodic wake-up. Spinner ticks and update frequency belong to the
+application. The application also serializes a Reporter with every other
+writer that uses the same output. The Reporter is not concurrently usable.
+Cancellation does not implicitly change output; an application responds to
+its cancellation source by finishing or clearing the Reporter as appropriate.
+
+An injected status I/O interface MUST expose complete writes, flush, terminal
+detection, and an optional positive terminal width. Tests and embedded
+applications MAY implement that interface without accessing a process
+terminal. The Unix process implementation writes to standard error by default
+so standard output remains available for command results. Terminal detection
+is an observed descriptor property and MUST NOT be inferred from environment
+variables. A failed width query does not change terminal classification.
+
+The stable terminal forms are:
+
+- Status: the message;
+- Spinner: one of `-`, `\`, `|`, `/` selected by `tick modulo 4`, followed by
+  one space and a non-empty message; and
+- Progress: `[###---] current/total`, followed by one space and a non-empty
+  message.
+
+Progress clamps `current` to `total`. A zero total renders current as zero and
+no completed cells. Multiplication used to select completed cells MUST NOT
+overflow. The default progress width is 20 Cells, and an application MAY
+configure a width from 1 through 1,024 Cells.
+
+Each emitted terminal update writes CR followed by CSI `2 K`, the rendered
+line, and one flush without a line feed. The Reporter reserves the terminal's
+final Cell to avoid autowrap and truncates at an extended-grapheme boundary
+using its configured Text width profile. The default profile is Modern. When
+terminal width is unavailable, the default is 80 columns. A width of one has
+zero usable Cells. A repeated update whose final terminal line is identical
+MUST NOT write or flush.
+
+Finish commits the supplied terminal Snapshot with one final line feed and
+ends the active lifecycle. If the final line is already displayed, Finish
+only writes that line feed. Clear writes CR and CSI `2 K` only when a terminal
+line is active. Both operations reset terminal and fallback coalescing state.
+An explicit Log writes one permanent message and one line feed. When a
+terminal line is active, Log clears it, writes the permanent line, and
+repaints the unchanged transient line before one flush.
+
+When output is not a terminal, Reporter MUST NOT emit control sequences or
+spinner frames. Status and Spinner fall back to the message followed by one
+line feed. Progress falls back to `current/total`, an optional space and
+message, and one line feed. Identical fallback records are coalesced even when
+Spinner ticks differ, and an empty fallback record is omitted. Finish attempts
+the same fallback record and then resets coalescing state. Clear emits nothing
+for non-terminal output. Explicit Log records are never coalesced.
+
+Messages MUST be valid UTF-8, MUST NOT contain Unicode control characters, and
+are limited to 65,536 bytes by default. An application MAY configure another
+positive limit. Validation failure occurs before output. An I/O failure may
+follow a partial stream write, returns a structured I/O error, and MUST NOT
+commit new Reporter state. Retained rendering buffers are bounded by the
+message and progress limits rather than the number of updates.
+
 ## Options and values
 
 An option has one of three kinds:

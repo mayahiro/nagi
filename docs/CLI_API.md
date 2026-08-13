@@ -20,6 +20,7 @@ preservation
 | Command graph, parser, and runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` package `cli` |
 | Shell completion generation and protocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
 | Lightweight interactive prompts | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
+| TTY-aware status reporting | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | Process-free application tests | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -213,6 +214,41 @@ See the [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt/
 and [Go Prompt example](../nagicli-go/examples/prompt/README.md) for complete
 handler integration
 
+## TTY-aware status reporting
+
+Status reporting is another optional layer outside CLI Core. Rust crate
+`nagi-cli-status` and Go package `status` project application-owned Status,
+Spinner, and Progress Snapshots onto standard error without owning a task,
+timer, cancellation source, or application meaning
+
+`Reporter` is synchronous. The application calls `update` or `Update` when its
+state changes and serializes the Reporter with other writers to the same
+stream. Stable ASCII spinner frames avoid terminal-font width ambiguity.
+Determinate progress clamps at the total and computes completed Cells without
+integer overflow
+
+The injected `StatusIo` or `status.IO` boundary reports terminal availability
+and optional current columns. On a terminal, one transient line is erased and
+repainted, identical rendered updates are coalesced, the final Cell is reserved
+to avoid autowrap, and Nagi Text applies the configured Modern, CJK, or custom
+width profile. An unavailable width uses 80 columns
+
+When output is redirected, no terminal controls or spinner frames are written.
+Status and Spinner become a plain message record; Progress becomes a clamped
+`current/total` record. Identical records are coalesced, including Spinner
+updates that differ only by tick. `finish` or `Finish` commits the final state
+and resets coalescing, while `clear` or `Clear` never erases redirected output
+
+Messages are valid UTF-8 without Unicode control characters and use a default
+65,536-byte limit. `log` or `Log` writes a permanent line while preserving an
+active transient status. Reporter retains only bounded rendering buffers and
+performs no periodic wake-up. Applications continue to own cancellation,
+update rate, progress meaning, and diagnostic coordination
+
+See the [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status/README.md)
+and [Go Status example](../nagicli-go/examples/status/README.md) for complete
+process-backed usage
+
 ## Structured Help
 
 `Command::help_document` and `Command.HelpDocument` return a renderer-independent
@@ -345,11 +381,13 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
+[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
 [Go basic example](../nagicli-go/examples/basic/main.go),
 [Go subcommand example](../nagicli-go/examples/subcommands/main.go),
-[Go staged-adoption example](../nagicli-go/examples/staged/main.go), and
-[Go completion example](../nagicli-go/examples/completion/main.go), and
-[Go Prompt example](../nagicli-go/examples/prompt/main.go) as complete
+[Go staged-adoption example](../nagicli-go/examples/staged/main.go),
+[Go completion example](../nagicli-go/examples/completion/main.go),
+[Go Prompt example](../nagicli-go/examples/prompt/main.go), and
+[Go Status example](../nagicli-go/examples/status/main.go) as complete
 entry points
 
 ## Limitations
@@ -357,8 +395,10 @@ entry points
 The core does not load configuration files, run interactive prompts, or
 integrate a TUI. Shell-specific generation and protocol I/O remain in the
 optional completion package or crate, and interactive terminal I/O remains in
-the optional Prompt package or crate. Long-running handlers and completion
-providers must poll their injected cancellation source and stop cooperatively
+the optional Prompt package or crate. Transient status output remains in the
+optional Status package or crate, which does not poll cancellation itself.
+Long-running handlers and completion providers must poll their injected
+cancellation source and stop cooperatively
 
 The portable graph does not model arbitrary invocation grammars or
 parser-generator productions. Use option groups and typed validators for
