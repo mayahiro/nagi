@@ -371,6 +371,56 @@ allocation come from the existing complete Command Graph validation contract,
 not resolver dispatch to sibling branches. Rust releases every measured
 Invocation with zero retained bytes
 
+## CLI Response File purpose
+
+This benchmark measures standalone Response File expansion without Command
+Graph validation, parsing, Handler execution, process I/O, or actual
+filesystem I/O
+
+- The single path reads and tokenizes one in-memory source containing one token
+- The 1,000-token path reads and tokenizes one in-memory source containing
+  1,000 space-separated tokens
+- The 1,000-literal path scans 1,000 ordinary argv values and verifies that the
+  injected reader is not called
+- The injected reader owns one returned byte buffer per source, matching the
+  public read boundary while excluding operating-system storage latency
+
+Rust reports the median of 12 calls with allocation count, total allocated
+bytes, peak additional live bytes, and retained bytes. Its literal path moves
+the returned argument vector into the next call, so it measures framework
+scanning and vector ownership rather than cloning 1,000 caller strings. Go
+reports the median of three reports, each measured over 100 calls with
+standard `testing` allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench response_file
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkResponseFile(Single|1000Tokens|1000LiteralArguments)$' -benchmem -benchtime=100x -count=3 .
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-14 in the reference environment above
+
+| Implementation | Path | Median time per expansion | Allocations | Allocated bytes | Peak additional live bytes | Retained bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Rust | One source token | 834 ns | 21 | 1,038 | 803 | 0 |
+| Rust | 1,000 source tokens | 0.146 ms | 1,944 | 261,792 | 115,637 | 0 |
+| Rust | 1,000 literal arguments | 0.013 ms | 12 | 113,104 | 64,048 | 0 |
+| Go | One source token | 716.7 ns | 12 | 640 | not measured | not measured |
+| Go | 1,000 source tokens | 0.180 ms | 2,941 | 431,725 | not measured | not measured |
+| Go | 1,000 literal arguments | 0.022 ms | 3 | 106,544 | not measured | not measured |
+
+The measured source paths grow linearly with source and token count. The
+literal path is substantially cheaper and performs no source read, which keeps
+the opt-in lexical layer bounded when an enabled process receives mostly
+ordinary arguments. Rust releases every measured result with zero retained
+bytes. These numbers exclude filesystem and standard-input latency, which
+remain application- and environment-dependent
+
 ## CLI completion purpose
 
 This benchmark measures one warmed completion resolution against an immutable

@@ -540,6 +540,11 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Resolver resultとmode | `ValueResolution` / `ValueResolutionMode` | `cli.ValueResolution` / `cli.ValueResolutionMode` |
 | Resolverのparser注入 | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
 | ResolverのRuntime注入 | `Context::with_value_resolver` | `Context.WithValueResolver` |
+| Response File optionと上限 | `ResponseFileOptions` / `ResponseFileLimits` | `cli.ResponseFileOptions` / `cli.ResponseFileLimits` |
+| Response File read境界 | `ResponseFileReader` / `ResponseFileReadRequest` | `cli.ResponseFileReader` / `cli.ResponseFileReadRequest` |
+| Filesystem Response File reader | `FilesystemResponseFileReader` | `cli.FilesystemResponseFileReader` |
+| Standalone Response File展開 | `expand_response_files` | `cli.ExpandResponseFiles` |
+| Response FileのRuntime注入 | `Context::with_response_files` | `Context.WithResponseFiles` |
 | Help Usage Variant定義 | `Command::usage_variant` | `Command.UsageVariant` |
 | Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
@@ -567,6 +572,8 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Invocation実行 | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
 | Parser-only renderingとstatus | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process実行 | `Command::run_process` | `Command.RunProcess` |
+| Composableなprocess service | `ProcessOptions` | `cli.ProcessOptions` |
+| 構成したservice付きprocess実行 | `Command::run_process_with_options` | `Command.RunProcessWithOptions` |
 | Value Resolver付きprocess実行 | `Command::run_process_with_value_resolver` / `run_process_with_policy_and_value_resolver` | `Command.RunProcessWithValueResolver` / `RunProcessWithPolicyAndValueResolver` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel`と`NewContextWithCancellation` |
 | Immutable completion model | `CompletionEngine::new` | `cli.NewCompletionEngine` |
@@ -604,6 +611,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Status failure | `StatusError` / `StatusErrorKind` | `status.Error` / `status.ErrorKind` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 | Test用Value Resolver注入 | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
+| Test用Response File注入 | `TestDriver::response_files` | `clitest.Driver.ResponseFiles` |
 
 Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
 
@@ -612,6 +620,12 @@ Goはraw byteをstringへ保持し、parser resultを`any`とgenericな`ValueAs`
 両実装は再利用されたlocal IDをstable command-ID pathで区別します
 
 Rust cancellationはatomic token、Go cancellationは`context.Context`を使用します
+
+両Response File expanderは同じopt-in tokenization、relative path、cycle、standard input、resource上限の契約を使います
+
+Rustはplatform-nativeなargvとpath byteを`OsString`と`Path`で保持し、Goは両方にstringを使います
+
+Source内容は両実装ともUTF-8でなければなりません
 
 両completion engineは検証済みgraphをsnapshotし、選択pathだけを解決してactiveなvalue targetに設定されたproviderだけを呼びます
 

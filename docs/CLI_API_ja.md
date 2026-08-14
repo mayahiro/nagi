@@ -282,6 +282,58 @@ Nagiは設定schema、file探索、credential、interpolation、retry、persiste
 
 [Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources/README.md)と[Go Value Source Adapter example](../nagicli-go/examples/value-sources/README.md)を参照してください
 
+## Response File
+
+Response File展開は通常のcommand parsingより前に置くopt-inのlexical layerです
+
+展開を設定しない既存parserとRuntime entry pointは先頭の`@`をliteralのまま保持します
+
+Standaloneの`expand_response_files`と`cli.ExpandResponseFiles`は注入したreaderとstandard inputを受け取ります
+
+`Context`には決定的testまたはembedded実行向けの同じ境界を設定でき、`ProcessOptions`は完全なprocess統合でfilesystem-backed readerを選択します
+
+| 操作 | Rust | Go |
+| --- | --- | --- |
+| Standalone展開 | `expand_response_files` | `cli.ExpandResponseFiles` |
+| 展開option | `ResponseFileOptions` | `cli.ResponseFileOptions` |
+| Resource上限 | `ResponseFileLimits` | `cli.ResponseFileLimits` |
+| 注入reader | `ResponseFileReader` | `cli.ResponseFileReader` |
+| Filesystem reader | `FilesystemResponseFileReader` | `cli.FilesystemResponseFileReader` |
+| Runtime注入 | `Context::with_response_files` | `Context.WithResponseFiles` |
+| Process構成 | `ProcessOptions::with_response_files` | `ProcessOptions.WithResponseFiles` |
+| 完全なprocess entry | `Command::run_process_with_options` | `Command.RunProcessWithOptions` |
+| Test driver注入 | `TestDriver::response_files` | `clitest.Driver.ResponseFiles` |
+
+有効な`@path` tokenは`--`より後でもfileを再帰的にincludeします
+
+`@@name`はliteralな`@name` argumentを生成し、単独の`@`はliteralのままです
+
+完全一致する`@-`は個別に有効化した場合だけstandard inputを読み、1回だけ消費できます
+
+Top-levelのrelative pathは注入したcurrent directory、nested pathはinclude元fileのdirectoryを基準にし、standard input内のnested pathは元のcurrent directoryを維持します
+
+SourceはUTF-8でなければならず、先頭に1個のbyte-order markを置けますが、NULは含められません
+
+ASCII whitespaceがtokenを分割し、`#`はtoken境界だけでcommentを開始します
+
+Single quoteとdouble quoteは内容を保持し、隣接するquoted fragmentとunquoted fragmentは連結し、single quote外のbackslashは次のUnicode scalarをliteralとしてescapeします
+
+Shell、variable、command、glob、tilde、environment、C-style escapeの展開は行いません
+
+既定上限はdepth 16、source 64個、source byte合計8 MiB、調査token 65,536個、token byte合計8 MiBです
+
+全上限をcallerが変更でき、zeroも実際の上限として扱います
+
+Activeなlexical include cycleは拒否し、source内容を含まないstructured Response File targetを返します
+
+Runtimeはfileを読む前にCommand Graphを検証します
+
+展開後のargumentは通常のCommand Line originを持ち、同じparser、validator、Sensitive Value処理を通ります
+
+`ProcessOptions`はResponse File、Value Resolver、Runtime Policyを順序依存のhelper variant追加なしで合成します
+
+[Rust Response File example](../nagi-rs/crates/nagi-cli/examples/response_files/README.md)と[Go Response File example](../nagicli-go/examples/response-files/README.md)を参照してください
+
 ## Shellとdynamic completion
 
 `CompletionEngine::new`と`cli.NewCompletionEngine`はCommand Graphを検証し、handlerを含まないimmutableなcompletion modelとしてsnapshotします
@@ -550,6 +602,8 @@ Process helperはplatform argv、environment、current directory、standard I/O�
 
 PolicyとResolverの両方を変更するvariantも利用できます
 
+`ProcessOptions`と`cli.ProcessOptions`はRuntime Policy、Value Resolver、Response Fileを同時に選択する場合のcomposableなentry pointです
+
 Diagnosticはprocess statusとは独立した`specification`、`usage`、`execution`、`cancellation`、`io`のsemantic categoryを持ちます
 
 既定Exit Code Policyはspecificationとusageを2、executionとI/Oを1、cancellationを130へ対応付けます
@@ -594,9 +648,10 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | 事前cancel | `.cancelled(true)` | `.Cancelled(true)` |
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | Value Resolver | `.value_resolver(...)` | `.ValueResolver(...)` |
+| Response File | `.response_files(options, reader)` | `.ResponseFiles(options, reader)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs)、[Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go)、[Go Value Source Adapter example](../nagicli-go/examples/value-sources/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs)、[Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources.rs)、[Rust Response File example](../nagi-rs/crates/nagi-cli/examples/response_files.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go)、[Go Value Source Adapter example](../nagicli-go/examples/value-sources/main.go)、[Go Response File example](../nagicli-go/examples/response-files/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
 
 ## 制約
 

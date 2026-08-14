@@ -178,6 +178,98 @@ The framework MUST NOT guess which substrings are secrets. Applications MUST
 redact those values before constructing public output. Environment variable
 names are metadata rather than resolved values and remain visible.
 
+## Response Files
+
+Response File expansion is an optional lexical layer before Command Graph
+parsing. Ordinary parser and Runtime entry points MUST preserve every leading
+`@` literally unless an application explicitly enables this layer. Enabling it
+authorizes file reads named by argv, so applications MUST NOT enable it for
+untrusted arguments when that access is inappropriate.
+
+An enabled expander examines every token, including tokens after `--`. A token
+with two leading at signs removes exactly one and is emitted literally without
+further expansion. A lone `@` is also literal. Any other token beginning with
+`@` names a Response File. The exact token `@-` names standard input. Standard
+input expansion is disabled by default and MUST be enabled separately. It MAY
+be consumed at most once per expansion. File or standard-input tokens produced
+by one Response File are recursively expanded depth first in source order.
+
+Each source MUST be valid UTF-8. One U+FEFF byte-order mark at the start of
+each source is accepted and removed. U+0000 is invalid. Tokenization uses only
+ASCII space, tab, carriage return, line feed, vertical tab, and form feed as
+separators. Outside quotes, `#` starts a comment through the next LF only when
+it occurs where a new token could start. A `#` after any token segment is
+literal.
+
+Single and double quotes remove their delimiters and MAY span lines. Adjacent
+quoted and unquoted segments form one token, and an empty quoted segment can
+produce an empty token. A reverse solidus outside single quotes removes itself
+and includes the next Unicode scalar literally; it does not interpret C-style
+escapes or perform line continuation. A trailing reverse solidus or unmatched
+quote is a syntax failure. No variable, tilde, glob, command, shell, or
+environment expansion occurs.
+
+A top-level relative reference is resolved lexically against the caller's base
+directory. A nested relative reference is resolved against the directory of
+the including file. Relative references in standard input use the original
+base directory. Absolute references remain absolute. Resolution removes
+redundant current-directory and parent-directory components without
+canonicalizing the filesystem or following symbolic links. The same resolved
+file cannot appear twice on the active include stack. Repeated non-recursive
+inclusion remains valid. A symbolic-link cycle need not be recognized as a
+cycle, but MUST terminate at the depth limit.
+
+Expansion has finite configurable limits for:
+
+- active include depth, where a top-level source has depth one;
+- total file and standard-input source reads, including repeated files;
+- total source bytes read before byte-order-mark removal;
+- total token occurrences examined, including include directives and original
+  argv; and
+- total bytes across those token occurrences after quote and escape removal.
+
+The portable defaults are depth 16, 64 sources, 8 MiB of source bytes, 65,536
+tokens, and 8 MiB of token bytes. A configured zero prohibits that resource.
+Implementations MUST stop without reading the next source or retaining the
+remaining source when a limit is known to be exceeded. Injected readers receive
+a bounded read request and MUST NOT be invoked when no file token is expanded.
+
+Framework expansion failures use these stable codes:
+
+```text
+response-file-io
+response-file-encoding
+response-file-syntax
+response-file-cycle
+response-file-limit
+response-file-stdin
+```
+
+`response-file-io` has the `io` category. The other codes have the `usage`
+category. A Response File Diagnostic target has kind `response-file`, an empty
+command-ID path, and the escaped include reference without its leading `@` as
+`value_id`. It is never Sensitive and has no Value Origin. Syntax messages MAY
+identify a one-based line and Unicode-scalar column but MUST NOT include a
+source token or file contents. An injected reader MAY return another structured
+Diagnostic; the expander preserves it and adds the current Response File target
+only when it has no target.
+
+Expanded tokens have ordinary CommandLine precedence, count as supplied, and
+pass through the same Value Parser and Sensitive handling as direct argv. The
+expander cannot know Command Graph sensitivity while opening or tokenizing a
+source, so a Response File reference is not itself treated as Sensitive.
+Framework Debug and formatting MUST NOT expose source contents. Response Files
+are argument containers, not secret-file readers, and do not remove values from
+process memory or application access.
+
+The public expansion API MUST accept an injected file reader, base directory,
+standard input, options, and platform-native argv. Runtime Context MAY opt into
+the same expander, and test support MUST permit an injected reader. When Runtime
+expansion is enabled, Command Graph validation occurs before any Response File
+I/O. Process integration uses an explicit Process Options value so Response
+Files and a Value Resolver can be enabled together. Completion and derived Help
+generation MUST NOT read or expand Response Files.
+
 ## Argument parsing
 
 Parsing starts at the root command and scans arguments from left to right.
@@ -643,6 +735,12 @@ missing-handler
 handler-error
 cancelled
 io-error
+response-file-io
+response-file-encoding
+response-file-syntax
+response-file-cycle
+response-file-limit
+response-file-stdin
 ```
 
 Applications MAY use another stable code matching the identifier grammar.
@@ -650,12 +748,13 @@ A code outside the framework set has the `execution` category until the
 application explicitly assigns another category.
 
 A Diagnostic target identifies an option or positional by stable command-ID
-path and command-local value ID. Targets are machine-readable metadata and do
-not require the default renderer to expose internal IDs. A parser-generated
-invalid-value target also carries the raw value's origin, including its
-Environment or External identity when present. Custom renderers MAY inspect
-that origin. The default plain and JSON renderers MUST NOT display or serialize
-it. Hints are human-readable remediation text.
+path and command-local value ID, or one Response File include reference as
+specified above. Targets are machine-readable metadata and do not require the
+default renderer to expose internal IDs. A parser-generated invalid-value
+target also carries the raw value's origin, including its Environment or
+External identity when present. Custom renderers MAY inspect that origin. The
+default plain and JSON renderers MUST NOT display or serialize it. Hints are
+human-readable remediation text.
 
 A Diagnostic also has one semantic category:
 

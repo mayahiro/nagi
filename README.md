@@ -56,8 +56,7 @@ typed value scopes, portable option groups and
 validators, structured deterministic Help with controllable Help-only Usage
 Variants, optional deterministic Markdown and man rendering, targeted semantic
 Diagnostics with stable JSON rendering, application-owned Value Source
-adapters, staged
-runtime policies, cooperative
+adapters, opt-in bounded Response File expansion, staged runtime policies, cooperative
 SIGINT cancellation, immutable handler-free completion engines, Bash, Zsh,
 Fish, and PowerShell generators, optional line-oriented prompts, process-free
 test drivers, and matching examples

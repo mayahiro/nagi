@@ -566,6 +566,11 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Resolver result and mode | `ValueResolution` / `ValueResolutionMode` | `cli.ValueResolution` / `cli.ValueResolutionMode` |
 | Resolver parser injection | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
 | Resolver Runtime injection | `Context::with_value_resolver` | `Context.WithValueResolver` |
+| Response File options and limits | `ResponseFileOptions` / `ResponseFileLimits` | `cli.ResponseFileOptions` / `cli.ResponseFileLimits` |
+| Response File read boundary | `ResponseFileReader` / `ResponseFileReadRequest` | `cli.ResponseFileReader` / `cli.ResponseFileReadRequest` |
+| Filesystem Response File reader | `FilesystemResponseFileReader` | `cli.FilesystemResponseFileReader` |
+| Standalone Response File expansion | `expand_response_files` | `cli.ExpandResponseFiles` |
+| Response File Runtime injection | `Context::with_response_files` | `Context.WithResponseFiles` |
 | Help Usage Variant definition | `Command::usage_variant` | `Command.UsageVariant` |
 | Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
@@ -593,6 +598,8 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Execute an Invocation | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
 | Parser-only rendering and status | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process execution | `Command::run_process` | `Command.RunProcess` |
+| Composable process services | `ProcessOptions` | `cli.ProcessOptions` |
+| Process execution with composed services | `Command::run_process_with_options` | `Command.RunProcessWithOptions` |
 | Process execution with Value Resolver | `Command::run_process_with_value_resolver` / `run_process_with_policy_and_value_resolver` | `Command.RunProcessWithValueResolver` / `RunProcessWithPolicyAndValueResolver` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel` with `NewContextWithCancellation` |
 | Immutable completion model | `CompletionEngine::new` | `cli.NewCompletionEngine` |
@@ -630,12 +637,18 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Status failure | `StatusError` / `StatusErrorKind` | `status.Error` / `status.ErrorKind` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
 | Test Value Resolver injection | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
+| Test Response File injection | `TestDriver::response_files` | `clitest.Driver.ResponseFiles` |
 
 Rust stores raw platform values as `OsString` and typed parser results behind
 `Any`. Go preserves raw bytes in strings and exposes parser results through
 `any` plus generic `ValueAs` and `RequireValueAs` helpers. Both use stable
 command-ID paths to disambiguate reused local IDs. Rust cancellation is an
 atomic token; Go cancellation is a `context.Context`
+
+Both Response File expanders use the same opt-in tokenization, relative-path,
+cycle, standard-input, and resource-limit contract. Rust preserves
+platform-native argv and path bytes through `OsString` and `Path`; Go uses
+strings for both. Source contents must be UTF-8 in both implementations
 
 Both completion engines snapshot the validated graph, resolve only the selected
 path, and call only the provider attached to the active value target. Rust

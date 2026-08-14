@@ -273,6 +273,55 @@ schema, file discovery, credentials, interpolation, retry, or persistence. See
 the [Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources/README.md)
 and [Go Value Source Adapter example](../nagicli-go/examples/value-sources/README.md)
 
+## Response Files
+
+Response File expansion is an opt-in lexical layer before ordinary command
+parsing. Existing parser and Runtime entry points continue to preserve a
+leading `@` literally unless expansion is configured. The standalone
+`expand_response_files` and `cli.ExpandResponseFiles` functions accept an
+injected reader and standard input. A `Context` can install the same boundary
+for deterministic or embedded execution, while `ProcessOptions` selects the
+filesystem-backed reader for complete process integration
+
+| Operation | Rust | Go |
+| --- | --- | --- |
+| Standalone expansion | `expand_response_files` | `cli.ExpandResponseFiles` |
+| Expansion options | `ResponseFileOptions` | `cli.ResponseFileOptions` |
+| Resource limits | `ResponseFileLimits` | `cli.ResponseFileLimits` |
+| Injected reader | `ResponseFileReader` | `cli.ResponseFileReader` |
+| Filesystem reader | `FilesystemResponseFileReader` | `cli.FilesystemResponseFileReader` |
+| Runtime injection | `Context::with_response_files` | `Context.WithResponseFiles` |
+| Process composition | `ProcessOptions::with_response_files` | `ProcessOptions.WithResponseFiles` |
+| Complete process entry | `Command::run_process_with_options` | `Command.RunProcessWithOptions` |
+| Test-driver injection | `TestDriver::response_files` | `clitest.Driver.ResponseFiles` |
+
+An enabled `@path` token includes a file recursively, including after `--`.
+`@@name` emits the literal argument `@name`, and a lone `@` stays literal.
+Exact `@-` reads standard input only when separately enabled and can be
+consumed at most once. Relative top-level paths resolve from the injected
+current directory; nested paths resolve from the including file's directory,
+while nested paths from standard input retain the original current directory
+
+Sources must be UTF-8, may start with one byte-order mark, and must not contain
+NUL. ASCII whitespace separates tokens. A `#` starts a comment only at a
+token boundary. Single and double quotes preserve their contents, adjacent
+quoted and unquoted fragments concatenate, and a backslash outside single
+quotes escapes the next Unicode scalar literally. There is no shell,
+variable, command, glob, tilde, environment, or C-style escape expansion
+
+Default limits allow depth 16, 64 sources, 8 MiB of aggregate source bytes,
+65,536 examined tokens, and 8 MiB of aggregate token bytes. Every limit is
+caller-configurable, and zero is an enforceable limit. Expansion rejects
+active lexical include cycles and returns structured Response File targets
+without source contents. Runtime validates the Command Graph before reading
+any file. Expanded arguments then use the ordinary Command Line origin and
+pass through the same parser, validator, and Sensitive Value handling
+
+`ProcessOptions` composes Response Files, a Value Resolver, and a Runtime
+Policy without adding ordering-dependent helper variants. See the
+[Rust Response File example](../nagi-rs/crates/nagi-cli/examples/response_files/README.md)
+and [Go Response File example](../nagicli-go/examples/response-files/README.md)
+
 ## Shell and dynamic completion
 
 `CompletionEngine::new` and `cli.NewCompletionEngine` validate and snapshot a
@@ -525,7 +574,10 @@ current directory, and standard I/O, then convert SIGINT into cancellation
 
 The `run_process_with_value_resolver` and `RunProcessWithValueResolver`
 variants retain the same process boundary while attaching a Value Resolver.
-Policy-and-resolver variants are available when both are customized
+Policy-and-resolver variants are available when both are customized.
+`ProcessOptions` and `cli.ProcessOptions` are the composable entry point
+when Runtime Policy, Value Resolver, and Response Files must be selected
+together
 
 Diagnostics carry a semantic category independently of process status:
 `specification`, `usage`, `execution`, `cancellation`, or `io`. The default
@@ -572,6 +624,7 @@ handler
 | Pre-cancel | `.cancelled(true)` | `.Cancelled(true)` |
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
 | Value Resolver | `.value_resolver(...)` | `.ValueResolver(...)` |
+| Response Files | `.response_files(options, reader)` | `.ResponseFiles(options, reader)` |
 | Run | `.run()` | `.Run()` |
 
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
@@ -581,6 +634,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs),
 [Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs),
 [Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources.rs),
+[Rust Response File example](../nagi-rs/crates/nagi-cli/examples/response_files.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
 [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
@@ -591,6 +645,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Go lifecycle example](../nagicli-go/examples/lifecycle/main.go),
 [Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go),
 [Go Value Source Adapter example](../nagicli-go/examples/value-sources/main.go),
+[Go Response File example](../nagicli-go/examples/response-files/main.go),
 [Go completion example](../nagicli-go/examples/completion/main.go),
 [Go Prompt example](../nagicli-go/examples/prompt/main.go), and
 [Go Status example](../nagicli-go/examples/status/main.go) as complete
