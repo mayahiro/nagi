@@ -1,0 +1,10 @@
+nagi-fixture-v1	widget-code-layout
+no-wrap	input=A日B	profile=modern	viewport=6	tab=4	wrap=false	line-numbers=false	expected-gutter=0	expected-code-width=6	expected-rows=A日B	expected-widths=4	expected-continuations=false
+tab-expand	input=A\tB	profile=modern	viewport=8	tab=4	wrap=false	line-numbers=false	expected-gutter=0	expected-code-width=8	expected-rows=A   B	expected-widths=5	expected-continuations=false
+hard-wrap	input=abcdef	profile=modern	viewport=3	tab=4	wrap=true	line-numbers=false	expected-gutter=0	expected-code-width=3	expected-rows=abc|def	expected-widths=3,3	expected-continuations=false,true
+modern-ambiguous	input=·A	profile=modern	viewport=2	tab=4	wrap=true	line-numbers=false	expected-gutter=0	expected-code-width=2	expected-rows=·A	expected-widths=2	expected-continuations=false
+cjk-ambiguous	input=·A	profile=cjk	viewport=2	tab=4	wrap=true	line-numbers=false	expected-gutter=0	expected-code-width=2	expected-rows=·|A	expected-widths=2,1	expected-continuations=false,true
+line-number-gutter	input=abcdef	profile=modern	viewport=8	tab=4	wrap=true	line-numbers=true	expected-gutter=4	expected-code-width=4	expected-rows=abcd|ef	expected-widths=4,2	expected-continuations=false,true
+suppressed-gutter	input=abcdef	profile=modern	viewport=4	tab=4	wrap=true	line-numbers=true	expected-gutter=0	expected-code-width=4	expected-rows=abcd|ef	expected-widths=4,2	expected-continuations=false,true
+oversized-grapheme	input=日	profile=modern	viewport=1	tab=4	wrap=true	line-numbers=false	expected-gutter=0	expected-code-width=1	expected-rows=日	expected-widths=2	expected-continuations=false
+empty-line	input=	profile=modern	viewport=4	tab=4	wrap=true	line-numbers=false	expected-gutter=0	expected-code-width=4	expected-rows=	expected-widths=0	expected-continuations=false

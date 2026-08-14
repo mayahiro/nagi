@@ -1,0 +1,8 @@
+nagi-fixture-v1	key-scope
+# bindings are stroke@repeat@support entries separated by slash
+default	action=app.submit	label=Submit	defaults=enter:-@initial@unknown	layers=-	availability=enabled	visible=true	expected-bindings=enter:-@initial@unknown	expected-scopes=-
+empty-scope	action=app.submit	label=Submit	defaults=enter:-@initial@unknown	layers=root:inherit	availability=enabled	visible=true	expected-bindings=enter:-@initial@unknown	expected-scopes=root
+root-override	action=app.submit	label=Submit	defaults=enter:-@initial@unknown	layers=root:char-U+0073:control@initial@supported	availability=enabled	visible=true	expected-bindings=char-U+0073:control@initial@supported	expected-scopes=root
+inner-wins	action=app.submit	label=Submit	defaults=enter:-@initial@unknown	layers=root:char-U+0073:control@initial@supported;modal:enter:-@initial@unknown	availability=enabled	visible=true	expected-bindings=enter:-@initial@unknown	expected-scopes=root,modal
+empty-override	action=app.submit	label=Submit	defaults=enter:-@initial@unknown	layers=modal:none	availability=disabled-pass-through	visible=false	expected-bindings=none	expected-scopes=modal
+fallbacks	action=app.submit	label=Submit	defaults=enter:-@initial@unknown	layers=root:char-U+0073:control@initial@supported/enter:alt@allow@unsupported	availability=disabled-consume	visible=true	expected-bindings=char-U+0073:control@initial@supported/enter:alt@allow@unsupported	expected-scopes=root

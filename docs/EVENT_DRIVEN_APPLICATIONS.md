@@ -16,7 +16,9 @@ owner
 | Responsibility | Owner |
 | --- | --- |
 | Terminal input, resize, waiting, wake-up, and render timing | Nagi terminal runner |
+| Opt-in startup capability observation and keyboard mode lifecycle | Nagi terminal runner |
 | One-shot asynchronous work | Effect |
+| One blocking operation requiring the ordinary terminal | SuspendTerminal Effect and terminal runner |
 | Long-lived external input such as process output | Stream subscription |
 | Clock-driven state such as uptime | Every subscription |
 | Model mutation | Sequential application update |
@@ -35,9 +37,26 @@ terminal input --------------------/                         |
                                                 coalesced view and render
 ```
 
+One terminal read may decode several Unicode or key Events. Nagi completes
+routing and every input-derived update for one Event before routing the next,
+so controlled widgets always rebuild from the latest state. Only the resulting
+render is coalesced across that input batch
+
+Opt-in capability detection runs once after the terminal session opens and
+before the initial application view. It does not add a polling source to the UI
+loop. The runner retains unrelated bytes read during the bounded query and
+routes them through the ordinary decoder after setup
+
+If one Event requests terminal suspension, later Events already decoded from
+the same read are discarded. The runner restores the ordinary terminal, runs
+the application-owned task on its driver thread, resumes the configured
+viewport, resets incomplete decoder state, and forces a full redraw
+
 ## Choose the source by lifetime
 
 - Use an Effect for finite work started by init or update
+- Use a SuspendTerminal Effect only for finite blocking work that requires the
+  ordinary terminal, such as an interactive editor, shell, or authentication UI
 - Use a keyed Latest Effect when a newer request makes older work stale
 - Use a Stream subscription for a long-lived blocking or callback source
 - Use an Every subscription only for state that actually changes on a clock
@@ -55,8 +74,9 @@ A process monitor commonly declares two independent sources
 
 Batch delivery preserves FIFO records and releases them after a count or delay
 limit. Each record still receives one sequential update, while rendering occurs
-at most once after the ready queue is drained. Latest delivery is suitable for
-uptime because only the newest value matters
+at most once per bounded scheduling cycle and may coalesce across cycles under
+the frame interval. Latest delivery is suitable for uptime because only the
+newest value matters
 
 Keep source keys stable across views of the same application state. Removing a
 source from the subscriptions declaration asks Nagi to cancel that generation,
@@ -64,12 +84,41 @@ wake blocked sends, and discard values that have not entered update. A producer
 must return after cancellation or a closed sink. Do not leave detached worker
 threads or goroutines behind
 
+Go terminal and context-aware Runtime entry points derive worker,
+terminal-task, and Stream contexts from the caller context. Values, deadlines,
+cancellation, and cancellation causes therefore remain available to process
+adapters and tracing code. Runtime close still requests cancellation for each
+active child
+
+Runtime close is request-only. Use Rust `close_and_wait` or
+`close_and_wait_timeout`, or Go `CloseAndWait(ctx)`, when a custom Runtime owner
+must also observe every Nagi-started Effect and Stream producer return. The
+producer remains responsible for joining any process or worker that it starts
+
+## Lifecycle notices
+
+An active Stream is a long-lived source. Returning while its generation remains
+active is unexpected and produces a `RuntimeNotice`; a return after requested
+cancellation does not. Recovered Effect and Stream panics and worker-spawn
+failures also produce notices. Panic payloads are not retained
+
+Notices use a separate bounded FIFO, preserve the oldest retained entries, and
+increment a dropped counter when full. They do not become application Messages
+or mark the view dirty by default. A manually driven Runtime can drain them.
+Terminal runners provide a synchronous handler for logging or telemetry and a
+direct optional-Message mapper for application state without a second
+Subscription
+
 ## Rendering and backpressure
 
 `MinimumFrameInterval` limits non-urgent frames; it is not an event-loop polling
 interval. Nagi can process many source Messages, retain the latest application
-state, wait for the remaining frame deadline, and render once. Framework-owned
-keyboard scrolling, focus, and resize remain urgent
+state, and coalesce rendering. `MaxUpdatesPerCycle` defaults to 64 and bounds
+how many asynchronous Messages run before the terminal runner checks input and
+resize again. Retained ready work starts the next cycle without a periodic
+wait. The bound is a deterministic Message count; one slow application update
+can still delay input. Framework-owned keyboard scrolling, focus, and resize
+remain urgent
 
 For high-rate sources
 
@@ -83,9 +132,24 @@ For high-rate sources
   `NoneEffect[Message]().WithoutRedraw()` when a Message changes no state read
   by the current view, such as output retained for an unselected process
 
+`SetClipboard` is also synchronous and does not start a worker. Runtime keeps
+only the latest pending request, so a custom driver should take it after each
+coalesced step. The standard terminal runner drops requests unless direct,
+write-only OSC 52 is explicitly enabled. When a copy Message changes no visible
+application state, combine the Clipboard Effect with `without_redraw` or
+`WithoutRedraw`
+
+`SuspendTerminal` does not start a worker either. It remains pending until the
+terminal driver can safely leave raw mode and its configured viewport. A
+full-screen session leaves the alternate screen; an inline session finalizes
+its current main-screen region. Existing workers and Streams continue using
+their bounded delivery contracts while the driver task blocks, but application
+update and rendering resume only after that task returns. The task maps its own
+process status or domain error to a Message
+
 ## Avoid a second UI loop
 
-Avoid these patterns in a standard full-screen terminal application
+Avoid these patterns in a standard terminal application
 
 - Calling runtime step or render from an application ticker
 - Polling channels with short sleeps when a Stream can block for input
@@ -96,7 +160,10 @@ Avoid these patterns in a standard full-screen terminal application
 
 Embedding Nagi in a non-terminal host can require manual Runtime driving. In
 that case the host loop owns the same responsibilities as the terminal runner
-and should wait on real readiness or deadlines rather than poll at a fixed rate
+and should wait on real readiness or deadlines rather than poll at a fixed
+rate. A manual driver that executes a pending terminal task must establish its
+own safe suspend/resume boundary and invalidate the Runtime terminal surface
+afterwards
 
 ## Runnable reference
 
@@ -109,6 +176,22 @@ repository root
 - [Go source](../nagitui-go/examples/log-viewer/main.go):
   `go run ./examples/log-viewer`
 
+The matching terminal-suspension examples run an application-selected
+interactive shell and resume after it exits
+
+- [Rust source](../nagi-rs/crates/nagi-tui/examples/terminal_suspend/main.rs):
+  `cargo run -p nagi-tui --example terminal_suspend`
+- [Go source](../nagitui-go/examples/terminal-suspend/main.go):
+  `go run ./examples/terminal-suspend`
+
+The terminal-capability examples opt into the startup query and show the
+immutable profile supplied to each view
+
+- [Rust source](../nagi-rs/crates/nagi-tui/examples/terminal_capabilities/main.rs):
+  `cargo run -p nagi-tui --example terminal_capabilities`
+- [Go source](../nagitui-go/examples/terminal-capabilities/main.go):
+  `go run ./examples/terminal-capabilities`
+
 The simulated producer uses a timer so the example needs no external process.
 A product adapter should replace only that producer body with its blocking
 process-output reader; the application lifecycle and render ownership stay the
@@ -118,4 +201,7 @@ same
 
 Use `nagi-tui-test` or Go `tuitest` with virtual time and controlled Effect or
 Subscription sources. Drive Messages and deadlines explicitly instead of
-sleeping in application tests
+sleeping in application tests. Feed multi-scalar input as one chunk when testing
+controlled editors so per-Event updates and render coalescing are both covered.
+Use the harness terminal-task method to simulate resume, pending-input discard,
+result delivery, and full redraw without changing a real terminal

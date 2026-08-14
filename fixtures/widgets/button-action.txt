@@ -1,0 +1,14 @@
+nagi-fixture-v1	widget-button-action
+default-enter	mode=default	enabled=true	event=enter	activate=true	consumed=true	help=Enter Activate|Space Activate	help-enabled=true
+default-space-text	mode=default	enabled=true	event=space-text	activate=true	consumed=true	help=Enter Activate|Space Activate	help-enabled=true
+default-space-key	mode=default	enabled=true	event=space-key	activate=true	consumed=true	help=Enter Activate|Space Activate	help-enabled=true
+default-repeat-enter	mode=default	enabled=true	event=repeat-enter	activate=true	consumed=true	help=Enter Activate|Space Activate	help-enabled=true
+default-release-enter	mode=default	enabled=true	event=release-enter	activate=false	consumed=false	help=Enter Activate|Space Activate	help-enabled=true
+default-control-enter	mode=default	enabled=true	event=control-enter	activate=false	consumed=false	help=Enter Activate|Space Activate	help-enabled=true
+rebind-x	event=x	mode=rebind-x	enabled=true	activate=true	consumed=true	help=x Activate	help-enabled=true
+rebind-enter	event=enter	mode=rebind-x	enabled=true	activate=false	consumed=false	help=x Activate	help-enabled=true
+rebind-pointer	event=mouse-left-press	mode=rebind-x	enabled=true	activate=true	consumed=true	help=x Activate	help-enabled=true
+unbound-enter	event=enter	mode=unbound	enabled=true	activate=false	consumed=false	help=	help-enabled=none
+unbound-pointer	event=mouse-left-press	mode=unbound	enabled=true	activate=true	consumed=true	help=	help-enabled=none
+disabled-enter	event=enter	mode=default	enabled=false	activate=false	consumed=false	help=Enter Activate|Space Activate	help-enabled=false
+disabled-pointer	event=mouse-left-press	mode=default	enabled=false	activate=false	consumed=false	help=Enter Activate|Space Activate	help-enabled=false

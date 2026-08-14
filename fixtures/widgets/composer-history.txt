@@ -1,0 +1,6 @@
+nagi-fixture-v1	widget-composer-history
+front-truncate	draft=draft	draft-cursor=2	initial-history=old=old/middle=middle/new=new	previous-count=2	replacement-history=middle=middle/new=new	expected=middle	expected-cursor=6	expected-index=0	expected-id=middle	expected-draft=draft	expected-draft-cursor=2
+prepend	draft=draft	draft-cursor=1	initial-history=middle=middle/new=new	previous-count=2	replacement-history=old=old/middle=middle/new=new	expected=middle	expected-cursor=6	expected-index=1	expected-id=middle	expected-draft=draft	expected-draft-cursor=1
+reorder	draft=draft	draft-cursor=3	initial-history=a=alpha/b=beta/c=gamma	previous-count=2	replacement-history=c=gamma/b=beta/a=alpha	expected=beta	expected-cursor=4	expected-index=1	expected-id=b	expected-draft=draft	expected-draft-cursor=3
+replace-value	draft=draft	draft-cursor=0	initial-history=entry=old	previous-count=1	replacement-history=entry=replacement	expected=replacement	expected-cursor=11	expected-index=0	expected-id=entry	expected-draft=draft	expected-draft-cursor=0
+remove-current	draft=draft	draft-cursor=2	initial-history=old=old/new=new	previous-count=1	replacement-history=old=old	expected=draft	expected-cursor=2	expected-index=-	expected-id=-	expected-draft=-	expected-draft-cursor=-

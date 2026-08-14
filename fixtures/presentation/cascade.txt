@@ -1,0 +1,19 @@
+nagi-fixture-v1	presentation-cascade
+# inherited and rules name deterministic arrangements constructed by each implementation
+inline-default	element=inline	roles=none	classes=none	states=none	inherited=default	rules=none	expected=inline|auto|0|absent|word|start|default
+flow-default	element=flow	roles=none	classes=none	states=none	inherited=default	rules=none	expected=flow|auto|0|absent|word|start|default
+paragraph-default	element=paragraph	roles=none	classes=none	states=none	inherited=default	rules=none	expected=paragraph|auto|0|absent|word|start|default
+sequence-default	element=sequence	roles=none	classes=none	states=none	inherited=default	rules=none	expected=sequence|auto|0|absent|word|start|default
+text-inheritance	element=inline	roles=none	classes=none	states=none	inherited=accent	rules=none	expected=inline|auto|0|absent|word|start|accent
+universal	element=paragraph	roles=none	classes=none	states=none	inherited=default	rules=universal	expected=paragraph|auto|0|absent|word|start|bold
+role-exact	element=paragraph	roles=heading	classes=none	states=none	inherited=default	rules=heading	expected=paragraph|auto|0|absent|word|start|heading
+class-exact	element=inline	roles=none	classes=source.bold	states=none	inherited=default	rules=source-class	expected=inline|auto|0|absent|word|start|source
+required-state	element=inline	roles=item	classes=none	states=selected,focused	inherited=default	rules=stateful	expected=inline|auto|0|absent|word|start|selected
+source-order	element=inline	roles=code	classes=source.bold	states=disabled	inherited=default	rules=ordered	expected=inline|auto|0|absent|word|start|ordered
+text-initial	element=inline	roles=reset	classes=none	states=none	inherited=accent	rules=text-initial	expected=inline|auto|0|absent|word|start|default
+underline-default	element=inline	roles=underline	classes=none	states=none	inherited=default	rules=underline-default	expected=inline|auto|0|absent|word|start|underline-default
+layout-set	element=flow	roles=layout	classes=none	states=none	inherited=default	rules=layout-set	expected=sequence|fixed:3|2|present:207C20|none|end|default
+layout-initial	element=flow	roles=layout	classes=reset	states=none	inherited=default	rules=layout-initial	expected=flow|auto|0|absent|word|start|default
+separator-empty	element=inline	roles=separator	classes=none	states=none	inherited=default	rules=separator-empty	expected=inline|auto|0|present:|word|start|default
+separator-invalid	element=inline	roles=separator	classes=none	states=none	inherited=default	rules=separator-invalid	expected=inline|auto|0|present:EFBFBD|word|start|default
+unspecified	element=paragraph	roles=heading	classes=none	states=none	inherited=default	rules=unspecified	expected=paragraph|auto|0|absent|word|start|heading

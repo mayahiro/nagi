@@ -1,0 +1,7 @@
+nagi-fixture-v1	effect-clipboard
+single	composition=single	values=hello	expected=hello
+unicode	composition=single	values=A\u{65E5}	expected=A\u{65E5}
+empty	composition=single	values=	expected=
+coalesced-updates	composition=updates	values=first,second,third	expected=third
+coalesced-batch	composition=batch	values=first,second,third	expected=third
+coalesced-sequence	composition=sequence	values=first,second,third	expected=third

@@ -1,0 +1,14 @@
+nagi-fixture-v1	widget-split-pane
+# availability order: focus-previous,focus-next,resize-previous,resize-next
+idle	ratio=5000	axis=horizontal	step=500	focus=true	resize=true	event=none	start=primary	expected-ratio=5000	message=-	consumed=false	expected-focus=primary	availability=enabled,enabled,enabled,enabled
+focus-next	ratio=5000	axis=horizontal	step=500	focus=true	resize=true	event=f6	start=primary	expected-ratio=5000	message=-	consumed=true	expected-focus=secondary	availability=enabled,enabled,enabled,enabled
+focus-previous	ratio=5000	axis=horizontal	step=500	focus=true	resize=true	event=shift-f6	start=secondary	expected-ratio=5000	message=-	consumed=true	expected-focus=primary	availability=enabled,enabled,enabled,enabled
+horizontal-previous	ratio=5000	axis=horizontal	step=500	focus=true	resize=true	event=alt-left	start=primary	expected-ratio=4500	message=ratio:4500	consumed=true	expected-focus=primary	availability=enabled,enabled,enabled,enabled
+horizontal-next-repeat	ratio=5000	axis=horizontal	step=500	focus=true	resize=true	event=repeat-alt-right	start=secondary	expected-ratio=5500	message=ratio:5500	consumed=true	expected-focus=secondary	availability=enabled,enabled,enabled,enabled
+vertical-previous	ratio=5000	axis=vertical	step=1000	focus=true	resize=true	event=alt-up	start=primary	expected-ratio=4000	message=ratio:4000	consumed=true	expected-focus=primary	availability=enabled,enabled,enabled,enabled
+vertical-next	ratio=5000	axis=vertical	step=1000	focus=true	resize=true	event=alt-down	start=secondary	expected-ratio=6000	message=ratio:6000	consumed=true	expected-focus=secondary	availability=enabled,enabled,enabled,enabled
+axis-mismatch-passes	ratio=5000	axis=horizontal	step=500	focus=true	resize=true	event=alt-up	start=primary	expected-ratio=5000	message=raw	consumed=true	expected-focus=primary	availability=enabled,enabled,enabled,enabled
+resize-disabled-passes	ratio=5000	axis=horizontal	step=500	focus=true	resize=false	event=alt-right	start=primary	expected-ratio=5000	message=raw	consumed=true	expected-focus=primary	availability=enabled,enabled,pass,pass
+focus-disabled-passes	ratio=5000	axis=horizontal	step=500	focus=false	resize=true	event=f6	start=primary	expected-ratio=5000	message=raw	consumed=true	expected-focus=primary	availability=pass,pass,enabled,enabled
+lower-boundary-consumes	ratio=0	axis=horizontal	step=500	focus=true	resize=true	event=alt-left	start=primary	expected-ratio=0	message=-	consumed=true	expected-focus=primary	availability=enabled,enabled,enabled,enabled
+upper-boundary-consumes	ratio=10000	axis=horizontal	step=500	focus=true	resize=true	event=alt-right	start=secondary	expected-ratio=10000	message=-	consumed=true	expected-focus=secondary	availability=enabled,enabled,enabled,enabled

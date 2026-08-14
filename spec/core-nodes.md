@@ -59,6 +59,72 @@ A Surface node embeds a fixed-size public Surface as a semantic leaf
 - Surface cells contain normalized graphemes and typed styles, not terminal
   byte sequences. Embedding a Surface does not create a raw VT output path
 
+## Width profile and cursor anchor
+
+Every Core Node uses the Runtime-selected Nagi Text width profile for
+measurement and drawing. A captured Surface cell whose stored span disagrees
+with that profile is skipped rather than composited with inconsistent geometry.
+Built-in border glyphs are replaced by one-cell ASCII `+`, `-`, and `|` when
+the selected profile does not measure the configured glyphs as one cell
+
+A cursor anchor occupies zero layout width and one row of height. While its
+stable focus owner owns focus, rendering sets the typed Surface cursor at the
+anchor position. It draws no visible grapheme and does not move following text.
+Out-of-bounds anchors follow the ordinary Surface rule and leave no visible
+cursor
+
+## Anchored overlay
+
+An AnchoredOverlay places one front layer relative to a stable Node ID found in
+its base subtree
+
+- Only the base contributes to measurement. The overlay can therefore be
+  added or removed without changing the surrounding layout
+- The assigned AnchoredOverlay rectangle intersected with its inherited clip
+  is the placement boundary. An overlay cannot escape that boundary
+- The anchor must intersect both its inherited clip and the placement
+  boundary. A zero-width, positive-height CursorAnchor is visible as a point
+  when its x coordinate is inside both half-open horizontal ranges. An absent,
+  fully hidden, or right-edge-outside anchor omits the overlay from rendering,
+  semantic indexing, hit testing, and routing
+- Placement defaults to below the anchor with start alignment and zero gap.
+  Above placement, start, center, or end alignment, a Cell gap, and optional
+  maximum width and height are configurable
+- Natural overlay size is measured within the configured maxima and placement
+  boundary. Zero maxima mean the complete boundary extent rather than a
+  zero-sized layer
+- Flip fallback uses the opposite vertical side only when the preferred side
+  cannot contain the desired height and the opposite side has strictly more
+  available rows. Clip fallback retains the preferred side. The result is
+  always clipped to its available rows
+- Horizontal placement is clamped to the complete boundary after alignment.
+  No grapheme or Cell may draw outside the inherited clip
+- The base is rendered and indexed first, then the overlay. Overlapping pointer
+  hits therefore select the overlay
+- Base and overlay are ordinary logical children of the AnchoredOverlay node.
+  The primitive creates no focus, modal, action, or hard Event boundary by
+  itself
+
+Wrapping a child ScrollViewport with AnchoredOverlay lets the layer use the
+outer boundary while the anchor remains clipped by that viewport. Placing the
+AnchoredOverlay inside a viewport keeps the complete layer inside the viewport
+
+## Base-measured overlay
+
+An Overlay places exactly one front layer over one base
+
+- Only the base contributes to intrinsic measurement. Adding or removing the
+  layer therefore does not move siblings in a surrounding linear layout
+- Base and layer receive the same complete assigned rectangle and inherited
+  clip. Applications use Align, Padding, Clip, or another ordinary Node to
+  constrain layer geometry
+- The base is prepared, indexed, and rendered first, then the layer. An
+  overlapping pointer hit therefore selects the layer
+- Both children remain ordinary logical children. Overlay creates no focus,
+  modal, action, placement, state, timer, or hard Event boundary
+- Overlay differs from Stack only in intrinsic measurement. Stack continues to
+  measure the greatest width and height of all supplied children
+
 ## Panel
 
 A Panel fills its assigned rectangle, draws a one-cell border, renders an
@@ -73,6 +139,30 @@ padding
 - A rendered title is one U+0020, the longest grapheme-aligned prefix fitting
   `width - 4` cells, and one U+0020. It begins one cell after the left border
 - Every operation remains clipped and zero-sized panels are valid
+
+## Split pane
+
+A SplitPane is the responsive two-child Core layout primitive defined by the
+[layout specification](layout.md)
+
+- The primary child, optional one-Cell divider, and secondary child follow the
+  configured main-axis order
+- Measurement includes both eager child measurements and one divider Cell.
+  Actual layout may omit the configured collapse pane under insufficient space
+- Only children present in the actual assigned layout enter semantic traversal
+- The primitive owns no focus target, input binding, pointer capture, or ratio
+  state. Those policies belong to standard widgets or application composition
+
+## Responsive row
+
+A ResponsiveRow is the priority-aware Core layout primitive defined by the
+[layout specification](layout.md)
+
+- Each item contains an arbitrary Node. The primitive does not assign meaning
+  to status, activity, usage, severity, or any other application concept
+- Actual assigned width determines retention, so omission occurs inside Core
+  before semantic indexing rather than in an application-sized approximation
+- The primitive owns no focus target, key binding, state, task, timer, or I/O
 
 ## Spacing
 

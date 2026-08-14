@@ -1,0 +1,18 @@
+nagi-fixture-v1	modal-focus-lifecycle
+# views are rendered from left to right; policies use first, previous, none, or target/<stable-id>
+default-entry-return	views=base,a,base	focus=opener	a-initial=first	a-return=previous	b-initial=first	b-return=previous	expected=opener,a-first,opener
+target-entry	views=base,a	focus=opener	a-initial=target/a-target	a-return=previous	b-initial=first	b-return=previous	expected=opener,a-target
+missing-target-entry	views=base,a	focus=opener	a-initial=target/missing	a-return=previous	b-initial=first	b-return=previous	expected=opener,a-first
+outside-target-entry	views=base,a	focus=opener	a-initial=target/background-target	a-return=previous	b-initial=first	b-return=previous	expected=opener,a-first
+none-entry	views=base,a	focus=opener	a-initial=none	a-return=previous	b-initial=first	b-return=previous	expected=opener,none
+previous-unfocused	views=base,a,base	focus=none	a-initial=first	a-return=previous	b-initial=first	b-return=previous	expected=none,a-first,none
+target-return	views=base,a,base	focus=opener	a-initial=first	a-return=target/background-target	b-initial=first	b-return=previous	expected=opener,a-first,background-target
+missing-target-return	views=base,a,base	focus=opener	a-initial=first	a-return=target/missing	b-initial=first	b-return=previous	expected=opener,a-first,background-first
+none-return	views=base,a,base	focus=opener	a-initial=first	a-return=none	b-initial=first	b-return=previous	expected=opener,a-first,none
+layered-return	views=base,a,a+b,a,base	focus=opener	a-initial=target/a-target	a-return=previous	b-initial=target/b-target	b-return=previous	expected=opener,a-target,b-target,a-target,opener
+nested-return	views=base,a,a>b,a,base	focus=opener	a-initial=target/a-target	a-return=previous	b-initial=target/b-target	b-return=previous	expected=opener,a-target,b-target,a-target,opener
+close-all	views=base,a,a+b,base	focus=opener	a-initial=first	a-return=previous	b-initial=first	b-return=previous	expected=opener,a-first,b-first,opener
+outer-none-close-all	views=base,a,a+b,base	focus=opener	a-initial=first	a-return=none	b-initial=first	b-return=previous	expected=opener,a-first,b-first,none
+replace-removed	views=base,a,b,base	focus=opener	a-initial=first	a-return=previous	b-initial=first	b-return=previous	expected=opener,a-first,b-first,opener
+inner-outside-return	views=base,a,a+b,a,base	focus=opener	a-initial=first	a-return=previous	b-initial=first	b-return=target/background-target	expected=opener,a-first,b-first,a-first,opener
+empty-modal	views=base,a-empty,base	focus=opener	a-initial=first	a-return=previous	b-initial=first	b-return=previous	expected=opener,none,opener

@@ -15,8 +15,9 @@ view(ViewContext)  -> Node<Message>
 - Messages MUST be processed in queue order unless a subscription explicitly
   uses latest-value delivery
 - Completed effects MUST return to the application as messages
-- `ViewContext` contains the current terminal size in cells. Runtime and
-  Interaction State are not exposed through it
+- `ViewContext` contains the current terminal size in cells and the Runtime's
+  terminal-width profile. Runtime and Interaction State are not exposed
+  through it
 - `view` MUST NOT perform I/O or mutate runtime state
 - Rendering MAY be coalesced across multiple processed messages without changing
   update order
@@ -38,6 +39,14 @@ terminal runner's ordinary error or cancellation result
 
 The runtime MUST NOT place user-visible continuity or event-processing state in
 Render Cache
+
+One terminal-width profile is fixed for a Runtime lifetime. Core measurement,
+wrapping, rendering, hit geometry, and cursor placement MUST use that profile.
+Standard widgets that calculate text geometry while building their Node receive
+the same profile explicitly from `ViewContext`; their standalone default remains
+Modern. An application-supplied Custom override MUST return a stable width for
+the same grapheme throughout that Runtime lifetime so cached geometry remains
+valid
 
 ## View identity
 

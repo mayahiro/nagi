@@ -1,0 +1,12 @@
+nagi-fixture-v1	widget-drawer
+# Runtime is 10x5; side drawers use Fixed 4, top and bottom use Fixed 3
+closed-idle	open=false	side=left	modal=true	body=true	dismiss=true	event=none	start=base	expected-open=false	message=-	consumed=false	expected-focus=base	builds=0	expected-body=none	availability=pass
+left-open	open=true	side=left	modal=true	body=true	dismiss=true	event=none	start=auto	expected-open=true	message=-	consumed=false	expected-focus=drawer-focus	builds=1	expected-body=1:1	availability=enabled
+right-open	open=true	side=right	modal=true	body=true	dismiss=true	event=none	start=auto	expected-open=true	message=-	consumed=false	expected-focus=drawer-focus	builds=1	expected-body=7:1	availability=enabled
+top-open	open=true	side=top	modal=true	body=true	dismiss=true	event=none	start=auto	expected-open=true	message=-	consumed=false	expected-focus=drawer-focus	builds=1	expected-body=1:1	availability=enabled
+bottom-open	open=true	side=bottom	modal=true	body=true	dismiss=true	event=none	start=auto	expected-open=true	message=-	consumed=false	expected-focus=drawer-focus	builds=1	expected-body=1:3	availability=enabled
+dismiss-modal	open=true	side=left	modal=true	body=true	dismiss=true	event=escape	start=base	expected-open=false	message=false	consumed=true	expected-focus=base	builds=1	expected-body=none	availability=enabled
+disabled-dismiss-passes	open=true	side=left	modal=true	body=true	dismiss=false	event=escape	start=auto	expected-open=true	message=raw	consumed=true	expected-focus=drawer-focus	builds=2	expected-body=1:1	availability=pass
+nonmodal-base-route	open=true	side=left	modal=false	body=true	dismiss=true	event=escape	start=base	expected-open=true	message=raw	consumed=true	expected-focus=base	builds=2	expected-body=1:1	availability=enabled
+nonmodal-drawer-dismiss	open=true	side=left	modal=false	body=true	dismiss=true	event=escape	start=drawer-focus	expected-open=false	message=false	consumed=true	expected-focus=base	builds=1	expected-body=none	availability=enabled
+open-without-body	open=true	side=left	modal=true	body=false	dismiss=true	event=escape	start=base	expected-open=false	message=false	consumed=true	expected-focus=base	builds=0	expected-body=none	availability=enabled

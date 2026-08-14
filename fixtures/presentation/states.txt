@@ -1,0 +1,9 @@
+nagi-fixture-v1	presentation-states
+simple	value=selected	expected=ok
+namespaced	value=dialog.active	expected=ok
+empty	value=	expected=empty
+leading-digit	value=1selected	expected=invalid-segment-start
+empty-segment	value=dialog..active	expected=invalid-segment-start
+uppercase	value=Selected	expected=invalid-segment-start
+invalid-character	value=dialog/active	expected=invalid-character
+invalid-utf8	value=state.\xFF	expected=invalid-utf8

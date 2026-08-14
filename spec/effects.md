@@ -2,20 +2,50 @@
 
 ## Effects
 
-The effect algebra contains `None`, `Exit`, `Focus`, `ScrollTo`, `Run`,
-`Latest`, `Cancel`, `Scoped`, `CancelScope`, `After`, `Batch`, and `Sequence`.
-Debounce is composed from `Latest` and `After` unless evidence requires another
-primitive
+The effect algebra contains `None`, `Exit`, `Focus`, `ScrollTo`,
+`SetClipboard`, `SuspendTerminal`, `Run`, `Latest`, `Cancel`, `Scoped`,
+`CancelScope`, `After`, `Batch`, and `Sequence`. Debounce is composed from
+`Latest` and `After` unless evidence requires another primitive
 
-`Exit`, `Focus`, and `ScrollTo` are synchronous UI commands applied by the
-Runtime. They MUST NOT start a worker thread or goroutine. `Exit` requests
-normal application termination after the final dirty frame, `Focus` requests a
-focusable stable Node ID in the next view, and `ScrollTo` requests a clamped
-offset for a stable ScrollViewport ID in the next view
+`Exit`, `Focus`, `ScrollTo`, and `SetClipboard` are synchronous UI commands
+applied by the Runtime. They MUST NOT start a worker thread or goroutine.
+`Exit` requests normal application termination after the final dirty frame,
+`Focus` requests a focusable stable Node ID in the next view, and `ScrollTo`
+requests a clamped offset for a stable ScrollViewport ID in the next view
 
-Rust tasks use standard threads and cooperative cancellation. Go tasks use
-goroutines and `context.Context`. Neither implementation embeds a general
-network or async runtime
+`SetClipboard` carries owned semantic UTF-8 text without choosing a domain
+meaning. Go normalizes invalid UTF-8 runs to U+FFFD at the Effect boundary.
+The Runtime retains at most one pending clipboard request, and a later request
+replaces an earlier request that has not been taken by a driver. Taking the
+request clears it. Custom Runtime drivers can route it to an application-owned
+backend. The standard terminal runner drops it while terminal clipboard output
+is disabled and encodes it as typed OSC 52 output only when explicitly enabled.
+Clipboard reads, raw terminal sequences, redaction policy, and OS-specific
+clipboard commands are not part of this Effect
+
+`SuspendTerminal` retains one blocking task for execution by a Runtime driver.
+The standard terminal runner restores the original terminal mode and leaves
+its full-screen alternate screen or finalizes its inline viewport before
+running the task on the driver thread. It resumes the configured viewport
+after the task returns. The task selects no editor, shell, browser, process, or
+domain error policy in Nagi; it only receives the same cooperative cancellation
+value as a normal task and returns one application Message. A custom Runtime
+driver MUST provide an equivalent safe boundary before calling the public
+terminal-task execution method
+
+Terminal tasks run one at a time and do not occupy asynchronous worker slots.
+They remain pending until a driver executes them. `Scoped` cancellation can
+remove a terminal task that has not started. A terminal task completes its
+enclosing `Batch` or `Sequence` only after it returns or its panic is recovered,
+so a later Sequence child never starts early
+
+Rust `Run` tasks use standard threads and cooperative cancellation. Go `Run`
+tasks use goroutines and `context.Context`. Terminal tasks instead execute on
+the Runtime driver's current thread or goroutine. A Go context-aware Runtime
+derives worker, terminal-task, and Stream contexts from its caller so values,
+deadlines, cancellation, and cancellation causes are retained. Closing the
+Runtime still cancels each active child. Neither implementation embeds a
+general network or async runtime
 
 `Run` starts an anonymous one-shot task. `Latest` starts a keyed task. `Cancel`
 targets the current Latest generation for its key. `Scoped` associates all
@@ -31,12 +61,14 @@ An Effect returned directly from `update` MAY declare that the update did not
 change state observed by `view`. The runtime MUST still schedule that Effect
 and reconcile subscriptions, but MUST NOT dirty an otherwise clean view solely
 for that update. An already-dirty runtime stays dirty. Synchronous `Exit`,
-`Focus`, and `ScrollTo` commands still request their required frame
+`Focus`, and `ScrollTo` commands still request their required frame.
+`SetClipboard` does not independently dirty the view, but is flushed at the
+next terminal scheduling boundary even when no frame is produced
 
-Concurrent task execution is bounded by runtime configuration. Cancellation
-does not free a worker slot until a running task returns. Task panics are caught
-at the task boundary, suppress their result, and advance enclosing Batch or
-Sequence completion
+Concurrent worker-task execution is bounded by runtime configuration.
+Cancellation does not free a worker slot until a running task returns. Worker
+and terminal task panics are caught at their execution boundary, suppress their
+result, and advance enclosing Batch or Sequence completion
 
 ## Latest-result guarantee
 
@@ -46,6 +78,17 @@ NOT enter the application message queue even if the old task finishes later
 
 Cancellation guarantees stale-result suppression, not immediate task
 termination
+
+Runtime close requests cancellation and returns without waiting. An optional
+close-and-wait boundary waits for Effect task functions and Stream producer
+functions started by that Runtime to return. Rust provides an unbounded wait
+and a real-time timeout; Go accepts a caller context. A timed-out or canceled
+wait leaves cancellation requested and MAY be retried. A producer that ignores
+cancellation can outlive close or prevent an unbounded wait from returning
+
+The wait boundary does not include an application-owned process, thread, or
+goroutine started inside a producer unless that producer itself waits for the
+child before returning
 
 ## Scope and subscriptions
 
@@ -89,3 +132,30 @@ intervals and produce one value at a scheduling boundary
 
 Backpressure, replacement, discarded-value, lifecycle, and producer-failure
 counters remain observable through runtime and test-support diagnostics
+
+## Asynchronous lifecycle notices
+
+The Runtime retains a separate bounded FIFO of lifecycle notices. This queue
+does not inject an application Message or dirty the view. When full, it keeps
+the oldest notices, drops newer notices, and increments an observable dropped
+counter
+
+Notice kinds are Effect panic, Effect worker spawn failure, active Stream
+return, Stream panic, and Stream worker spawn failure. Go worker primitives do
+not currently report spawn failure, but the kind remains shared across the
+public model. A Latest Effect notice contains its Task key and generation; an
+anonymous Run or SuspendTerminal notice has no task identity. Every Stream
+notice contains its Subscription key and generation. Panic payloads and stack
+traces are not retained
+
+A Stream that returns while its generation remains active emits the active
+Stream return notice because Stream is a long-lived source. Returning after the
+Runtime requested cancellation or closed the sink does not emit that notice. A
+recovered panic remains a panic notice
+
+Custom Runtime drivers drain notices explicitly. Terminal runners provide both
+a synchronous observation handler and a direct optional-Message mapper, and
+drain after each asynchronous scheduling boundary. A mapped Message completes
+its update before the next notice is mapped while rendering remains coalesced.
+Applications decide whether a notice becomes domain state, a Message, a log
+record, or process-level telemetry

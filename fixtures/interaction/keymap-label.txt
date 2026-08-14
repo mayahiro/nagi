@@ -1,0 +1,5 @@
+nagi-fixture-v1	keymap-label
+descriptor-default	action=app.submit	label=Submit	layers=-	expected=Submit	expected-scopes=-
+root-localization	action=app.submit	label=Submit	layers=root:Send	expected=Send	expected-scopes=root
+nearest-wins	action=app.submit	label=Submit	layers=root:Send;dialog:Confirm	expected=Confirm	expected-scopes=root,dialog
+unicode-label	action=app.submit	label=Submit	layers=root:送信	expected=送信	expected-scopes=root

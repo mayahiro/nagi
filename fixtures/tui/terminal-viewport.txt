@@ -1,0 +1,7 @@
+nagi-fixture-v1	terminal-viewport
+middle	terminal=80,24	requested=3	cursor=4,5	offset=0	expected=origin:5;height:3;lines:2
+bottom-scroll	terminal=80,24	requested=4	cursor=0,23	offset=0	expected=origin:20;height:4;lines:3
+resize-offset	terminal=100,30	requested=5	cursor=12,18	offset=2	expected=origin:16;height:5;lines:2
+height-clamp	terminal=40,6	requested=20	cursor=2,5	offset=0	expected=origin:0;height:6;lines:5
+offset-clamp	terminal=40,6	requested=3	cursor=2,1	offset=9	expected=origin:0;height:3;lines:0
+single-row	terminal=1,1	requested=1	cursor=0,0	offset=0	expected=origin:0;height:1;lines:0

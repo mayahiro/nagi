@@ -1,0 +1,4 @@
+nagi-fixture-v1	runtime-scheduling
+two-of-five	maximum=2	messages=1,2,3,4,5	expected-cycle=1,2	expected-remaining=3	expected-final=1,2,3,4,5
+one-of-three	maximum=1	messages=A,B,C	expected-cycle=A	expected-remaining=2	expected-final=A,B,C
+larger-than-queue	maximum=8	messages=x,y	expected-cycle=x,y	expected-remaining=0	expected-final=x,y

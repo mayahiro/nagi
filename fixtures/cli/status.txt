@@ -1,0 +1,14 @@
+nagi-fixture-v1	cli-status
+terminal-status	terminal=yes	width=20	profile=modern	progress-width=4	kind=status	tick=0	current=0	total=0	message=Working	repeat=yes	log=-	end=clear	emitted=true,false,true	output=\r\x1B[2KWorking\r\x1B[2K
+terminal-spinner-finish	terminal=yes	width=20	profile=modern	progress-width=4	kind=spinner	tick=1	current=0	total=0	message=Wait	repeat=no	log=-	end=finish	emitted=true,true	output=\r\x1B[2K\\ Wait\n
+terminal-progress	terminal=yes	width=30	profile=modern	progress-width=4	kind=progress	tick=0	current=1	total=4	message=Build	repeat=yes	log=-	end=finish	emitted=true,false,true	output=\r\x1B[2K[#---] 1/4 Build\n
+terminal-cjk-truncate	terminal=yes	width=5	profile=cjk	progress-width=4	kind=status	tick=0	current=0	total=0	message=A·日B	repeat=no	log=-	end=clear	emitted=true,true	output=\r\x1B[2KA·\r\x1B[2K
+terminal-narrow	terminal=yes	width=1	profile=modern	progress-width=4	kind=status	tick=0	current=0	total=0	message=Hidden	repeat=no	log=-	end=clear	emitted=true,true	output=\r\x1B[2K\r\x1B[2K
+terminal-unknown-width	terminal=yes	width=-	profile=modern	progress-width=4	kind=status	tick=0	current=0	total=0	message=Fallback width	repeat=no	log=-	end=finish	emitted=true,true	output=\r\x1B[2KFallback width\n
+terminal-log	terminal=yes	width=30	profile=modern	progress-width=4	kind=status	tick=0	current=0	total=0	message=Working	repeat=no	log=downloaded	end=clear	emitted=true,true	output=\r\x1B[2KWorking\r\x1B[2Kdownloaded\n\r\x1B[2KWorking\r\x1B[2K
+terminal-maximum-spinner	terminal=yes	width=10	profile=modern	progress-width=4	kind=spinner	tick=18446744073709551615	current=0	total=0	message=	repeat=no	log=-	end=finish	emitted=true,true	output=\r\x1B[2K/\n
+terminal-maximum-progress	terminal=yes	width=100	profile=modern	progress-width=7	kind=progress	tick=0	current=18446744073709551615	total=18446744073709551615	message=	repeat=no	log=-	end=finish	emitted=true,true	output=\r\x1B[2K[#######] 18446744073709551615/18446744073709551615\n
+log-spinner-coalesce	terminal=no	width=-	profile=modern	progress-width=4	kind=spinner	tick=3	current=0	total=0	message=Waiting	repeat=yes	log=-	end=none	emitted=true,false	output=Waiting\n
+log-progress-clamp	terminal=no	width=-	profile=modern	progress-width=4	kind=progress	tick=0	current=9	total=4	message=Build	repeat=no	log=-	end=finish	emitted=true,false	output=4/4 Build\n
+log-progress-zero-total	terminal=no	width=-	profile=modern	progress-width=4	kind=progress	tick=0	current=10	total=0	message=Idle	repeat=no	log=-	end=none	emitted=true	output=0/0 Idle\n
+log-empty-status	terminal=no	width=-	profile=modern	progress-width=4	kind=status	tick=0	current=0	total=0	message=	repeat=no	log=-	end=none	emitted=false	output=

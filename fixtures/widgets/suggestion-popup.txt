@@ -1,0 +1,15 @@
+nagi-fixture-v1	widget-suggestion-popup
+normalize-missing	candidates=a,b	selected=missing	status=ready	enabled=true	event=-	expected-selected=a	expected-value=	expected-open=true	expected-messages=-	consumed=-
+next	candidates=a,b,c	selected=a	status=ready	enabled=true	event=down	expected-selected=b	expected-value=	expected-open=true	expected-messages=select:b	consumed=true
+repeat-next	candidates=a,b,c	selected=b	status=ready	enabled=true	event=repeat-down	expected-selected=c	expected-value=	expected-open=true	expected-messages=select:c	consumed=true
+next-boundary	candidates=a,b,c	selected=c	status=ready	enabled=true	event=down	expected-selected=c	expected-value=	expected-open=true	expected-messages=-	consumed=true
+previous-boundary	candidates=a,b,c	selected=a	status=ready	enabled=true	event=up	expected-selected=a	expected-value=	expected-open=true	expected-messages=-	consumed=true
+accept	candidates=a,b	selected=b	status=ready	enabled=true	event=enter	expected-selected=b	expected-value=	expected-open=true	expected-messages=accept:b	consumed=true
+repeat-accept	candidates=a,b	selected=b	status=ready	enabled=true	event=repeat-enter	expected-selected=b	expected-value=	expected-open=true	expected-messages=-	consumed=true
+dismiss	candidates=a,b	selected=a	status=ready	enabled=true	event=escape	expected-selected=a	expected-value=	expected-open=false	expected-messages=dismiss	consumed=true
+repeat-dismiss	candidates=a,b	selected=a	status=ready	enabled=true	event=repeat-escape	expected-selected=a	expected-value=	expected-open=true	expected-messages=-	consumed=true
+text-edit	candidates=a,b	selected=a	status=ready	enabled=true	event=text-X	expected-selected=a	expected-value=X	expected-open=true	expected-messages=change:X	consumed=true
+loading-submit	candidates=a,b	selected=a	status=loading	enabled=true	event=enter	expected-selected=a	expected-value=	expected-open=true	expected-messages=submit	consumed=true
+empty-submit	candidates=-	selected=-	status=ready	enabled=true	event=enter	expected-selected=-	expected-value=	expected-open=true	expected-messages=submit	consumed=true
+disabled-submit	candidates=a,b	selected=a	status=ready	enabled=false	event=enter	expected-selected=a	expected-value=	expected-open=true	expected-messages=submit	consumed=true
+pointer-second	candidates=a,b	selected=a	status=ready	enabled=true	event=mouse-second	expected-selected=b	expected-value=	expected-open=true	expected-messages=select:b,accept:b	consumed=true

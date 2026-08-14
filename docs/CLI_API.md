@@ -10,13 +10,18 @@ Status through a configurable Runtime Policy
 
 The language-neutral [command application specification](../spec/cli.md) is
 the public behavioral contract. Shared fixtures under `fixtures/cli` verify
-parsing, diagnostics, help, runtime output, cancellation, and byte preservation
+parsing, completion, diagnostics, Help, runtime output, cancellation, and byte
+preservation
 
 ## Packages
 
 | Responsibility | Rust | Go |
 | --- | --- | --- |
 | Command graph, parser, and runtime | `nagi-cli` | `github.com/mayahiro/nagicli-go` package `cli` |
+| Shell completion generation and protocol | `nagi-cli-completion` | `github.com/mayahiro/nagicli-go/completion` |
+| Markdown and man Help rendering | `nagi-cli-document` | `github.com/mayahiro/nagicli-go/document` |
+| Lightweight interactive prompts | `nagi-cli-prompt` | `github.com/mayahiro/nagicli-go/prompt` |
+| TTY-aware status reporting | `nagi-cli-status` | `github.com/mayahiro/nagicli-go/status` |
 | Process-free application tests | `nagi-cli-test` | `github.com/mayahiro/nagicli-go/clitest` |
 | Help label width | `nagi-text` | `github.com/mayahiro/nagi-go/text` |
 
@@ -33,9 +38,14 @@ Commands, options, and positionals use language-native builders
 | Flag | `OptionSpec::flag("id")` | `cli.Flag("id")` |
 | Count | `OptionSpec::count("id")` | `cli.Count("id")` |
 | Value option | `OptionSpec::value("id")` | `cli.ValueOption("id")` |
+| Inherited option | `.inherited()` | `.Inherited()` |
+| Hidden command or option | `.hidden()` | `.Hidden()` |
+| Deprecated command or option | `.deprecated(replacement)` | `.Deprecated(replacement)` |
 | Positional | `Argument::new("id")` | `cli.Positional("id")` |
+| Sensitive value option or positional | `.sensitive()` | `.Sensitive()` |
 | Option group | `OptionGroup::exactly_one(...)` | `cli.ExactlyOne(...)` |
 | Child command | `.subcommand(command)` | `.Subcommand(command)` |
+| Dynamic value completion | `.completion_provider(provider)` | `.CompletionProvider(provider)` |
 | Typed validator | `.validator(validator)` | `.Validator(validator)` |
 | Help Usage Variant | `.usage_variant(id, syntax)` | `.UsageVariant(id, syntax)` |
 | Help example | `.example(name, invocation)` | `.Example(name, invocation)` |
@@ -44,9 +54,13 @@ Commands, options, and positionals use language-native builders
 | Custom Help section | `HelpSection::new(...)` | `cli.NewHelpSection(...)` |
 | Handler | `.handler(handler)` | `.Handle(handler)` |
 
-Long and short names are explicit. Value options can be required, repeatable,
+Long and short names are explicit. Options are command-local by default.
+Marking an option inherited makes it visible in its declaring command and
+every selected descendant, before or after subcommand selection and
+positionals until `--`. Value options can be required, repeatable,
 environment-backed, defaulted, or related through `requires` and `conflicts`.
-Relations can inspect resolved presence or command-line presence
+Relations can inspect resolved presence or command-line presence and remain
+local to the command that declares them
 
 Portable option groups express `at-most-one`, `exactly-one`, `at-least-one`,
 and `all-or-none` cardinality over options on one command. Groups inspect
@@ -62,7 +76,104 @@ The complete graph is validated before argv is consumed. Invalid names,
 reserved built-in spellings, local option and positional ID collisions, sibling
 alias collisions, invalid positional order, malformed groups, and
 cross-command option relations return an `invalid-specification` Diagnostic.
-Parent and child commands may reuse the same value ID and option spelling
+Parent and child commands may reuse the same value ID. They may also reuse an
+option spelling when the ancestor declaration is local. A descendant cannot
+reuse a visible inherited spelling, while unrelated branches remain independent
+
+## Command and option lifecycle
+
+Command and Option builders expose independent Hidden and Deprecated metadata.
+The metadata is generic to command applications and does not add Agent,
+authorization, credential, or migration-policy concepts
+
+Hidden omits a declaration from generated projections while keeping its exact
+syntax parseable. Parent Help, generated Usage Variants, local and inherited
+Option entries, completion candidates, and future graph-derived documentation
+omit Hidden declarations. A relation whose source or target is Hidden is
+omitted from Help, as is an option group containing a Hidden member. A Hidden
+Value Option's finite candidates are not returned and its dynamic completion
+provider does not run, even when completed input explicitly names that Option
+
+Direct Help for a known Hidden Command remains available. A root with only
+Hidden children does not expose a generic `<COMMAND>` Usage form or generated
+`help` candidate. Hidden is not a security or redaction boundary: known hidden
+syntax can still be parsed, so applications must enforce access control and
+sensitive-value handling separately
+
+Deprecated accepts a non-empty valid UTF-8 replacement hint without Unicode
+control characters. Parsing and handler execution continue. Structured Help
+and static completion candidates expose a `Deprecation` value. The plain Help
+renderer adds replacement hints, and optional shell protocol adapters decorate
+candidate descriptions without changing insertion values
+
+In Go, lifecycle metadata on `HelpEntry` and `HelpInheritedOption` is opaque
+and is populated by `HelpDocument`. Direct keyed literals can represent only
+synthetic non-deprecated entries. The added private metadata also means an
+external unkeyed composite literal written for an earlier field list is not
+source compatible
+
+Each successful Invocation exposes structured `DeprecationNotice` values in
+deterministic first-use order. A deprecated root comes first; later Command and
+Option targets follow their first successful argv occurrence. Stable targets
+are deduplicated, while the first alias, long spelling, or short spelling is
+retained. Environment, external, and default fallbacks do not create Option notices.
+Help, version, and failed parsing or validation do not return notices through a
+Diagnostic
+
+The default Runtime Policy keeps notices silent. Install
+`PlainDeprecationNoticeRenderer` through
+`RuntimePolicy::with_deprecation_notice_renderer` or
+`RuntimePolicy.WithDeprecationNoticeRenderer` to write them to standard error
+before handler execution. An output failure is returned and prevents the
+handler from starting. Applications that own output routing can inspect
+`Invocation::deprecation_notices` or `Invocation.DeprecationNotices` directly
+
+See the [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle/README.md)
+and [Go lifecycle example](../nagicli-go/examples/lifecycle/README.md)
+
+## Sensitive Value metadata
+
+A Value Option or positional Argument can carry generic Sensitive metadata.
+This metadata controls framework presentation only: it does not identify a
+credential type or add authorization policy. Applying it to a Flag or Count is
+invalid value-only configuration and graph validation rejects it
+
+Generated Help preserves labels, descriptions, required state, and environment
+variable names while replacing a configured default or finite value set with
+the public `<redacted>` marker. A framework-generated parser failure omits both
+the raw value and parser reason. Structured Help entries, parsed values,
+Diagnostic targets, and Completion targets expose the marker as queryable
+metadata rather than requiring display-text inspection. Stable JSON Diagnostic
+schema `nagi.cli.diagnostic.v1` remains unchanged because it has no raw-value field
+
+Parser targets and matching targets returned by Invocation validators or
+Handlers inherit the declaration marker. Resolution uses target kind, stable
+command-ID path, and local value ID; an unknown or mismatched target remains
+non-Sensitive
+
+Completion returns no finite-value candidates for a Sensitive target and does
+not retain or invoke that target's dynamic provider. A completed Sensitive
+occurrence remains available through explicit raw `CompletionRequest` access
+when a provider for another target needs it; the occurrence and target stay
+marked Sensitive. Raw `CompletionInput` formatting treats every token as opaque
+because that input has not yet been interpreted against a Command Graph
+
+Explicit Invocation raw and typed access returns the original value and source.
+Sensitive metadata does not zeroize memory, hide OS argv or shell history,
+protect transport, or stop application code from logging a value it reads.
+Application-authored Diagnostic text, Help text, parser objects, and runtime
+output are opaque, so applications must redact those strings themselves
+
+Go defines safe formatting for value-bearing CLI and completion types instead
+of relying on recursive default struct formatting. Code that compared their
+undocumented formatting text is not source-level affected but observes
+different output before v1. Go framework-generated non-Sensitive Invalid Value
+messages now use the same single-quoted stable value ID as Rust and the shared
+fixture; consumers should continue branching on the Diagnostic code rather
+than its human-readable message
+
+See the [Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values/README.md)
+and [Go Sensitive Value example](../nagicli-go/examples/sensitive-values/README.md)
 
 ## Parsing and typed values
 
@@ -92,8 +203,14 @@ Use `Invocation::scope` or `Invocation.Scope` with a stable command-ID path for
 exact access to a parent or another selected scope. `Invocation::scopes` and
 `Invocation.Scopes` enumerate all selected scopes in root-to-leaf order
 
+Every inherited-option occurrence is stored in the scope that declared it,
+including occurrences after a descendant was selected. Duplicate checks and
+repeated-value ordering therefore span both argv positions. A parse or
+validation Diagnostic targets the declaration's stable command-ID path while
+retaining the selected command path and usage
+
 Each parsed value records whether it came from the command line, environment,
-or default. Command-line values take precedence over both fallback sources.
+external resolver, or default. Precedence follows that same order.
 `Invocation::contains` and `Invocation.Contains` report resolved presence,
 while `Invocation::supplied` and `Invocation.Supplied` report whether argv
 supplied the nearest visible declaration. Exact scopes provide the same
@@ -108,6 +225,227 @@ mapping, use `Invocation::require_value` in Rust or
 mismatch and includes the stable lookup scope and local value ID. No accessor
 coerces dynamic types
 
+## Value Source adapters
+
+A Value Resolver maps configuration that the application has already loaded
+into raw Value Option fallbacks. Nagi keeps a fixed precedence of command line,
+environment, external resolver, then configured default. A command-line or
+environment value skips the resolver for that declaration. An unresolved
+result permits the default
+
+The callback runs synchronously only for unresolved Value Options on the
+selected command path, in root-to-leaf and declaration order. It does not run
+for Flag, Count, positional, unselected command, Help, version, completion, or
+derived-document processing. Its request contains selected and declaring
+command paths, stable ID paths, local value ID, repeatability, and Sensitive
+metadata. It does not expose higher-precedence raw values, the configured
+default, or the Value Parser
+
+| Operation | Rust | Go |
+| --- | --- | --- |
+| Resolver callback | `ValueResolver` | `cli.ValueResolver` |
+| Parser injection | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
+| Unresolved result | `ValueResolution::unresolved()` | zero `cli.ValueResolution` |
+| Replace Default | `ValueResolution::replace(...)` | `cli.ReplaceValueResolution(...)` |
+| Merge with Default | `ValueResolution::merge(...)` | `cli.MergeValueResolution(...)` |
+| Parsed origin | `ParsedValue::origin` | `ParsedValue.Origin` |
+| Runtime injection | `Context::with_value_resolver` | `Context.WithValueResolver` |
+| Process integration | `Command::run_process_with_value_resolver` | `Command.RunProcessWithValueResolver` |
+| Test-driver injection | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
+
+Replace suppresses the configured default. Merge is valid only for a repeated
+Value Option and appends its configured default after the external values when
+present. A non-repeated declaration accepts exactly one Replace value. A
+resolved source identity uses the stable ASCII identifier grammar and should
+name a non-secret source such as `project-config`, not a credential
+
+Each external raw value still passes through the declaration's Value Parser.
+Parser failures retain an External origin in the structured Diagnostic target,
+while the default plain and JSON renderers deliberately omit origin metadata.
+Custom renderers can inspect it without changing the stable JSON schema.
+Default Debug and Go formatting of a Value Resolution omit its source identity
+and every raw value. Use explicit accessors only when application code intends
+to read them
+
+The resolver should be a projection over application state, not a place to
+start configuration-file or network I/O. Nagi does not own configuration
+schema, file discovery, credentials, interpolation, retry, or persistence. See
+the [Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources/README.md)
+and [Go Value Source Adapter example](../nagicli-go/examples/value-sources/README.md)
+
+## Response Files
+
+Response File expansion is an opt-in lexical layer before ordinary command
+parsing. Existing parser and Runtime entry points continue to preserve a
+leading `@` literally unless expansion is configured. The standalone
+`expand_response_files` and `cli.ExpandResponseFiles` functions accept an
+injected reader and standard input. A `Context` can install the same boundary
+for deterministic or embedded execution, while `ProcessOptions` selects the
+filesystem-backed reader for complete process integration
+
+| Operation | Rust | Go |
+| --- | --- | --- |
+| Standalone expansion | `expand_response_files` | `cli.ExpandResponseFiles` |
+| Expansion options | `ResponseFileOptions` | `cli.ResponseFileOptions` |
+| Resource limits | `ResponseFileLimits` | `cli.ResponseFileLimits` |
+| Injected reader | `ResponseFileReader` | `cli.ResponseFileReader` |
+| Filesystem reader | `FilesystemResponseFileReader` | `cli.FilesystemResponseFileReader` |
+| Runtime injection | `Context::with_response_files` | `Context.WithResponseFiles` |
+| Process composition | `ProcessOptions::with_response_files` | `ProcessOptions.WithResponseFiles` |
+| Complete process entry | `Command::run_process_with_options` | `Command.RunProcessWithOptions` |
+| Test-driver injection | `TestDriver::response_files` | `clitest.Driver.ResponseFiles` |
+
+An enabled `@path` token includes a file recursively, including after `--`.
+`@@name` emits the literal argument `@name`, and a lone `@` stays literal.
+Exact `@-` reads standard input only when separately enabled and can be
+consumed at most once. Relative top-level paths resolve from the injected
+current directory; nested paths resolve from the including file's directory,
+while nested paths from standard input retain the original current directory
+
+Sources must be UTF-8, may start with one byte-order mark, and must not contain
+NUL. ASCII whitespace separates tokens. A `#` starts a comment only at a
+token boundary. Single and double quotes preserve their contents, adjacent
+quoted and unquoted fragments concatenate, and a backslash outside single
+quotes escapes the next Unicode scalar literally. There is no shell,
+variable, command, glob, tilde, environment, or C-style escape expansion
+
+Default limits allow depth 16, 64 sources, 8 MiB of aggregate source bytes,
+65,536 examined tokens, and 8 MiB of aggregate token bytes. Every limit is
+caller-configurable, and zero is an enforceable limit. Expansion rejects
+active lexical include cycles and returns structured Response File targets
+without source contents. Runtime validates the Command Graph before reading
+any file. Expanded arguments then use the ordinary Command Line origin and
+pass through the same parser, validator, and Sensitive Value handling
+
+`ProcessOptions` composes Response Files, a Value Resolver, and a Runtime
+Policy without adding ordering-dependent helper variants. See the
+[Rust Response File example](../nagi-rs/crates/nagi-cli/examples/response_files/README.md)
+and [Go Response File example](../nagicli-go/examples/response-files/README.md)
+
+## Shell and dynamic completion
+
+`CompletionEngine::new` and `cli.NewCompletionEngine` validate and snapshot a
+Command Graph as an immutable, handler-free completion model. Build one Engine
+and reuse it across requests. Changes to the original graph after construction
+do not affect the Engine
+
+One request separates completed shell tokens from the token prefix at the
+cursor. Rust uses `CompletionInput::new(arguments, current)` and
+`CompletionEngine::complete`; Go uses `cli.NewCompletionInput(arguments,
+current)` and `CompletionEngine.Complete`. The Engine resolves only the selected
+command path and its visible inherited options. It understands aliases, `--`,
+short-option clusters, attached values such as `--profile=dev`, repeated
+positionals, and the built-in `help` path
+
+Finite parser values are static candidates. A value Option or Argument may also
+install one dynamic `CompletionProvider`. Only the provider for the active
+target runs. It receives the selected canonical and stable command paths, the
+target-local prefix, and recognized raw occurrences in argv order. Completion
+does not run Value Parsers, fallbacks, validators, or command handlers.
+Sensitive targets return no value candidates and do not run their provider
+
+Rust providers receive a `CancellationToken`; Go providers receive the caller's
+`context.Context`. Providers must poll cancellation during long-running work.
+The Engine preserves source order, filters by exact prefix, and keeps the first
+candidate for each insertion value. Empty display labels and descriptions are
+treated as absent. Empty values, invalid UTF-8 in Go, and Unicode control
+characters produce a completion-specific error before protocol output
+
+Shell integration is optional. Rust crate `nagi-cli-completion` and Go package
+`completion` generate deterministic Bash, Zsh, Fish, and PowerShell scripts.
+Their `handle` or `Handle` helper intercepts the reserved completion request
+before ordinary Command Graph dispatch and returns whether it handled the
+request. Applications should call it before `Command::run_process` or
+`Command.RunProcess`
+
+Generated adapters use each shell's native completion registration and pass
+already tokenized arguments to the Engine. They do not evaluate candidate text
+as shell source. The Bash adapter reconstructs the cursor prefix without
+evaluating expansions and shell-quotes insertion values; Zsh uses its `PREFIX`
+state and compsys quoting. Zsh and PowerShell preserve per-candidate append
+policy. Bash uses no-space behavior for every candidate, and Fish uses its
+native default because neither public adapter surface can represent arbitrary
+per-candidate suffix behavior
+
+## Lightweight interactive prompts
+
+Prompt is an optional layer outside CLI Core. Rust crate `nagi-cli-prompt` and
+Go package `prompt` provide line-oriented Confirm, Select, Input, and Secret
+requests without entering a full-screen TUI or owning application policy
+
+`Prompter` executes requests through an injected I/O boundary. Rust uses
+`PromptIo`; Go uses `prompt.IO`. Both boundaries report terminal availability,
+write and flush prompt text, and return a bounded complete line together with
+its visible or secret input mode. This makes transcript, cancellation,
+oversized-input, and Secret-mode tests deterministic without changing a real
+terminal
+
+The process implementations use standard input and standard error by default,
+leaving standard output for command results. Prompt requires terminal input
+and output before writing. An application may explicitly allow non-terminal
+Confirm, Select, and Input requests, but Secret always requires a terminal.
+Rust uses `ProcessIo::default`; Go uses `prompt.NewProcess` or
+`prompt.NewProcessIO`
+
+Every request receives the caller's cancellation source. Pass a CLI handler's
+`Context::cancellation` or `Context.Cancellation` so process SIGINT becomes a
+structured Prompt cancellation. End of input before a response, an ETX-only
+line, and an Escape-only line are also cancellation. The Unix process reader checks
+cancellation while waiting for input without a permanently running task
+
+Confirm accepts ASCII yes/no forms and supports an explicit default. Select
+renders one-based ordered choices and returns a zero-based index. Input and
+Secret preserve surrounding spaces, while Confirm and Select trim ASCII spaces
+and tabs. Invalid UTF-8 response runs become U+FFFD. The default response limit
+is 65,536 bytes and the default Select limit is 1,000 choices; both are
+configurable
+
+Secret clears terminal `ECHO` and `ECHONL` only for the bounded canonical line
+read, then restores the complete saved state on success, failure,
+cancellation, oversized input, and stack unwinding. Returned Secret values are
+ordinary strings and are not memory-zeroized by Prompt. Applications still own
+credential handling, validation, authorization, approval policy, and retries
+beyond the portable input rules
+
+See the [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt/README.md)
+and [Go Prompt example](../nagicli-go/examples/prompt/README.md) for complete
+handler integration
+
+## TTY-aware status reporting
+
+Status reporting is another optional layer outside CLI Core. Rust crate
+`nagi-cli-status` and Go package `status` project application-owned Status,
+Spinner, and Progress Snapshots onto standard error without owning a task,
+timer, cancellation source, or application meaning
+
+`Reporter` is synchronous. The application calls `update` or `Update` when its
+state changes and serializes the Reporter with other writers to the same
+stream. Stable ASCII spinner frames avoid terminal-font width ambiguity.
+Determinate progress clamps at the total and computes completed Cells without
+integer overflow
+
+The injected `StatusIo` or `status.IO` boundary reports terminal availability
+and optional current columns. On a terminal, one transient line is erased and
+repainted, identical rendered updates are coalesced, the final Cell is reserved
+to avoid autowrap, and Nagi Text applies the configured Modern, CJK, or custom
+width profile. An unavailable width uses 80 columns
+
+When output is redirected, no terminal controls or spinner frames are written.
+Status and Spinner become a plain message record; Progress becomes a clamped
+`current/total` record. Identical records are coalesced, including Spinner
+updates that differ only by tick. `finish` or `Finish` commits the final state
+and resets coalescing, while `clear` or `Clear` never erases redirected output
+
+Messages are valid UTF-8 without Unicode control characters and use a default
+65,536-byte limit. `log` or `Log` writes a permanent line while preserving an
+active transient status. Reporter retains only bounded rendering buffers and
+performs no periodic wake-up. Applications continue to own cancellation,
+update rate, progress meaning, and diagnostic coordination
+
+See the [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status/README.md)
+and [Go Status example](../nagicli-go/examples/status/README.md) for complete
+process-backed usage
+
 ## Structured Help
 
 `Command::help_document` and `Command.HelpDocument` return a renderer-independent
@@ -117,6 +455,13 @@ option-relation and option-group constraints, named examples, notes, links,
 and application-defined structured sections. Standard entries, Usage
 Variants, and relation and group members retain stable IDs separately from
 display labels
+
+Local declarations appear under `Options`. Options inherited from selected
+ancestors appear under `Inherited Options` in outermost-to-nearest ancestor
+and definition order. `HelpInheritedOption` retains the source command path,
+stable command-ID path, option ID, label, and unmodified description for
+custom renderers. The plain renderer appends the source command path to each
+inherited description
 
 `Command::usage_variant` and `Command.UsageVariant` add ordered Help-only
 invocation forms. Their syntax is a suffix such as `<NODE> [OPTIONS]`; the
@@ -142,9 +487,40 @@ The default plain renderer preserves definition order and aligns labels by
 terminal Cell width. Applications can install a custom Help Renderer through
 the Runtime Policy without replacing parsing or validation
 
+`Command::visit_help_documents` and `Command.VisitHelpDocuments` validate the
+graph once and synchronously visit the root followed by visible descendants in
+definition-order preorder. Hidden command subtrees are omitted. Returning
+`false` stops successfully. The visitor receives one document at a time, so an
+application can write a large documentation set without retaining every page
+in memory. Do not mutate the Command Graph from the callback
+
 In addition to `-h` and `--help`, roots with subcommands provide
 `help [COMMAND...]`. Nested aliases are accepted and the selected command is
 reported by its canonical path
+
+## Derived Help documents
+
+The optional Rust `nagi-cli-document` crate and Go `document` package provide
+`MarkdownRenderer` and `ManRenderer`. Both implement the existing Help
+Renderer interface and also expose a direct `render` or `Render` method. They
+are pure adapters over one Help Document and perform no filesystem I/O. The
+application owns filenames, directories, page separation, and output routing
+
+Markdown output targets CommonMark 0.31.2. Usage and example invocations use
+indented code blocks. Application strings are escaped as plain text, and
+unsafe link-destination characters are percent-encoded. Man output uses a
+deterministic section 1 `.TH` plus conventional `NAME`, `SYNOPSIS`, `.SH`,
+`.TP`, `.PP`, `.nf`, and `.fi` structure. Roff request starts, reverse solidus,
+and hyphen in application text are escaped. Neither format contains the
+current date or invokes handlers, validators, Completion Providers, or shell
+completion generation
+
+Both renderers normalize line endings and controls, produce valid UTF-8, and
+end with exactly one LF. Hidden declarations, Deprecated hints, inherited
+origins, and Sensitive redaction come from the same structured Help Document
+as terminal Help. See the
+[Rust derived-document example](../nagi-rs/crates/nagi-cli-document/examples/documentation/README.md)
+and [Go derived-document example](../nagicli-go/examples/documentation/README.md)
 
 ## Structured Diagnostics
 
@@ -167,6 +543,20 @@ selected scope
 The plain renderer writes one `hint:` line per hint before optional usage.
 Custom Diagnostic Renderers receive the complete structured Diagnostic
 
+`JsonDiagnosticRenderer` and Go `JSONDiagnosticRenderer` emit stable compact
+newline-delimited JSON for CI, GUI, and process integrations. Every record has
+schema `nagi.cli.diagnostic.v1` and fixed `code`, `category`, `message`,
+`command_path`, nullable `usage`, ordered `targets`, and ordered `hints`
+members. The renderer does not add process status, timestamps, severity, or
+application metadata. It follows RFC 8259 string escaping, emits UTF-8 without
+a byte-order mark, and writes one final newline
+
+Go `Diagnostic.UsageValue` distinguishes absent usage from an explicitly
+present empty string. The existing `Usage` accessor remains available. See the
+[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic/README.md)
+and [Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/README.md)
+for pure Runtime Policy rendering
+
 ## Runtime
 
 A Handler receives mutable access to injected stdin, stdout, stderr,
@@ -181,6 +571,13 @@ current directory, and standard I/O, then convert SIGINT into cancellation
 - Rust `Command::run_process` temporarily installs and restores its SIGINT handler
 - Go `Command.RunProcess` uses `signal.NotifyContext` and always stops notification
 - Both helpers return an Exit Status instead of terminating the process
+
+The `run_process_with_value_resolver` and `RunProcessWithValueResolver`
+variants retain the same process boundary while attaching a Value Resolver.
+Policy-and-resolver variants are available when both are customized.
+`ProcessOptions` and `cli.ProcessOptions` are the composable entry point
+when Runtime Policy, Value Resolver, and Response Files must be selected
+together
 
 Diagnostics carry a semantic category independently of process status:
 `specification`, `usage`, `execution`, `cancellation`, or `io`. The default
@@ -226,21 +623,44 @@ handler
 | Current directory | `.current_directory(...)` | `.CurrentDirectory(...)` |
 | Pre-cancel | `.cancelled(true)` | `.Cancelled(true)` |
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
+| Value Resolver | `.value_resolver(...)` | `.ValueResolver(...)` |
+| Response Files | `.response_files(options, reader)` | `.ResponseFiles(options, reader)` |
 | Run | `.run()` | `.Run()` |
 
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs),
 [Rust staged-adoption example](../nagi-rs/crates/nagi-cli/examples/staged.rs),
+[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs),
+[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs),
+[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs),
+[Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources.rs),
+[Rust Response File example](../nagi-rs/crates/nagi-cli/examples/response_files.rs),
+[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
+[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
+[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
 [Go basic example](../nagicli-go/examples/basic/main.go),
-[Go subcommand example](../nagicli-go/examples/subcommands/main.go), and
-[Go staged-adoption example](../nagicli-go/examples/staged/main.go) as complete
+[Go subcommand example](../nagicli-go/examples/subcommands/main.go),
+[Go staged-adoption example](../nagicli-go/examples/staged/main.go),
+[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go),
+[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go),
+[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go),
+[Go Value Source Adapter example](../nagicli-go/examples/value-sources/main.go),
+[Go Response File example](../nagicli-go/examples/response-files/main.go),
+[Go completion example](../nagicli-go/examples/completion/main.go),
+[Go Prompt example](../nagicli-go/examples/prompt/main.go), and
+[Go Status example](../nagicli-go/examples/status/main.go) as complete
 entry points
 
 ## Limitations
 
-The core does not load configuration files, generate shell completions, run
-interactive prompts, or integrate a TUI. Long-running handlers must poll their
-injected cancellation source and stop cooperatively
+The core can adapt already loaded configuration through a Value Resolver but
+does not load configuration files, run interactive prompts, or integrate a
+TUI. Shell-specific generation and protocol I/O remain in the
+optional completion package or crate, and interactive terminal I/O remains in
+the optional Prompt package or crate. Transient status output remains in the
+optional Status package or crate, which does not poll cancellation itself.
+Long-running handlers and completion providers must poll their injected
+cancellation source and stop cooperatively
 
 The portable graph does not model arbitrary invocation grammars or
 parser-generator productions. Use option groups and typed validators for

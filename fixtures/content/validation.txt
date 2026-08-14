@@ -1,0 +1,10 @@
+nagi-fixture-v1	content-validation
+# limits are depth,nodes,semantic-bytes,metadata-bytes,tokens-per-element
+valid	limits=2,2,2,30,2	expected=ok
+node-limit	limits=3,2,100,100,10	expected=node-limit
+depth-limit	limits=2,10,100,100,10	expected=depth-limit
+semantic-byte-limit	limits=3,10,2,100,10	expected=semantic-byte-limit
+metadata-byte-limit	limits=3,10,100,9,10	expected=metadata-byte-limit
+token-limit	limits=3,10,100,100,2	expected=token-limit
+duplicate-element-id	limits=3,10,100,100,10	expected=duplicate-element-id
+limit-precedence	limits=0,0,0,0,0	expected=node-limit

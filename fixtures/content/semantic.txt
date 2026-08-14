@@ -1,0 +1,10 @@
+nagi-fixture-v1	content-semantic
+# annotations are annotation-id:start-end in preorder, or none
+empty-text	expected=	annotations=none	nodes=1	depth=1	semantic-bytes=0	metadata-bytes=0	annotation-count=0	identified-count=0	max-tokens=0
+normalized-text	expected=A\u{FFFD}B	annotations=none	nodes=1	depth=1	semantic-bytes=5	metadata-bytes=0	annotation-count=0	identified-count=0	max-tokens=0
+hard-break	expected=\n	annotations=none	nodes=1	depth=1	semantic-bytes=1	metadata-bytes=0	annotation-count=0	identified-count=0	max-tokens=0
+default-boundaries	expected=alpha\nleft\tright\ntail!	annotations=none	nodes=9	depth=3	semantic-bytes=22	metadata-bytes=0	annotation-count=0	identified-count=0	max-tokens=0
+boundary-overrides	expected=A B\nCD	annotations=none	nodes=7	depth=3	semantic-bytes=6	metadata-bytes=0	annotation-count=0	identified-count=0	max-tokens=0
+nested-annotations	expected=Go now\nDone	annotations=copy.all:0-11,link.one:0-6,emphasis.one:2-6	nodes=7	depth=4	semantic-bytes=11	metadata-bytes=74	annotation-count=3	identified-count=2	max-tokens=2
+empty-annotation	expected=	annotations=marker.empty:0-0	nodes=1	depth=1	semantic-bytes=0	metadata-bytes=12	annotation-count=1	identified-count=0	max-tokens=0
+parent-boundary-range	expected=a\tb\tc	annotations=cell.middle:2-3	nodes=5	depth=3	semantic-bytes=5	metadata-bytes=11	annotation-count=1	identified-count=0	max-tokens=0

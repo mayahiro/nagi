@@ -1,0 +1,11 @@
+nagi-fixture-v1	responsive-row-layout
+# Lists use source order; expected entries are rectangles or none
+three-regions	rect=2:3:20:1	gap=1	placements=start,center,end	priorities=3,2,1	widths=4,5,3	expected=2:3:4:1,9:3:5:1,19:3:3:1
+priority-hides-center	rect=0:0:8:1	gap=1	placements=start,center,end	priorities=3,1,2	widths=4,5,3	expected=0:0:4:1,none,5:0:3:1
+equal-priority-source-order	rect=0:0:5:2	gap=1	placements=start,start,start	priorities=4,4,4	widths=2,2,2	expected=0:0:2:2,3:0:2:2,none
+skip-too-wide-item	rect=0:0:6:1	gap=1	placements=start,start,start	priorities=3,2,1	widths=3,9,2	expected=0:0:3:1,none,4:0:2:1
+highest-priority-clips	rect=-2:4:4:2	gap=1	placements=end,start	priorities=3,2	widths=9,1	expected=-2:4:4:2,none
+center-only	rect=-3:1:10:1	gap=2	placements=center	priorities=0	widths=4	expected=0:1:4:1
+end-only	rect=5:-2:10:3	gap=2	placements=end	priorities=0	widths=4	expected=11:-2:4:3
+zero-width	rect=3:2:0:1	gap=1	placements=start,end	priorities=1,2	widths=2,2	expected=none,none
+zero-natural-width	rect=0:0:1:1	gap=0	placements=start	priorities=0	widths=0	expected=0:0:1:1

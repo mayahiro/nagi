@@ -1,0 +1,8 @@
+nagi-fixture-v1	terminal-capabilities
+unknown	term=-	colorterm=-	no-color=-	expected=unknown,false,unknown,unknown
+ansi16	term=xterm	colorterm=-	no-color=-	expected=ansi16,false,unknown,unknown
+indexed256	term=xterm-256color	colorterm=-	no-color=-	expected=indexed256,false,unknown,unknown
+truecolor	term=xterm-256color	colorterm=truecolor	no-color=-	expected=truecolor,false,unknown,unknown
+truecolor-case	term=xterm	colorterm=24BIT	no-color=-	expected=truecolor,false,unknown,unknown
+no-color-preference	term=xterm	colorterm=-	no-color=1	expected=ansi16,true,unknown,unknown
+dumb	term=dumb	colorterm=truecolor	no-color=-	expected=monochrome,false,unsupported,unsupported

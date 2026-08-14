@@ -1,0 +1,17 @@
+nagi-fixture-v1	cli-value-resolution
+external-precedence	arrangement=single	argv=	env=	expected=ok;scopes=root-id{config=external(config-file):65787465726E616C}	calls=root-id:config
+command-line-precedence	arrangement=single	argv=--config|cli	env=NAGI_CONFIG=environment	expected=ok;scopes=root-id{config=cli:636C69}	calls=
+environment-precedence	arrangement=single	argv=	env=NAGI_CONFIG=environment	expected=ok;scopes=root-id{config=env(NAGI_CONFIG):656E7669726F6E6D656E74}	calls=
+unresolved-default	arrangement=unresolved	argv=	env=	expected=ok;scopes=root-id{config=default:64656661756C74}	calls=root-id:config
+repeated-replace	arrangement=repeated-replace	argv=	env=	expected=ok;scopes=root-id{tag=external(config-file):6F6E65+external(config-file):74776F}	calls=root-id:tag
+repeated-merge	arrangement=repeated-merge	argv=	env=	expected=ok;scopes=root-id{tag=external(config-file):6F6E65+external(config-file):74776F+default:62617365}	calls=root-id:tag
+selected-child-order	arrangement=selected	argv=run	env=	expected=ok;scopes=root-id{root-value=external(project-config):726F6F74}|root-id/run-id{profile=external(project-config):6368696C64}	calls=root-id:root-value|root-id/run-id:profile
+non-repeated-multiple	arrangement=invalid-multiple	argv=	env=	expected=error;code=invalid-specification;target=option@root-id:config;origin=none;sensitive=false	calls=root-id:config
+non-repeated-merge	arrangement=invalid-merge	argv=	env=	expected=error;code=invalid-specification;target=option@root-id:config;origin=none;sensitive=false	calls=root-id:config
+empty-resolved	arrangement=empty	argv=	env=	expected=error;code=invalid-specification;target=option@root-id:config;origin=none;sensitive=false	calls=root-id:config
+invalid-source-identity	arrangement=invalid-source	argv=	env=	expected=error;code=invalid-specification;target=option@root-id:config;origin=none;sensitive=false	calls=root-id:config
+raw-invalid-utf8	arrangement=raw-invalid-utf8	argv=	env=	expected=ok;scopes=root-id{config=external(config-file):FFFE41}	calls=root-id:config
+invalid-external-value	arrangement=invalid-value	argv=	env=	expected=error;code=invalid-value;target=option@root-id:config;origin=external(config-file);sensitive=false	calls=root-id:config
+sensitive-invalid-external	arrangement=sensitive-invalid	argv=	env=	expected=error;code=invalid-value;target=option@root-id:token;origin=external(secret-store);sensitive=true	calls=root-id:token
+resolver-diagnostic	arrangement=resolver-error	argv=	env=	expected=error;code=config-load;target=option@root-id:config;origin=none;sensitive=false	calls=root-id:config
+help-skips-resolver	arrangement=single	argv=--help	env=	expected=action;kind=help	calls=

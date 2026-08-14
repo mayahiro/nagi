@@ -1,0 +1,9 @@
+nagi-fixture-v1	cli-inherited-option-validation
+local-reuse	shape=local-reuse	expected=ok
+ancestor-local-child-inherited	shape=ancestor-local-child-inherited	expected=ok
+ancestor-inherited-child-local-long	shape=ancestor-inherited-child-local-long	expected=invalid-specification
+ancestor-inherited-child-local-short	shape=ancestor-inherited-child-local-short	expected=invalid-specification
+ancestor-inherited-child-inherited	shape=ancestor-inherited-child-inherited	expected=invalid-specification
+transitive-collision	shape=transitive-collision	expected=invalid-specification
+unrelated-siblings	shape=unrelated-siblings	expected=ok
+same-id-different-spelling	shape=same-id-different-spelling	expected=ok

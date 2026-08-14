@@ -1,0 +1,14 @@
+nagi-fixture-v1	cli-inherited-options
+before-subcommand	argv=-v|--config|before|run|-n	env=	expected=ok;command=root/run;scopes=root-id{config=value:cli:6265666F7265,jobs=value:default:31,verbose=count:1}|root-id/run-id{dry-run=flag}
+after-subcommand	argv=run|-v|--config=after|-n	env=	expected=ok;command=root/run;scopes=root-id{config=value:cli:6166746572,jobs=value:default:31,verbose=count:1}|root-id/run-id{dry-run=flag}
+mixed-short-cluster	argv=run|-nvv	env=	expected=ok;command=root/run;scopes=root-id{config=value:default:64656661756C74,jobs=value:default:31,verbose=count:2}|root-id/run-id{dry-run=flag}
+repeated-order	argv=--tag|one|run|--tag=two|-tthree	env=	expected=ok;command=root/run;scopes=root-id{config=value:default:64656661756C74,jobs=value:default:31,tag=values:cli:6F6E65+cli:74776F+cli:7468726565}|root-id/run-id{}
+environment-fallback	argv=run	env=NAGI_CONFIG=/etc/root	expected=ok;command=root/run;scopes=root-id{config=value:env:2F6574632F726F6F74,jobs=value:default:31}|root-id/run-id{}
+after-positional	argv=run|value|--verbose	env=	expected=ok;command=root/run;scopes=root-id{config=value:default:64656661756C74,jobs=value:default:31,verbose=count:1}|root-id/run-id{args=values:cli:76616C7565}
+child-inherited-after-grandchild	argv=run|exec|--profile|prod	env=	expected=ok;command=root/run/exec;scopes=root-id{config=value:default:64656661756C74,jobs=value:default:31}|root-id/run-id{profile=value:cli:70726F64}|root-id/run-id/exec-id{}
+terminator	argv=run|--|--verbose	env=	expected=ok;command=root/run;scopes=root-id{config=value:default:64656661756C74,jobs=value:default:31}|root-id/run-id{args=values:cli:2D2D766572626F7365}
+root-local-before	argv=--root-only|run	env=	expected=ok;command=root/run;scopes=root-id{config=value:default:64656661756C74,jobs=value:default:31,root-only=flag}|root-id/run-id{}
+root-local-after	argv=run|--root-only	env=	expected=error;code=unknown-option;targets=
+child-option-before-selection	argv=--profile|prod|run	env=	expected=error;code=unknown-option;targets=
+duplicate-before-after	argv=--config|one|run|--config|two	env=	expected=error;code=duplicate-option;targets=option@root-id:config
+invalid-value-target	argv=run|--jobs|many	env=	expected=error;code=invalid-value;targets=option@root-id:jobs

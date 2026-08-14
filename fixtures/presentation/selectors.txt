@@ -1,0 +1,12 @@
+nagi-fixture-v1	presentation-selectors
+# lists use comma and none denotes an empty list
+any-empty	selector=any	roles=none	classes=none	required=none	active=none	expected=match
+role-exact	selector=role:heading	roles=heading,document	classes=none	required=none	active=none	expected=match
+role-prefix-miss	selector=role:head	roles=heading	classes=none	required=none	active=none	expected=miss
+class-exact	selector=class:source.bold	roles=none	classes=source.bold	required=none	active=none	expected=match
+role-class-separated	selector=role:emphasis	roles=none	classes=emphasis	required=none	active=none	expected=miss
+class-role-separated	selector=class:emphasis	roles=emphasis	classes=none	required=none	active=none	expected=miss
+required-all	selector=role:item	roles=item	classes=none	required=focused,selected	active=selected,focused,active	expected=match
+required-missing	selector=role:item	roles=item	classes=none	required=focused,selected	active=selected	expected=miss
+extra-state	selector=role:item	roles=item	classes=none	required=selected	active=selected,disabled	expected=match
+unknown-state	selector=role:item	roles=item	classes=none	required=selected	active=focused	expected=miss

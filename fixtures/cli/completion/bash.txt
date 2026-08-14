@@ -1,0 +1,124 @@
+# Nagi completion for qed
+_nagi_completion_dequote_qed() {
+    local LC_ALL=C
+    local input="$1"
+    local output=""
+    local quote=""
+    local character next
+    local index=0
+    local length=${#input}
+
+    while (( index < length )); do
+        character="${input:index:1}"
+        if [[ -z "$quote" ]]; then
+            case "$character" in
+                "'") quote="single" ;;
+                '"') quote="double" ;;
+                \\)
+                    if (( index + 1 < length )); then
+                        ((index++))
+                        output+="${input:index:1}"
+                    else
+                        output+="$character"
+                    fi
+                    ;;
+                *) output+="$character" ;;
+            esac
+        elif [[ "$quote" == "single" ]]; then
+            if [[ "$character" == "'" ]]; then
+                quote=""
+            else
+                output+="$character"
+            fi
+        elif [[ "$character" == '"' ]]; then
+            quote=""
+        elif [[ "$character" == \\ ]] && (( index + 1 < length )); then
+            next="${input:index+1:1}"
+            if [[ "$next" == '$' || "$next" == $'\x60' || "$next" == '"' || "$next" == \\ ]]; then
+                output+="$next"
+                ((index++))
+            elif [[ "$next" == $'\n' ]]; then
+                ((index++))
+            else
+                output+="$character"
+            fi
+        else
+            output+="$character"
+        fi
+        ((index++))
+    done
+    REPLY="$output"
+    NAGI_COMPLETION_QUOTE_REPLY="$quote"
+}
+
+_nagi_completion_escape_qed() {
+    local input="$1"
+    local quote="$2"
+    local output=""
+    local character
+    local index=0
+
+    if [[ -z "$quote" ]]; then
+        printf -v output '%q' "$input"
+    else
+        while (( index < ${#input} )); do
+            character="${input:index:1}"
+            if [[ "$quote" == "double" && ( "$character" == '$' || "$character" == $'\x60' || "$character" == '"' || "$character" == \\ ) ]]; then
+                output+="\\$character"
+            elif [[ "$quote" == "single" && "$character" == "'" ]]; then
+                output+="'\\''"
+            else
+                output+="$character"
+            fi
+            ((index++))
+        done
+    fi
+
+    REPLY="$output"
+}
+
+_nagi_completion_current_qed() {
+    local LC_ALL=C
+    local full="${COMP_WORDS[COMP_CWORD]}"
+    local length=${#full}
+    local point=$COMP_POINT
+    local start=$(( point - length ))
+    local raw="$full"
+
+    (( start < 0 )) && start=0
+    while (( start <= point )); do
+        if (( point <= start + length )) && [[ "${COMP_LINE:start:length}" == "$full" ]]; then
+            raw="${COMP_LINE:start:point-start}"
+            break
+        fi
+        ((start++))
+    done
+    _nagi_completion_dequote_qed "$raw"
+}
+
+_nagi_completion_qed() {
+    local current
+    local -a completed=()
+    local value label description kind append escaped
+    local index
+    local REPLY
+    local NAGI_COMPLETION_QUOTE_REPLY
+    local current_quote
+
+    _nagi_completion_current_qed
+    current="$REPLY"
+    current_quote="$NAGI_COMPLETION_QUOTE_REPLY"
+    for (( index = 1; index < COMP_CWORD; index++ )); do
+        _nagi_completion_dequote_qed "${COMP_WORDS[index]}"
+        completed+=("$REPLY")
+    done
+
+    COMPREPLY=()
+    while IFS=$'\t' read -r value label description kind append; do
+        [[ -z "$value" ]] && continue
+        _nagi_completion_escape_qed "$value" "$current_quote"
+        escaped="$REPLY"
+        COMPREPLY+=("$escaped")
+    done < <(command qed __nagi_complete bash "$current" "${completed[@]}" 2>/dev/null)
+}
+complete -o nospace -F _nagi_completion_qed qed

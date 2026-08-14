@@ -1,0 +1,23 @@
+nagi-fixture-v1	widget-modal-action
+default-focused	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=escape	messages=dismiss	consumed=true	owners=modal	keys=Escape	available=true
+default-no-focus	handler=true	focus=none	mode=default	propagation=continue	child=none	outer=none	event=escape	messages=dismiss	consumed=true	owners=modal	keys=Escape	available=true
+default-repeat	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=repeat-escape	messages=dismiss	consumed=true	owners=modal	keys=Escape	available=true
+default-unknown	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=unknown-escape	messages=dismiss	consumed=true	owners=modal	keys=Escape	available=true
+release-ignored	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=release-escape	messages=-	consumed=false	owners=modal	keys=Escape	available=true
+shift-exact	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=shift-escape	messages=-	consumed=false	owners=modal	keys=Escape	available=true
+control-exact	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=control-escape	messages=-	consumed=false	owners=modal	keys=Escape	available=true
+alt-exact	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=alt-escape	messages=-	consumed=false	owners=modal	keys=Escape	available=true
+meta-exact	handler=true	focus=child	mode=default	propagation=continue	child=none	outer=none	event=meta-escape	messages=-	consumed=false	owners=modal	keys=Escape	available=true
+rebind-x	handler=true	focus=child	mode=rebind-x	propagation=continue	child=none	outer=none	event=x	messages=dismiss	consumed=true	owners=modal	keys=x	available=true
+rebind-removes-escape	handler=true	focus=child	mode=rebind-x	propagation=continue	child=none	outer=none	event=escape	messages=-	consumed=false	owners=modal	keys=x	available=true
+unbound	handler=true	focus=child	mode=unbound	propagation=continue	child=none	outer=none	event=escape	messages=-	consumed=false	owners=modal	keys=-	available=true
+unavailable	handler=false	focus=none	mode=default	propagation=continue	child=none	outer=none	event=escape	messages=-	consumed=false	owners=modal	keys=Escape	available=false
+unavailable-passes-outer-action	handler=false	focus=none	mode=default	propagation=continue	child=none	outer=action	event=escape	messages=outer-action	consumed=true	owners=modal,root	keys=Escape	available=false
+modal-shadows-outer-action	handler=true	focus=none	mode=default	propagation=continue	child=none	outer=action	event=escape	messages=dismiss	consumed=true	owners=modal,root	keys=Escape	available=true
+unbound-passes-outer-action	handler=true	focus=child	mode=unbound	propagation=continue	child=none	outer=action	event=escape	messages=outer-action	consumed=true	owners=modal,root	keys=-	available=true
+stop-excludes-outer-action	handler=false	focus=none	mode=default	propagation=stop	child=none	outer=action	event=escape	messages=-	consumed=false	owners=modal	keys=Escape	available=false
+stop-keeps-outer-raw	handler=false	focus=none	mode=default	propagation=stop	child=none	outer=raw	event=escape	messages=outer-raw	consumed=true	owners=modal	keys=Escape	available=false
+child-action-shadows	handler=true	focus=child	mode=default	propagation=continue	child=action-consume	outer=none	event=escape	messages=child-action	consumed=true	owners=child,modal	keys=Escape	available=true
+child-action-ignore-propagates	handler=true	focus=child	mode=default	propagation=continue	child=action-ignore	outer=none	event=escape	messages=child-action,dismiss	consumed=true	owners=child,modal	keys=Escape	available=true
+child-raw-shadows	handler=true	focus=child	mode=default	propagation=continue	child=raw-consume	outer=none	event=escape	messages=child-raw	consumed=true	owners=modal	keys=Escape	available=true
+child-raw-ignore-propagates	handler=true	focus=child	mode=default	propagation=continue	child=raw-ignore	outer=none	event=escape	messages=child-raw,dismiss	consumed=true	owners=modal	keys=Escape	available=true

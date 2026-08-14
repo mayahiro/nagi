@@ -5,7 +5,9 @@ GO_WORK := $(CURDIR)/go.work
 
 bench:
 	$(MAKE) -C nagi-rs bench
+	GOWORK=off $(MAKE) -C nagi-go bench
 	GOWORK=$(GO_WORK) $(MAKE) -C nagitui-go bench
+	GOWORK=$(GO_WORK) $(MAKE) -C nagicli-go bench
 
 build:
 	$(MAKE) -C nagi-rs build

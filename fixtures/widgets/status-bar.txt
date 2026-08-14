@@ -1,0 +1,5 @@
+nagi-fixture-v1	widget-status-bar
+three-regions	width=20	gap=1	labels=L,C,R	placements=start,center,end	priorities=normal,normal,normal	expected=L\x20\x20\x20\x20\x20\x20\x20\x20C\x20\x20\x20\x20\x20\x20\x20\x20\x20R
+critical-survives	width=5	gap=1	labels=AAA,BBBB,X	placements=start,center,end	priorities=normal,low,critical	expected=AAA\x20X
+highest-clips	width=2	gap=1	labels=LONG,Z	placements=end,start	priorities=critical,high	expected=LO
+equal-source-order	width=3	gap=1	labels=A,B,C	placements=start,start,start	priorities=high,high,high	expected=A\x20B

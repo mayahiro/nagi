@@ -1,0 +1,14 @@
+nagi-fixture-v1	widget-json-inspector
+normalize-missing	selected=/missing	expanded=$	event=-	max-graphemes=5	expected-selected=$	expected-expanded=$	expected-message=-	expected-copy=-	consumed=-
+next	selected=$	expanded=$	event=down	max-graphemes=5	expected-selected=/short	expected-expanded=$	expected-message=state:/short:$	expected-copy=-	consumed=true
+previous-boundary	selected=$	expanded=$	event=up	max-graphemes=5	expected-selected=$	expected-expanded=$	expected-message=-	expected-copy=-	consumed=true
+collapse-root	selected=$	expanded=$	event=left	max-graphemes=5	expected-selected=$	expected-expanded=-	expected-message=state:$:-	expected-copy=-	consumed=true
+expand-root	selected=$	expanded=-	event=right	max-graphemes=5	expected-selected=$	expected-expanded=$	expected-message=state:$:$	expected-copy=-	consumed=true
+right-child	selected=$	expanded=$	event=right	max-graphemes=5	expected-selected=/short	expected-expanded=$	expected-message=state:/short:$	expected-copy=-	consumed=true
+left-parent	selected=/short	expanded=$	event=left	max-graphemes=5	expected-selected=$	expected-expanded=$	expected-message=state:$:$	expected-copy=-	consumed=true
+toggle-nested	selected=/nested	expanded=$	event=enter	max-graphemes=5	expected-selected=/nested	expected-expanded=$,/nested	expected-message=state:/nested:$,/nested	expected-copy=-	consumed=true
+repeat-activate	selected=/nested	expanded=$	event=repeat-enter	max-graphemes=5	expected-selected=/nested	expected-expanded=$	expected-message=-	expected-copy=-	consumed=true
+copy-long	selected=/long	expanded=$	event=copy	max-graphemes=5	expected-selected=/long	expected-expanded=$	expected-message=copy:/long	expected-copy="abcdef日ghi"	consumed=true
+repeat-copy	selected=/long	expanded=$	event=repeat-copy	max-graphemes=5	expected-selected=/long	expected-expanded=$	expected-message=-	expected-copy=-	consumed=true
+hidden-selection	selected=/nested/flag	expanded=$	event=-	max-graphemes=5	expected-selected=/nested	expected-expanded=$	expected-message=-	expected-copy=-	consumed=-
+pointer-nested	selected=$	expanded=$	event=pointer-nested	max-graphemes=5	expected-selected=/nested	expected-expanded=$,/nested	expected-message=state:/nested:$,/nested	expected-copy=-	consumed=true
