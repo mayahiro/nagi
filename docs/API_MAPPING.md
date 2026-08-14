@@ -192,8 +192,11 @@ uses `WithID`, `Focusable`, `TabStop`, `WithFocusedStyle`, `OnEvent`, and
 | Action and semantic handler | `Action::new` | `NewAction` |
 | Semantic invocation | `ActionEvent` | `ActionEvent` |
 | Availability | `ActionAvailability` | `ActionAvailability` |
-| Immutable override layer | `KeyMap::new().rebind(...)` | `NewKeyMap().Rebind(...)` |
-| Duplicate override error | `KeyMapError::DuplicateActionOverride` | `DuplicateActionOverrideError` |
+| Immutable override layer | `KeyMap::new()` | `NewKeyMap()` |
+| Binding replacement | `KeyMap::rebind` | `KeyMap.Rebind` |
+| User-facing label replacement | `KeyMap::relabel` | `KeyMap.Relabel` |
+| Duplicate binding override error | `KeyMapError::DuplicateActionOverride` | `DuplicateActionOverrideError` |
+| Duplicate label override error | `KeyMapError::DuplicateActionLabelOverride` | `DuplicateActionLabelOverrideError` |
 | Active scope | `KeyScope::new` | `NewKeyScope` |
 | Scope propagation | `KeyScopePropagation` | `KeyScopePropagation` |
 | Attach owner actions | `Node::on_actions` | `Node.OnActions` |
@@ -384,6 +387,11 @@ builders use exported mixed case and finish with `Node`. Examples include
 | Preferred visual column | `TextAreaState::preferred_column` | `TextAreaState.PreferredColumn` |
 | Undo and redo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
+| Composer history entry identity | `ComposerHistoryEntryId::new` | `widget.NewComposerHistoryEntryID` |
+| Composer history entry | `ComposerHistoryEntry::new` | `widget.NewComposerHistoryEntry` |
+| Immutable Composer history | `ComposerHistory::new` | `widget.NewComposerHistory` |
+| Composer history reconciliation | `ComposerState::reconcile_history` | `ComposerState.ReconcileHistory` |
+| Duplicate Composer history ID error | `DuplicateComposerHistoryEntryId` | `widget.DuplicateComposerHistoryEntryIDError` |
 | Split pane state | `SplitPaneState::new` | `widget.NewSplitPaneState` / `DefaultSplitPaneState` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
 | Suggestion identity | `SuggestionId::new` | `widget.NewSuggestionID` |
@@ -435,6 +443,8 @@ contract; Rust uses unsigned indices
 | Application contract | `App` with associated `Message` | `App[Message]` |
 | View environment | `ViewContext { size, width_profile, terminal_capabilities }` | `ViewContext{Size: ..., WidthProfile: ..., TerminalCapabilities: ...}` |
 | Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
+| Per-cycle update limit | `RuntimeConfig::max_updates_per_cycle` | `RuntimeConfig.MaxUpdatesPerCycle` |
+| Terminal per-cycle update limit | `TerminalOptions::max_updates_per_cycle` | `TerminalOptions.MaxUpdatesPerCycle` |
 | Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
 | Runtime capability profile | `RuntimeConfig::terminal_capabilities` | `RuntimeConfig.TerminalCapabilities` |
 | Terminal capability profile | `TerminalCapabilityProfile` | `TerminalCapabilityProfile` |
@@ -451,11 +461,18 @@ contract; Rust uses unsigned indices
 | Run with external cancellation | Language-specific caller integration | `RunTerminalContext[M]` |
 | Run with Runtime notices | `run_terminal_with_notice_handler` | `RunTerminalWithNoticeHandler[M]` |
 | Context cancellation and notices | Language-specific caller integration | `RunTerminalContextWithNoticeHandler[M]` |
+| Map Runtime notices to Messages | `run_terminal_with_notice_mapper` returning `Option<Message>` | `RunTerminalWithNoticeMapper[M]` returning `(Message, bool)` |
+| Context cancellation and notice mapping | Language-specific caller integration | `RunTerminalContextWithNoticeMapper[M]` |
+| Cooperative Runtime close | `Runtime::close` | `Runtime.Close` |
+| Close and wait for Nagi producers | `Runtime::close_and_wait` / `close_and_wait_timeout` | `Runtime.CloseAndWait(ctx)` |
 | Process queued input without async polling | `Runtime::process_queued` | `Runtime.ProcessQueued` |
+| Process one bounded async cycle | `Runtime::process_pending` | `Runtime.ProcessPending` |
+| Ready update query | `Runtime::has_pending_updates` | `Runtime.HasPendingUpdates` |
 | Lifecycle notice | `RuntimeNotice` / `RuntimeNoticeKind` | `RuntimeNotice` / `RuntimeNoticeKind` |
 | Pending and drain notices | `Runtime::pending_runtime_notices` / `drain_runtime_notices` | `Runtime.PendingRuntimeNotices` / `DrainRuntimeNotices` |
 | Notice drop diagnostics | `Runtime::runtime_notice_diagnostics` | `Runtime.RuntimeNoticeDiagnostics` |
 | Test harness notices | `Harness::pending_runtime_notices` / `drain_runtime_notices` / `runtime_notice_diagnostics` | `Harness.PendingRuntimeNotices` / `DrainRuntimeNotices` / `RuntimeNoticeDiagnostics` |
+| Test harness close and wait | `Harness::close_and_wait` / `close_and_wait_timeout` | `Harness.CloseAndWait(ctx)` |
 | Ignore event | `EventResult::ignored()` | `IgnoreResult[M]()` |
 | Consume event | `EventResult::consumed()` | `ConsumeResult[M]()` |
 | Emit one Message | `EventResult::message(value)` | `MessageResult(value)` |

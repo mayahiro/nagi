@@ -7,6 +7,17 @@
 - Backpressure behavior remains diagnosable
 - Multiple sequential updates MAY be followed by one coalesced render
 - Coalescing MUST NOT change message order or state transitions
+- One asynchronous scheduling cycle applies at most the configured positive
+  `MaxUpdatesPerCycle` count. The shared default is 64 updates
+- A cycle moves only enough ready Effect and Subscription values into the
+  application queue to fit its remaining update budget. Work retained by a
+  source remains pending for a later cycle
+- Between bounded asynchronous cycles, a terminal runner MUST check resize and
+  terminal input before applying more source values. If application work is
+  already ready, the next wait MUST be immediate rather than periodic
+- The count budget bounds consecutive application updates, not the execution
+  time of one update. Applications remain responsible for keeping each update
+  finite and responsive
 - When one terminal read decodes multiple input Events, each Event MUST complete
   routing, terminal fallback mapping, input-derived Message updates, and
   semantic-tree rebuilding before the next Event is routed. Only Surface
@@ -18,6 +29,9 @@
 - Polling asynchronous Effect and Subscription sources occurs at the normal
   scheduling boundary rather than between Events from the same decoded input
   batch
+- The per-cycle asynchronous budget does not split one input Event transaction.
+  Messages emitted while routing that Event are applied before the next decoded
+  Event and do not poll asynchronous sources
 - Resize, focus, cursor handling, and explicit frame requests bypass the frame
   interval and request an immediate frame
 - Scheduling is event-driven and does not assume a fixed 60 frames per second

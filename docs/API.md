@@ -75,6 +75,13 @@ each Event before routing the next one. Surface rendering alone is coalesced
 across the input batch. A terminal-suspending Effect discards later Events from
 that decoded batch before the runner gives the ordinary terminal to the task
 
+`RuntimeConfig::max_updates_per_cycle` and
+`RuntimeConfig.MaxUpdatesPerCycle` bound asynchronous application updates per
+scheduling cycle and default to 64. Terminal input and resize are checked
+between cycles; ready retained work causes an immediate next cycle. This count
+budget does not split one input Event transaction and does not bound the cost
+of one application update
+
 `RuntimeConfig` and `TerminalOptions` select one Nagi Text `WidthProfile` for
 the Runtime lifetime. Core measurement, wrapping, drawing, hit geometry, and
 cursor placement use it automatically. Width-sensitive widgets expose
@@ -106,7 +113,7 @@ output policy. See the matching
 
 Rust callers using an exhaustive `TerminalOptions` struct literal must provide
 the `capability_detection`, `capability_query_timeout`, `clipboard`, `viewport`,
-and `cursor_query_timeout` fields. A literal using
+`cursor_query_timeout`, and `max_updates_per_cycle` fields. A literal using
 `..TerminalOptions::default()` keeps capability detection and clipboard output
 disabled, preserves the Indexed 256 encoder baseline, and preserves the
 full-screen viewport without further configuration
@@ -167,8 +174,12 @@ worker-spawn failures enter a separate bounded `RuntimeNotice` FIFO. They do not
 become application Messages or dirty the view. Manual Runtime drivers can drain
 the queue and inspect its dropped counter; terminal applications can use
 `run_terminal_with_notice_handler` or `RunTerminalWithNoticeHandler` and the Go
-context-aware variant. The application decides whether a notice becomes state,
-a Message, a log record, or telemetry
+context-aware variant. `run_terminal_with_notice_mapper`,
+`RunTerminalWithNoticeMapper`, and its Go context-aware variant map notices to
+optional application Messages without an external channel or Subscription.
+Each mapped Message completes update before the next notice while rendering is
+coalesced. The application decides whether a notice becomes state, a Message,
+a log record, or telemetry
 
 ## Semantic views and interaction
 
@@ -258,7 +269,10 @@ paging, and persistence remain application-owned
 `ActionId` in Rust and `ActionID` in Go identify operations independently from
 terminal keys. `KeyStroke` normalizes Key and single-scalar Text input,
 `KeyBinding` adds repeat and capability metadata, and an immutable `KeyMap`
-layer replaces the complete binding list for an action
+layer independently replaces the complete binding list or user-facing label
+for an action. Root-to-target scope precedence applies separately to both
+declaration kinds, so one application-level scope can localize standard Help
+labels without changing matching
 
 `resolve_actions` and `ResolveActions` apply active `KeyScope` values in
 root-to-target order to one semantic owner. The result preserves action,
@@ -312,8 +326,8 @@ Modified PageUp, PageDown, Home, and End require explicit bindings
 `Help::from_resolved_actions` and `NewHelpFromResolvedActions` convert the same
 projection into one Help binding per effective key. They preserve action and
 binding order, omit Help-hidden actions, and mark unavailable or unsupported
-bindings disabled. Existing manual `HelpBinding` construction remains
-available
+bindings disabled. They use the effective label after KeyMap localization.
+Existing manual `HelpBinding` construction remains available
 
 The standard widget packages expose constants for `nagi.activate`, four
 single-item and two page-scale `nagi.selection.*` operations,
@@ -365,6 +379,14 @@ row height, optional validation content, and UTF-8-byte or grapheme insertion
 limits over TextArea without owning message or persistence semantics. It
 declares `nagi.composer.submit`, `nagi.history.previous`, and
 `nagi.history.next` before the inherited text actions under the same root.
+`ComposerHistory` is an immutable oldest-to-newest order with unique stable
+entry IDs. While browsing, `ComposerState` follows the same ID across prepend,
+front truncation, and reordering. Replacing the value under that ID updates the
+editor, while removing the ID restores the preserved draft. Applications still
+own history persistence, deduplication, capacity, and sensitive-value policy.
+The Composer builder reconciles its controlled copy when history is supplied;
+an application that also needs the normalized state immediately can store the
+result of `ComposerState::reconcile_history` or `ComposerState.ReconcileHistory`.
 Enter submits without accepting repeat; Shift-Enter, Alt-Enter, and Control-O
 insert a line break. Cursor movement takes precedence while another visual line
 exists, then Up or Down recalls history. Active scopes can replace the complete
@@ -469,8 +491,11 @@ non-selected rows retain raw selection-then-open pointer handling independent
 from keyboard rebinding
 
 Trees without actions keep existing Core, raw `OnEvent`, unmigrated-widget, and
-terminal `mapEvent` behavior. Tab traversal is still handled before action
-routing, and standard widgets other than Button, Checkbox, Radio, Select, Tabs,
+terminal `mapEvent` behavior. On a stable action owner, Node-declared actions
+are evaluated before Runtime-owned Core focus actions such as Tab traversal.
+Only a tree without a stable focus-action owner uses the compatibility Tab
+fallback outside resolved action projection. Standard widgets other than
+Button, Checkbox, Radio, Select, Tabs,
 List, Table, Tree, Disclosure, SplitPane, Drawer, TextArea, Composer,
 SuggestionPopup, SelectableText, JsonInspector, CodeView, DiffView, Command
 Palette, Modal, Dialog, ConfirmDialog, Paginator, FilePicker, and Calendar have not yet
@@ -499,6 +524,12 @@ Effects represent one-shot work
 Go context-aware Runtime and terminal entry points derive worker, terminal-task,
 and Stream contexts from the caller context. Runtime close still requests
 cooperative child cancellation
+
+Runtime close does not wait for producer return. Rust `Runtime::close_and_wait`
+and `Runtime::close_and_wait_timeout`, and Go `Runtime.CloseAndWait(ctx)`, add an
+optional wait for Nagi-started Effect and Stream producer functions. This wait
+can remain blocked when a producer ignores cancellation and does not include
+application-owned child processes or workers unless their producer joins them
 
 Subscriptions represent long-lived stable-key sources
 

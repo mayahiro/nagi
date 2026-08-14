@@ -75,9 +75,11 @@ digits
 
 ## Key-map layers and scopes
 
-A KeyMap layer contains at most one override per Action ID. An override
-replaces the action's complete ordered binding list. An empty replacement
-unbinds the action from keyboard input without removing its descriptor
+A KeyMap layer may contain one binding override and one label override per
+Action ID. A binding override replaces the action's complete ordered binding
+list. An empty replacement unbinds the action from keyboard input without
+removing its descriptor. A label override replaces only the user-facing label
+used by resolved projections such as Help
 
 A Key scope combines a stable Node ID with one KeyMap layer and action
 propagation behavior. The caller passes active scopes to the pure resolver in
@@ -86,14 +88,19 @@ Runtime ancestor-action lookup but does not change pure resolution
 
 Resolution for each action is
 
-1. Start with the descriptor's default bindings
+1. Start with the descriptor's default bindings and label
 2. Apply active scope layers in root-to-target order
-3. Replace the complete binding list whenever a layer names the Action ID
+3. Replace the complete binding list or label whenever the corresponding
+   declaration in a layer names the Action ID
 
-The nearest explicit layer therefore wins. Every active scope ID remains in
-the resolved scope path even when its layer does not override an action
+Binding and label declarations are independent. One layer may declare both
+for the same Action ID. The nearest explicit declaration of each kind wins.
+Every active scope ID remains in the resolved scope path even when its layer
+does not override an action
 
-Duplicate Action ID overrides in one immutable layer are construction errors
+Duplicate binding overrides or duplicate label overrides in one immutable
+layer are construction errors. A label override changes presentation only; it
+does not change matching, conflict detection, availability, or Help visibility
 
 ## Resolution and conflicts
 

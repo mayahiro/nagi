@@ -74,8 +74,9 @@ A process monitor commonly declares two independent sources
 
 Batch delivery preserves FIFO records and releases them after a count or delay
 limit. Each record still receives one sequential update, while rendering occurs
-at most once after the ready queue is drained. Latest delivery is suitable for
-uptime because only the newest value matters
+at most once per bounded scheduling cycle and may coalesce across cycles under
+the frame interval. Latest delivery is suitable for uptime because only the
+newest value matters
 
 Keep source keys stable across views of the same application state. Removing a
 source from the subscriptions declaration asks Nagi to cancel that generation,
@@ -89,6 +90,11 @@ cancellation, and cancellation causes therefore remain available to process
 adapters and tracing code. Runtime close still requests cancellation for each
 active child
 
+Runtime close is request-only. Use Rust `close_and_wait` or
+`close_and_wait_timeout`, or Go `CloseAndWait(ctx)`, when a custom Runtime owner
+must also observe every Nagi-started Effect and Stream producer return. The
+producer remains responsible for joining any process or worker that it starts
+
 ## Lifecycle notices
 
 An active Stream is a long-lived source. Returning while its generation remains
@@ -98,16 +104,21 @@ failures also produce notices. Panic payloads are not retained
 
 Notices use a separate bounded FIFO, preserve the oldest retained entries, and
 increment a dropped counter when full. They do not become application Messages
-or mark the view dirty. A manually driven Runtime can drain and map them to
-application-owned Messages. Terminal runners provide a synchronous notice
-handler for logging, telemetry, or an application-defined bridge
+or mark the view dirty by default. A manually driven Runtime can drain them.
+Terminal runners provide a synchronous handler for logging or telemetry and a
+direct optional-Message mapper for application state without a second
+Subscription
 
 ## Rendering and backpressure
 
 `MinimumFrameInterval` limits non-urgent frames; it is not an event-loop polling
 interval. Nagi can process many source Messages, retain the latest application
-state, wait for the remaining frame deadline, and render once. Framework-owned
-keyboard scrolling, focus, and resize remain urgent
+state, and coalesce rendering. `MaxUpdatesPerCycle` defaults to 64 and bounds
+how many asynchronous Messages run before the terminal runner checks input and
+resize again. Retained ready work starts the next cycle without a periodic
+wait. The bound is a deterministic Message count; one slow application update
+can still delay input. Framework-owned keyboard scrolling, focus, and resize
+remain urgent
 
 For high-rate sources
 

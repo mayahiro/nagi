@@ -61,6 +61,8 @@ Applicationは4個のoperationを実装します
 
 `update`は常に逐次実行します。EffectとSubscriptionは並行して値を生成できますが、そのresultは次のupdateより前に上限付きruntime queueへ入ります。1回のterminal readから複数Eventがdecodeされた場合も、各Eventのrouting、fallback mapping、入力由来update、semantic tree更新を完了してから次のEventを処理し、Surface描画だけをbatch全体でcoalesceします。Terminal suspend Effectが生じた場合は通常terminalをtaskへ渡す前に同じdecode batchの後続Eventを破棄します
 
+`RuntimeConfig::max_updates_per_cycle`と`RuntimeConfig.MaxUpdatesPerCycle`は1 scheduling cycleの非同期application updateを制限し、既定値は64です。Cycle間ではterminal inputとresizeを先に確認し、処理可能なworkが残る場合は次のcycleを待機せず開始します。この件数budgetは1個のinput Event transactionを分割せず、Applicationの1 updateにかかる時間は制限しません
+
 `RuntimeConfig`と`TerminalOptions`はRuntime lifetime全体で使用するNagi Textの`WidthProfile`を1個選択します。Coreのmeasure、wrap、draw、hit geometry、cursor配置は自動的に同じprofileを使います。幅計算を行うWidgetはRustの`width_profile`とGoの`WidthProfile`を提供するため、RuntimeがModern以外を使う場合は`ViewContext`の値を渡します。Custom overrideは同じgraphemeに対してRuntime lifetime中に安定した幅を返す必要があります
 
 Terminal capability検出はopt-inであり既定では無効です
@@ -75,7 +77,7 @@ VTの`Capabilities`は`ColorLevel`でMonochrome、ANSI 16、Indexed 256、True C
 Profile metadataはOSC 52やその他のoutput policyを有効にしません
 対応する[Rust example](../nagi-rs/crates/nagi-tui/examples/terminal_capabilities/main.rs)、[Go example](../nagitui-go/examples/terminal-capabilities/main.go)、[terminal session仕様](../spec/terminal-session.md)を参照してください
 
-Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`capability_detection`、`capability_query_timeout`、`clipboard`、`viewport`、`cursor_query_timeout` fieldも指定する必要があります
+Rustで`TerminalOptions`を全field指定のstruct literalとして構築するcallerは`capability_detection`、`capability_query_timeout`、`clipboard`、`viewport`、`cursor_query_timeout`、`max_updates_per_cycle` fieldも指定する必要があります
 `..TerminalOptions::default()`を使うliteralは追加設定なしでcapability検出とclipboard outputを無効にし、Indexed 256 encoder baselineとfull-screen viewportの既定値を維持します
 
 Rustはassociated `Message` typeを持つ`App` traitを使用し、Goはgenericな`App[Message]` interfaceを使用します。完全な最小applicationは対応する[Rust counter](../nagi-rs/crates/nagi-tui/examples/counter/main.rs)と[Go counter](../nagitui-go/examples/counter/main.go)を参照してください
@@ -98,7 +100,7 @@ Production terminal runnerはterminal input、非同期EffectまたはStreamの�
 Wake-up通知はcoalesceできますが、queueまたはDelivery semanticsは変更しません
 既定のterminal optionはnon-urgent描画を最大120 FPSへ制限し、minimum frame intervalをzeroにすると制限を無効化できます
 
-回復したEffect panic、active Streamの予期しないreturn、Stream panic、worker spawn failureはApplication Messageと別の上限付き`RuntimeNotice` FIFOへ入ります。Noticeはviewをdirtyにしません。手動Runtime driverはqueueをdrainしてdrop counterを確認でき、terminal applicationは`run_terminal_with_notice_handler`、`RunTerminalWithNoticeHandler`、Goのcontext-aware variantを使用できます。Noticeをstate、Message、log、telemetryのどれへ変換するかはApplicationが決めます
+回復したEffect panic、active Streamの予期しないreturn、Stream panic、worker spawn failureはApplication Messageと別の上限付き`RuntimeNotice` FIFOへ入ります。Noticeはviewをdirtyにしません。手動Runtime driverはqueueをdrainしてdrop counterを確認でき、terminal applicationは`run_terminal_with_notice_handler`、`RunTerminalWithNoticeHandler`、Goのcontext-aware variantを使用できます。`run_terminal_with_notice_mapper`、`RunTerminalWithNoticeMapper`、Goのcontext-aware variantは外部channelやSubscriptionを介さずnoticeを任意のApplication Messageへ写像します。各Messageは次のnoticeより先にupdateを完了し、renderはcoalesceされます。Noticeをstate、Message、log、telemetryのどれへ変換するかはApplicationが決めます
 
 ## Semantic viewとInteraction
 
@@ -126,7 +128,9 @@ VirtualFlowは一意なstable item IDのimmutable order、revision付きinvalida
 
 Rustの`ActionId`とGoの`ActionID`はterminal keyと独立して操作を識別します
 
-`KeyStroke`はKeyと単一scalar Text inputを正規化し、`KeyBinding`はrepeatとcapability metadataを加え、immutableな`KeyMap` layerはactionのbinding list全体を置き換えます
+`KeyStroke`はKeyと単一scalar Text inputを正規化し、`KeyBinding`はrepeatとcapability metadataを加え、immutableな`KeyMap` layerはactionのbinding list全体またはuser-facing labelを独立して置き換えます
+
+rootからtargetへのscope precedenceは両宣言へ別々に適用されるため、application levelのscopeでmatchingを変えずに標準Help labelをlocalizeできます
 
 `resolve_actions`と`ResolveActions`はactiveな`KeyScope`をrootからtargetの順で一つのsemantic ownerへ適用します
 
@@ -172,6 +176,8 @@ Rustの`Help::from_resolved_actions`とGoの`NewHelpFromResolvedActions`は同�
 
 actionとbinding順序を維持し、Help-hidden actionを除外して、unavailableまたはunsupportedなbindingをdisabledにします
 
+表示にはKeyMap localization適用後のeffective labelを使用します
+
 既存の手書き`HelpBinding`も引き続き利用できます
 
 標準Widget packageは`nagi.activate`、entry単位4個とpage単位2個の`nagi.selection.*` operation、`nagi.navigation.back`、`nagi.collapse`、`nagi.expand`、`nagi.confirm`、`nagi.dismiss`を表すconstantを公開します
@@ -215,6 +221,14 @@ Contentとselection stateはcontrolledかつgrapheme境界へ揃えられます�
 ComposerはTextAreaへcontrolled history recall、submit validity、1行から6行までの自動高さ、任意のvalidation content、UTF-8 byte数またはgrapheme数による挿入制限を加え、messageの意味や永続化は所有しません
 
 同じrootで継承したtext actionより先に`nagi.composer.submit`、`nagi.history.previous`、`nagi.history.next`を宣言します
+
+`ComposerHistory`は一意なstable entry IDを持つoldest-to-newestのimmutable orderです
+
+browse中の`ComposerState`はprepend、先頭truncate、reorder後も同じIDを追従し、同じIDのvalue差し替えではeditorを更新し、ID削除時は保存済みdraftへ戻ります
+
+historyの永続化、deduplication、capacity、sensitive value policyは引き続きApplicationが所有します
+
+Composer builderはhistory指定時にcontrolled copyをreconcileし、Applicationも正規化済みstateを直ちに保持する場合は`ComposerState::reconcile_history`または`ComposerState.ReconcileHistory`の結果を保存します
 
 EnterはRepeatを受け付けずにsubmitし、Shift-Enter、Alt-Enter、Control-Oは改行を挿入します。別のvisual lineが存在する間はcursor移動を優先し、その後にUpまたはDownでhistoryをrecallします。Active scopeはsubmitと改行のbinding list全体を置換でき、Pasteはediting inputのままです。Submitがinvalidな場合はinitialとrepeatのEnterをどちらもlocalでconsumeします
 
@@ -264,7 +278,7 @@ openまたはback callbackがない場合は対応actionだけがDisabledPassThr
 
 actionを宣言しないtreeでは既存Core、raw `OnEvent`、未移行Widget、terminal `mapEvent`の挙動を維持します
 
-Tab traversalは引き続きaction routingより先に処理され、Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、SplitPane、Drawer、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、CodeView、DiffView、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
+安定したaction ownerではNode宣言actionを先に評価し、その後にTab traversalなどRuntime所有Core focus actionを評価します。安定したfocus-action ownerがないtreeだけがresolved action projection外の互換Tab fallbackを使います。Button、Checkbox、Radio、Select、Tabs、List、Table、Tree、Disclosure、SplitPane、Drawer、TextArea、Composer、SuggestionPopup、SelectableText、JsonInspector、CodeView、DiffView、Command Palette、Modal、Dialog、ConfirmDialog、Paginator、FilePicker、Calendar以外の標準Widgetはまだ移行していません
 
 完全なdispatch、event matching、override、conflict、notationの契約は[Scoped KeyMap仕様](../spec/keymap.md)を参照してください
 
@@ -283,6 +297,8 @@ Effectはone-shot workを表します
 - `without_redraw`と`WithoutRedraw`は、現在のupdateだけでotherwise-cleanなruntimeへ要求されるframeを抑止する
 
 Goのcontext-aware Runtimeとterminal entry pointはcaller contextからworker、terminal task、Stream contextをderiveし、Runtime closeでも各childへ協調的cancellationを要求します
+
+Runtime closeはproducerのreturnを待ちません。Rustの`Runtime::close_and_wait`と`Runtime::close_and_wait_timeout`、Goの`Runtime.CloseAndWait(ctx)`はNagiが開始したEffectとStream producer関数のreturnを任意で待機します。Cancellationを無視するproducerではwaitがblockし続ける可能性があり、producer自身がjoinしないApplication所有のchild processやworkerは待機範囲に含みません
 
 Subscriptionは安定key付きの長期sourceを表します
 

@@ -550,10 +550,19 @@ lifetime
 
 - Composer is a controlled multiline message editor built on TextArea. Its
   application-owned state contains the complete TextArea state, an optional
-  oldest-to-newest history index, and the draft restored after browsing past
-  the newest entry. The widget owns neither history persistence nor submit
-  meaning
-- History entries are supplied oldest-to-newest. Previous history is available
+  stable history entry ID with its current oldest-to-newest index, and the draft
+  restored after browsing past the newest entry. The widget owns neither
+  history persistence nor submit meaning
+- Composer history is an immutable oldest-to-newest order. Every entry contains
+  an opaque stable application-defined ID and recalled text. Duplicate IDs are
+  construction errors. Replacing history reconciles browsing by ID: prepend,
+  front truncation, and reordering update the derived index without changing
+  the target; a changed value under the same ID replaces the editor value and
+  places its cursor at the end; removing the target restores the complete draft.
+  Supplying history reconciles the widget's controlled state copy. Applications
+  may apply the same public state reconciliation operation when they need to
+  store the normalized state before the next change callback
+- Previous history is available
   only when ordinary visual-line Up movement is unavailable and an older entry
   exists. Next history is available only while browsing and when ordinary
   visual-line Down movement is unavailable. The first recall preserves the

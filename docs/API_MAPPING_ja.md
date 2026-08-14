@@ -187,8 +187,11 @@ Node modifierも同じ対応規則を使用します。Rustの`with_id`、`focus
 | Actionとsemantic handler | `Action::new` | `NewAction` |
 | Semantic invocation | `ActionEvent` | `ActionEvent` |
 | Availability | `ActionAvailability` | `ActionAvailability` |
-| Immutable override layer | `KeyMap::new().rebind(...)` | `NewKeyMap().Rebind(...)` |
-| Duplicate override error | `KeyMapError::DuplicateActionOverride` | `DuplicateActionOverrideError` |
+| Immutable override layer | `KeyMap::new()` | `NewKeyMap()` |
+| Binding replacement | `KeyMap::rebind` | `KeyMap.Rebind` |
+| User-facing label replacement | `KeyMap::relabel` | `KeyMap.Relabel` |
+| Duplicate binding override error | `KeyMapError::DuplicateActionOverride` | `DuplicateActionOverrideError` |
+| Duplicate label override error | `KeyMapError::DuplicateActionLabelOverride` | `DuplicateActionLabelOverrideError` |
 | Active scope | `KeyScope::new` | `NewKeyScope` |
 | Scope propagation | `KeyScopePropagation` | `KeyScopePropagation` |
 | Owner actionのattach | `Node::on_actions` | `Node.OnActions` |
@@ -378,6 +381,11 @@ RustのWidget builderはsnake caseを使用して`into_node`で終わり、Goは
 | Preferred visual column | `TextAreaState::preferred_column` | `TextAreaState.PreferredColumn` |
 | Undoとredo history | `TextAreaHistory` | `widget.TextAreaHistory` |
 | Composer state | `ComposerState::new` / `at_end` | `widget.NewComposerState` / `NewComposerStateAtEnd` |
+| Composer history entry identity | `ComposerHistoryEntryId::new` | `widget.NewComposerHistoryEntryID` |
+| Composer history entry | `ComposerHistoryEntry::new` | `widget.NewComposerHistoryEntry` |
+| Immutable Composer history | `ComposerHistory::new` | `widget.NewComposerHistory` |
+| Composer history reconciliation | `ComposerState::reconcile_history` | `ComposerState.ReconcileHistory` |
+| Duplicate Composer history ID error | `DuplicateComposerHistoryEntryId` | `widget.DuplicateComposerHistoryEntryIDError` |
 | Split pane state | `SplitPaneState::new` | `widget.NewSplitPaneState` / `DefaultSplitPaneState` |
 | Composer overflow policy | `ComposerOverflowPolicy` | `widget.ComposerOverflowPolicy` |
 | Suggestion identity | `SuggestionId::new` | `widget.NewSuggestionID` |
@@ -426,6 +434,8 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | Application contract | associated `Message`を持つ`App` | `App[Message]` |
 | View環境 | `ViewContext { size, width_profile, terminal_capabilities }` | `ViewContext{Size: ..., WidthProfile: ..., TerminalCapabilities: ...}` |
 | Runtime width profile | `RuntimeConfig::width_profile` | `RuntimeConfig.WidthProfile` |
+| Cycleごとのupdate上限 | `RuntimeConfig::max_updates_per_cycle` | `RuntimeConfig.MaxUpdatesPerCycle` |
+| Terminalのcycleごとのupdate上限 | `TerminalOptions::max_updates_per_cycle` | `TerminalOptions.MaxUpdatesPerCycle` |
 | Terminal width profile | `TerminalOptions::width_profile` | `TerminalOptions.WidthProfile` |
 | Runtime capability profile | `RuntimeConfig::terminal_capabilities` | `RuntimeConfig.TerminalCapabilities` |
 | Terminal capability profile | `TerminalCapabilityProfile` | `TerminalCapabilityProfile` |
@@ -442,11 +452,18 @@ Selection callbackはRustで`usize`、Goで`int`を受け取ります。Rust con
 | 外部cancellation付き実行 | 言語固有のcaller integration | `RunTerminalContext[M]` |
 | Runtime notice付き実行 | `run_terminal_with_notice_handler` | `RunTerminalWithNoticeHandler[M]` |
 | Context cancellationとnotice | 言語固有のcaller integration | `RunTerminalContextWithNoticeHandler[M]` |
+| Runtime noticeからMessageへの写像 | `Option<Message>`を返す`run_terminal_with_notice_mapper` | `(Message, bool)`を返す`RunTerminalWithNoticeMapper[M]` |
+| Context cancellationとnotice写像 | 言語固有のcaller integration | `RunTerminalContextWithNoticeMapper[M]` |
+| Runtimeの協調的close | `Runtime::close` | `Runtime.Close` |
+| Nagi producerの終了待機 | `Runtime::close_and_wait` / `close_and_wait_timeout` | `Runtime.CloseAndWait(ctx)` |
 | Async pollingなしのqueued input処理 | `Runtime::process_queued` | `Runtime.ProcessQueued` |
+| 上限付きasync cycleを1回処理 | `Runtime::process_pending` | `Runtime.ProcessPending` |
+| 処理可能なupdateの確認 | `Runtime::has_pending_updates` | `Runtime.HasPendingUpdates` |
 | Lifecycle notice | `RuntimeNotice` / `RuntimeNoticeKind` | `RuntimeNotice` / `RuntimeNoticeKind` |
 | Pending noticeとdrain | `Runtime::pending_runtime_notices` / `drain_runtime_notices` | `Runtime.PendingRuntimeNotices` / `DrainRuntimeNotices` |
 | Notice drop diagnostic | `Runtime::runtime_notice_diagnostics` | `Runtime.RuntimeNoticeDiagnostics` |
 | Test harnessのnotice | `Harness::pending_runtime_notices` / `drain_runtime_notices` / `runtime_notice_diagnostics` | `Harness.PendingRuntimeNotices` / `DrainRuntimeNotices` / `RuntimeNoticeDiagnostics` |
+| Test harnessの終了待機 | `Harness::close_and_wait` / `close_and_wait_timeout` | `Harness.CloseAndWait(ctx)` |
 | Eventをignore | `EventResult::ignored()` | `IgnoreResult[M]()` |
 | Eventをconsume | `EventResult::consumed()` | `ConsumeResult[M]()` |
 | 1個のMessageをemit | `EventResult::message(value)` | `MessageResult(value)` |

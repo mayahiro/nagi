@@ -79,6 +79,17 @@ NOT enter the application message queue even if the old task finishes later
 Cancellation guarantees stale-result suppression, not immediate task
 termination
 
+Runtime close requests cancellation and returns without waiting. An optional
+close-and-wait boundary waits for Effect task functions and Stream producer
+functions started by that Runtime to return. Rust provides an unbounded wait
+and a real-time timeout; Go accepts a caller context. A timed-out or canceled
+wait leaves cancellation requested and MAY be retried. A producer that ignores
+cancellation can outlive close or prevent an unbounded wait from returning
+
+The wait boundary does not include an application-owned process, thread, or
+goroutine started inside a producer unless that producer itself waits for the
+child before returning
+
 ## Scope and subscriptions
 
 Scopes group tasks for explicit cancellation. They do not automatically couple
@@ -142,7 +153,9 @@ Stream return notice because Stream is a long-lived source. Returning after the
 Runtime requested cancellation or closed the sink does not emit that notice. A
 recovered panic remains a panic notice
 
-Custom Runtime drivers drain notices explicitly. Terminal runners provide a
-synchronous notice-handler entry point and drain after each asynchronous
-scheduling boundary. Applications decide whether a notice becomes domain
-state, a Message, a log record, or process-level telemetry
+Custom Runtime drivers drain notices explicitly. Terminal runners provide both
+a synchronous observation handler and a direct optional-Message mapper, and
+drain after each asynchronous scheduling boundary. A mapped Message completes
+its update before the next notice is mapped while rendering remains coalesced.
+Applications decide whether a notice becomes domain state, a Message, a log
+record, or process-level telemetry
