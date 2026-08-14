@@ -120,7 +120,7 @@ Deprecatedなrootが最初になり、後続のCommandとOption targetはargvで
 
 Stable targetは重複を除き、最初のalias、long spelling、short spellingを維持します
 
-Environmentとdefault fallbackはOption noticeを生成しません
+Environment、external、default fallbackはOption noticeを生成しません
 
 Help、version、失敗したparseまたはvalidationはDiagnosticを通してnoticeを返しません
 
@@ -148,7 +148,7 @@ Frameworkが生成するparser failureはraw値とparser reasonの両方を省�
 
 Structured Help entry、parsed value、Diagnostic target、Completion targetはdisplay textの検査を不要にするquery可能なmetadataを公開します
 
-Stable JSON Diagnostic schema `nagi-diagnostic-v1`はraw value fieldを持たないため変更しません
+Stable JSON Diagnostic schema `nagi.cli.diagnostic.v1`はraw value fieldを持たないため変更しません
 
 Parser targetとInvocation validatorまたはHandlerが返す一致targetは宣言のmarkerを継承します
 
@@ -214,7 +214,7 @@ Parentなどのexact scopeを参照する場合はstable command-ID pathを指�
 
 Parseまたはvalidation Diagnosticは選択中のcommand pathとusageを維持しつつ、宣言元のstable command-ID pathをtargetにします
 
-各parsed valueはcommand line、environment、defaultのどこから得たかを記録し、command-line valueが両fallbackより優先されます
+各parsed valueはcommand line、environment、external resolver、defaultのどこから得たかを記録し、同じ順序で優先されます
 
 `Invocation::contains`と`Invocation.Contains`はresolved presence、`Invocation::supplied`と`Invocation.Supplied`はnearest visible declarationがargvから指定されたかを返します
 
@@ -229,6 +229,58 @@ Schema上必要なvalueのmappingには、Rustの`Invocation::require_value`ま�
 `ValueAccessError`はmissing valueとparser-result type mismatchを区別し、stable lookup scopeとlocal value IDを保持します
 
 どのaccessorもdynamic typeをcoerceしません
+
+## Value Source adapter
+
+Value ResolverはApplicationが既に読み込んだ設定をraw Value Option fallbackへ対応付けます
+
+Nagiはcommand line、environment、external resolver、設定済みdefaultの固定優先順位を保ちます
+
+Command-lineまたはenvironment valueがある宣言ではResolverを呼ばず、unresolved resultではdefaultを使用できます
+
+Callbackはselected command path上の未解決Value Optionだけに対して同期的にrootからleaf、各宣言順で実行します
+
+Flag、Count、positional、未選択Command、Help、version、completion、派生document処理では実行しません
+
+Requestはselected pathと宣言path、それぞれのstable ID path、local value ID、repeatability、Sensitive metadataを保持します
+
+上位sourceのraw value、設定済みdefault、Value Parserは公開しません
+
+| 操作 | Rust | Go |
+| --- | --- | --- |
+| Resolver callback | `ValueResolver` | `cli.ValueResolver` |
+| Parserへの注入 | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
+| Unresolved result | `ValueResolution::unresolved()` | zero `cli.ValueResolution` |
+| Defaultの置換 | `ValueResolution::replace(...)` | `cli.ReplaceValueResolution(...)` |
+| Defaultとのmerge | `ValueResolution::merge(...)` | `cli.MergeValueResolution(...)` |
+| Parsed origin | `ParsedValue::origin` | `ParsedValue.Origin` |
+| Runtimeへの注入 | `Context::with_value_resolver` | `Context.WithValueResolver` |
+| Process統合 | `Command::run_process_with_value_resolver` | `Command.RunProcessWithValueResolver` |
+| Test driverへの注入 | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
+
+Replaceは設定済みdefaultを抑止します
+
+Mergeはrepeated Value Optionだけで有効で、external valueの後に設定済みdefaultがあれば追加します
+
+Non-repeated宣言はReplaceによる1 valueだけを受理します
+
+Resolved source identityはstable ASCII identifier grammarを使用し、credentialではなく`project-config`のような非secret source名にします
+
+External raw valueも宣言のValue Parserを通ります
+
+Parser failureのstructured Diagnostic targetはExternal originを保持しますが、既定plain rendererとJSON rendererはorigin metadataを出力しません
+
+Custom rendererはstable JSON schemaを変えずにoriginを参照できます
+
+Value Resolutionの既定DebugとGo formattingはsource identityと全raw valueを省略します
+
+Application codeが意図して読む場合だけ明示的なvalue accessorを使用します
+
+Resolverは設定fileまたはnetwork I/Oを開始する場所ではなく、Application stateを投影するadapterとして使用します
+
+Nagiは設定schema、file探索、credential、interpolation、retry、persistenceを所有しません
+
+[Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources/README.md)と[Go Value Source Adapter example](../nagicli-go/examples/value-sources/README.md)を参照してください
 
 ## Shellとdynamic completion
 
@@ -494,6 +546,10 @@ Process helperはplatform argv、environment、current directory、standard I/O�
 - Goの`Command.RunProcess`は`signal.NotifyContext`を使用し、notificationを必ず停止する
 - 両helperはprocessを終了せずExit Statusを返す
 
+`run_process_with_value_resolver`と`RunProcessWithValueResolver`は同じprocess境界を維持しながらValue Resolverを設定します
+
+PolicyとResolverの両方を変更するvariantも利用できます
+
 Diagnosticはprocess statusとは独立した`specification`、`usage`、`execution`、`cancellation`、`io`のsemantic categoryを持ちます
 
 既定Exit Code Policyはspecificationとusageを2、executionとI/Oを1、cancellationを130へ対応付けます
@@ -537,13 +593,14 @@ Argv、stdin byte、environment、current directory、manual cancellationを注�
 | Current directory | `.current_directory(...)` | `.CurrentDirectory(...)` |
 | 事前cancel | `.cancelled(true)` | `.Cancelled(true)` |
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
+| Value Resolver | `.value_resolver(...)` | `.ValueResolver(...)` |
 | 実行 | `.run()` | `.Run()` |
 
-完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
+完全なentry pointは[Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs)、[Rust subcommand example](../nagi-rs/crates/nagi-cli/examples/subcommands.rs)、[Rust段階導入example](../nagi-rs/crates/nagi-cli/examples/staged.rs)、[Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs)、[Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs)、[Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs)、[Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources.rs)、[Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs)、[Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs)、[Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs)、[Go basic example](../nagicli-go/examples/basic/main.go)、[Go subcommand example](../nagicli-go/examples/subcommands/main.go)、[Go段階導入example](../nagicli-go/examples/staged/main.go)、[Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go)、[Go lifecycle example](../nagicli-go/examples/lifecycle/main.go)、[Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go)、[Go Value Source Adapter example](../nagicli-go/examples/value-sources/main.go)、[Go completion example](../nagicli-go/examples/completion/main.go)、[Go Prompt example](../nagicli-go/examples/prompt/main.go)、[Go Status example](../nagicli-go/examples/status/main.go)を参照してください
 
 ## 制約
 
-Coreは設定file読み込み、interactive prompt、TUI統合を行いません
+Coreは既読設定をValue Resolverで接続できますが、設定file読み込み、interactive prompt、TUI統合を行いません
 
 Interactive terminal I/Oは任意のPrompt packageまたはcrateに留まります
 

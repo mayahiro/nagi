@@ -534,6 +534,12 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Typed access failure | `ValueAccessError` | `cli.ValueAccessError` |
 | Typed Invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
+| Value originとsource identity | `ValueOrigin` / `ParsedValue::origin` | `cli.ValueOrigin` / `ParsedValue.Origin` |
+| Application Value Resolver | `ValueResolver` | `cli.ValueResolver` |
+| Value Resolver request | `ValueResolutionRequest` | `cli.ValueResolutionRequest` |
+| Resolver resultとmode | `ValueResolution` / `ValueResolutionMode` | `cli.ValueResolution` / `cli.ValueResolutionMode` |
+| Resolverのparser注入 | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
+| ResolverのRuntime注入 | `Context::with_value_resolver` | `Context.WithValueResolver` |
 | Help Usage Variant定義 | `Command::usage_variant` | `Command.UsageVariant` |
 | Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
@@ -550,6 +556,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
 | Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
 | Diagnostic targetのsensitivity | `DiagnosticTarget::is_sensitive` | `DiagnosticTarget.IsSensitive` |
+| Diagnostic targetのvalue origin | `DiagnosticTarget::value_origin` | `DiagnosticTarget.ValueOrigin` |
 | Diagnosticの意味 | `DiagnosticCategory` | `cli.DiagnosticCategory` |
 | Stable JSON Diagnostic renderer | `JsonDiagnosticRenderer` | `cli.JSONDiagnosticRenderer` |
 | JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
@@ -560,6 +567,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Invocation実行 | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
 | Parser-only renderingとstatus | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process実行 | `Command::run_process` | `Command.RunProcess` |
+| Value Resolver付きprocess実行 | `Command::run_process_with_value_resolver` / `run_process_with_policy_and_value_resolver` | `Command.RunProcessWithValueResolver` / `RunProcessWithPolicyAndValueResolver` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel`と`NewContextWithCancellation` |
 | Immutable completion model | `CompletionEngine::new` | `cli.NewCompletionEngine` |
 | Tokenize済みcompletion input | `CompletionInput::new` | `cli.NewCompletionInput` |
@@ -595,6 +603,7 @@ Typedかつwrite-onlyのclipboard operationはRustの`TerminalOp::SetClipboard`�
 | Status option | `Options` | `status.Options` |
 | Status failure | `StatusError` / `StatusErrorKind` | `status.Error` / `status.ErrorKind` |
 | Processなしのdriver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
+| Test用Value Resolver注入 | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
 
 Rustはraw platform valueを`OsString`、typed parser resultを`Any`の背後へ保存します
 

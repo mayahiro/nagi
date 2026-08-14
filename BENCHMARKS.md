@@ -320,6 +320,57 @@ implementation. The small elapsed-time differences are treated as run-to-run
 noise rather than a confirmed CPU change. Sensitivity is carried directly
 beside each Parsed Value and does not require a second lookup structure
 
+## CLI Value Source Adapter purpose
+
+This benchmark measures complete parses with a synchronous application Value
+Resolver and no process I/O, file I/O, Handler, or cancellation
+
+- The single path resolves one selected root Value Option
+- The selected path resolves 1,000 Value Options declared on the selected root
+- The unselected path selects `root run`, resolves its one Value Option, and
+  keeps 1,000 sibling commands with one Value Option each unselected
+
+Every callback returns one raw value with source identity `benchmark-config`.
+The benchmark asserts one callback per eligible selected declaration, checks
+the External origin, and therefore also detects accidental resolver work on
+unselected branches. The measured path includes whole-graph validation,
+argument parsing, request dispatch, raw-value ownership transfer, Value Parser
+execution, and Invocation construction
+
+Rust reports the median of 12 parses with allocation count, total allocated
+bytes, peak additional live bytes, and retained bytes. Go reports the median
+of three reports, each measured over 100 parses with standard `testing`
+allocation metrics
+
+Run only these benchmarks from the superproject root
+
+```sh
+cargo bench --manifest-path nagi-rs/Cargo.toml -p nagi-cli --bench value_resolution
+GOWORK="$PWD/go.work" GOTOOLCHAIN=local go test -C nagicli-go -run '^$' -bench '^BenchmarkValueResolver(Single|1000Selected|1000UnselectedBranches)$' -benchmem -benchtime=100x -count=3 .
+```
+
+The root `make bench` command includes these paths
+
+### Reference results
+
+Results recorded on 2026-08-14 in the reference environment above
+
+| Implementation | Graph | Resolver calls | Median time per parse | Allocations per parse | Allocated bytes per parse | Peak additional live bytes | Retained bytes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Rust | One selected Value Option | 1 | 0.004 ms | 30 | 2,208 | 1,264 | 0 |
+| Rust | 1,000 selected Value Options | 1,000 | 0.959 ms | 15,785 | 563,812 | 323,708 | 0 |
+| Rust | 1 selected and 1,000 unselected branches | 1 | 0.659 ms | 13,357 | 1,150,051 | 111,827 | 0 |
+| Go | One selected Value Option | 1 | 0.000874 ms | 16 | 1,320 | not measured | not measured |
+| Go | 1,000 selected Value Options | 1,000 | 0.496 ms | 4,096 | 808,555 | not measured | not measured |
+| Go | 1 selected and 1,000 unselected branches | 1 | 0.370 ms | 3,065 | 283,136 | not measured | not measured |
+
+Both 1,000-declaration shapes complete below 1 ms on the reference machine.
+The selected path performs exactly 1,000 callbacks and owns 1,000 external raw
+results. The unselected path performs one callback; its remaining CPU and
+allocation come from the existing complete Command Graph validation contract,
+not resolver dispatch to sibling branches. Rust releases every measured
+Invocation with zero retained bytes
+
 ## CLI completion purpose
 
 This benchmark measures one warmed completion resolution against an immutable

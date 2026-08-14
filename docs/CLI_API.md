@@ -116,7 +116,7 @@ Each successful Invocation exposes structured `DeprecationNotice` values in
 deterministic first-use order. A deprecated root comes first; later Command and
 Option targets follow their first successful argv occurrence. Stable targets
 are deduplicated, while the first alias, long spelling, or short spelling is
-retained. Environment and default fallbacks do not create Option notices.
+retained. Environment, external, and default fallbacks do not create Option notices.
 Help, version, and failed parsing or validation do not return notices through a
 Diagnostic
 
@@ -144,7 +144,7 @@ the public `<redacted>` marker. A framework-generated parser failure omits both
 the raw value and parser reason. Structured Help entries, parsed values,
 Diagnostic targets, and Completion targets expose the marker as queryable
 metadata rather than requiring display-text inspection. Stable JSON Diagnostic
-schema `nagi-diagnostic-v1` remains unchanged because it has no raw-value field
+schema `nagi.cli.diagnostic.v1` remains unchanged because it has no raw-value field
 
 Parser targets and matching targets returned by Invocation validators or
 Handlers inherit the declaration marker. Resolution uses target kind, stable
@@ -210,7 +210,7 @@ validation Diagnostic targets the declaration's stable command-ID path while
 retaining the selected command path and usage
 
 Each parsed value records whether it came from the command line, environment,
-or default. Command-line values take precedence over both fallback sources.
+external resolver, or default. Precedence follows that same order.
 `Invocation::contains` and `Invocation.Contains` report resolved presence,
 while `Invocation::supplied` and `Invocation.Supplied` report whether argv
 supplied the nearest visible declaration. Exact scopes provide the same
@@ -224,6 +224,54 @@ mapping, use `Invocation::require_value` in Rust or
 `ValueAccessError` distinguishes a missing value from a parser-result type
 mismatch and includes the stable lookup scope and local value ID. No accessor
 coerces dynamic types
+
+## Value Source adapters
+
+A Value Resolver maps configuration that the application has already loaded
+into raw Value Option fallbacks. Nagi keeps a fixed precedence of command line,
+environment, external resolver, then configured default. A command-line or
+environment value skips the resolver for that declaration. An unresolved
+result permits the default
+
+The callback runs synchronously only for unresolved Value Options on the
+selected command path, in root-to-leaf and declaration order. It does not run
+for Flag, Count, positional, unselected command, Help, version, completion, or
+derived-document processing. Its request contains selected and declaring
+command paths, stable ID paths, local value ID, repeatability, and Sensitive
+metadata. It does not expose higher-precedence raw values, the configured
+default, or the Value Parser
+
+| Operation | Rust | Go |
+| --- | --- | --- |
+| Resolver callback | `ValueResolver` | `cli.ValueResolver` |
+| Parser injection | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
+| Unresolved result | `ValueResolution::unresolved()` | zero `cli.ValueResolution` |
+| Replace Default | `ValueResolution::replace(...)` | `cli.ReplaceValueResolution(...)` |
+| Merge with Default | `ValueResolution::merge(...)` | `cli.MergeValueResolution(...)` |
+| Parsed origin | `ParsedValue::origin` | `ParsedValue.Origin` |
+| Runtime injection | `Context::with_value_resolver` | `Context.WithValueResolver` |
+| Process integration | `Command::run_process_with_value_resolver` | `Command.RunProcessWithValueResolver` |
+| Test-driver injection | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
+
+Replace suppresses the configured default. Merge is valid only for a repeated
+Value Option and appends its configured default after the external values when
+present. A non-repeated declaration accepts exactly one Replace value. A
+resolved source identity uses the stable ASCII identifier grammar and should
+name a non-secret source such as `project-config`, not a credential
+
+Each external raw value still passes through the declaration's Value Parser.
+Parser failures retain an External origin in the structured Diagnostic target,
+while the default plain and JSON renderers deliberately omit origin metadata.
+Custom renderers can inspect it without changing the stable JSON schema.
+Default Debug and Go formatting of a Value Resolution omit its source identity
+and every raw value. Use explicit accessors only when application code intends
+to read them
+
+The resolver should be a projection over application state, not a place to
+start configuration-file or network I/O. Nagi does not own configuration
+schema, file discovery, credentials, interpolation, retry, or persistence. See
+the [Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources/README.md)
+and [Go Value Source Adapter example](../nagicli-go/examples/value-sources/README.md)
 
 ## Shell and dynamic completion
 
@@ -475,6 +523,10 @@ current directory, and standard I/O, then convert SIGINT into cancellation
 - Go `Command.RunProcess` uses `signal.NotifyContext` and always stops notification
 - Both helpers return an Exit Status instead of terminating the process
 
+The `run_process_with_value_resolver` and `RunProcessWithValueResolver`
+variants retain the same process boundary while attaching a Value Resolver.
+Policy-and-resolver variants are available when both are customized
+
 Diagnostics carry a semantic category independently of process status:
 `specification`, `usage`, `execution`, `cancellation`, or `io`. The default
 Exit Code Policy maps specification and usage to 2, execution and I/O to 1,
@@ -519,6 +571,7 @@ handler
 | Current directory | `.current_directory(...)` | `.CurrentDirectory(...)` |
 | Pre-cancel | `.cancelled(true)` | `.Cancelled(true)` |
 | Runtime Policy | `.policy(...)` | `.Policy(...)` |
+| Value Resolver | `.value_resolver(...)` | `.ValueResolver(...)` |
 | Run | `.run()` | `.Run()` |
 
 Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
@@ -527,6 +580,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Rust JSON Diagnostic example](../nagi-rs/crates/nagi-cli/examples/json_diagnostic.rs),
 [Rust lifecycle example](../nagi-rs/crates/nagi-cli/examples/lifecycle.rs),
 [Rust Sensitive Value example](../nagi-rs/crates/nagi-cli/examples/sensitive_values.rs),
+[Rust Value Source Adapter example](../nagi-rs/crates/nagi-cli/examples/value_sources.rs),
 [Rust completion example](../nagi-rs/crates/nagi-cli-completion/examples/completion.rs),
 [Rust Prompt example](../nagi-rs/crates/nagi-cli-prompt/examples/prompt.rs),
 [Rust Status example](../nagi-rs/crates/nagi-cli-status/examples/status.rs),
@@ -536,6 +590,7 @@ Use the [Rust basic example](../nagi-rs/crates/nagi-cli/examples/basic.rs),
 [Go JSON Diagnostic example](../nagicli-go/examples/json-diagnostic/main.go),
 [Go lifecycle example](../nagicli-go/examples/lifecycle/main.go),
 [Go Sensitive Value example](../nagicli-go/examples/sensitive-values/main.go),
+[Go Value Source Adapter example](../nagicli-go/examples/value-sources/main.go),
 [Go completion example](../nagicli-go/examples/completion/main.go),
 [Go Prompt example](../nagicli-go/examples/prompt/main.go), and
 [Go Status example](../nagicli-go/examples/status/main.go) as complete
@@ -543,8 +598,9 @@ entry points
 
 ## Limitations
 
-The core does not load configuration files, run interactive prompts, or
-integrate a TUI. Shell-specific generation and protocol I/O remain in the
+The core can adapt already loaded configuration through a Value Resolver but
+does not load configuration files, run interactive prompts, or integrate a
+TUI. Shell-specific generation and protocol I/O remain in the
 optional completion package or crate, and interactive terminal I/O remains in
 the optional Prompt package or crate. Transient status output remains in the
 optional Status package or crate, which does not poll cancellation itself.

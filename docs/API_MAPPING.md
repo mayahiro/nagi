@@ -560,6 +560,12 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Typed access failure | `ValueAccessError` | `cli.ValueAccessError` |
 | Typed invocation validator | `InvocationValidator` | `cli.InvocationValidator` |
 | Value source | `ValueSource` | `cli.ValueSource` |
+| Value origin and source identity | `ValueOrigin` / `ParsedValue::origin` | `cli.ValueOrigin` / `ParsedValue.Origin` |
+| Application Value Resolver | `ValueResolver` | `cli.ValueResolver` |
+| Value Resolver request | `ValueResolutionRequest` | `cli.ValueResolutionRequest` |
+| Resolver result and mode | `ValueResolution` / `ValueResolutionMode` | `cli.ValueResolution` / `cli.ValueResolutionMode` |
+| Resolver parser injection | `Command::parse_with_value_resolver` | `Command.ParseWithValueResolver` |
+| Resolver Runtime injection | `Context::with_value_resolver` | `Context.WithValueResolver` |
 | Help Usage Variant definition | `Command::usage_variant` | `Command.UsageVariant` |
 | Subcommand Usage presentation | `Command::subcommand_usage` / `SubcommandUsageMode` | `Command.SubcommandUsage` / `cli.SubcommandUsageMode` |
 | Structured Help Usage Variant | `HelpUsageVariant` | `cli.HelpUsageVariant` |
@@ -576,6 +582,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Structured failure | `Diagnostic` / `DiagnosticCode` | `cli.Diagnostic` / `cli.DiagnosticCode` |
 | Diagnostic value target | `DiagnosticTarget` | `cli.DiagnosticTarget` |
 | Diagnostic target sensitivity | `DiagnosticTarget::is_sensitive` | `DiagnosticTarget.IsSensitive` |
+| Diagnostic target value origin | `DiagnosticTarget::value_origin` | `DiagnosticTarget.ValueOrigin` |
 | Diagnostic meaning | `DiagnosticCategory` | `cli.DiagnosticCategory` |
 | Stable JSON Diagnostic renderer | `JsonDiagnosticRenderer` | `cli.JSONDiagnosticRenderer` |
 | JSON Diagnostic schema | `JSON_DIAGNOSTIC_SCHEMA` | `cli.JSONDiagnosticSchema` |
@@ -586,6 +593,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Execute an Invocation | `Command::run_invocation_with_policy` | `Command.RunInvocationWithPolicy` |
 | Parser-only rendering and status | `RuntimePolicy::render_diagnostic` / `status_for_diagnostic` | `RuntimePolicy.RenderDiagnostic` / `StatusForDiagnostic` |
 | Process execution | `Command::run_process` | `Command.RunProcess` |
+| Process execution with Value Resolver | `Command::run_process_with_value_resolver` / `run_process_with_policy_and_value_resolver` | `Command.RunProcessWithValueResolver` / `RunProcessWithPolicyAndValueResolver` |
 | Manual cancellation | `cancellation_pair` | `context.WithCancel` with `NewContextWithCancellation` |
 | Immutable completion model | `CompletionEngine::new` | `cli.NewCompletionEngine` |
 | Tokenized completion input | `CompletionInput::new` | `cli.NewCompletionInput` |
@@ -621,6 +629,7 @@ the same names. Rust test support uses `Harness::scroll_state` and
 | Status options | `Options` | `status.Options` |
 | Status failure | `StatusError` / `StatusErrorKind` | `status.Error` / `status.ErrorKind` |
 | Process-free driver | `nagi_cli_test::TestDriver` | `clitest.Driver` |
+| Test Value Resolver injection | `TestDriver::value_resolver` | `clitest.Driver.ValueResolver` |
 
 Rust stores raw platform values as `OsString` and typed parser results behind
 `Any`. Go preserves raw bytes in strings and exposes parser results through

@@ -107,8 +107,8 @@ executable. Other targets follow their first successful occurrence in argv.
 Each stable target appears at most once. An alias, long spelling, or short
 spelling used first remains the notice spelling.
 
-Only command-line occurrences produce Option notices. Environment and default
-fallbacks do not. Help, version, failed parsing, portable validation failure,
+Only command-line occurrences produce Option notices. Environment, external,
+and default fallbacks do not. Help, version, failed parsing, portable validation failure,
 and Invocation validator failure do not return an Invocation and therefore do
 not expose accumulated notices through a failure Diagnostic. A Deprecation
 Notice is non-fatal metadata and MUST NOT be added to Diagnostic codes,
@@ -204,7 +204,7 @@ inherited options from different selected scopes.
 Every occurrence of an inherited option is stored in its declaration scope,
 regardless of its argv position. Duplicate checks and repeated-value order
 therefore span occurrences before and after subcommand selection. Required,
-environment, default, relation, option-group, and validator behavior continues
+environment, external, default, relation, option-group, and validator behavior continues
 to run in the declaration scope. Relations and groups remain command-local and
 MUST NOT reference an ancestor or descendant declaration.
 
@@ -266,7 +266,7 @@ without treating the request as a normal parse failure.
 Completion scans completed arguments with the ordinary command, alias,
 option, inherited-option, positional, short-cluster, attached-value, and `--`
 recognition rules where the next state is unambiguous. It MUST NOT resolve
-environment or default values, run a Value Parser, enforce required values,
+environment, external, or default values, run a Value Parser, enforce required values,
 relations, or groups, or run an Invocation validator. Unknown or malformed
 completed syntax MUST NOT produce an ordinary parsing Diagnostic. An
 implementation MAY stop producing candidates after such syntax rather than
@@ -500,16 +500,65 @@ of these sources:
 
 1. CommandLine
 2. Environment
-3. Default
+3. External
+4. Default
 
-CommandLine has highest precedence, followed by Environment and Default. One
-or more command-line values suppress the environment and default values for
-that ID.
+CommandLine has highest precedence, followed by Environment, an optional
+application Value Resolver, and Default. One or more command-line values
+suppress every fallback for that ID. A present environment value suppresses
+the resolver and Default. An unresolved resolver result permits Default.
+
+A parsed value also has an origin. CommandLine and Default origins have no
+identity. An Environment origin identifies the environment variable. An
+External origin identifies the application source. A source identity MUST
+start with an ASCII letter and contain only ASCII letters, digits, hyphens, or
+underscores. It is portable metadata and MUST NOT contain a credential or
+secret.
+
+An application MAY provide one synchronous Value Resolver when parsing or
+running a command. The resolver adapts already loaded application state into
+raw Value Option fallbacks. It does not make Nagi own configuration schemas,
+file formats, path discovery, credential storage, environment interpolation,
+asynchronous I/O, or retries. A resolver SHOULD NOT start file or network I/O
+from its callback.
+
+The resolver receives only selected Value Options that remain unresolved after
+CommandLine and Environment processing. Flag and Count options, positionals,
+unselected commands, Help and version actions, completion, and derived Help
+generation MUST NOT invoke it. Eligible requests run synchronously in selected
+root-to-leaf command order and declaration order within each command.
+
+Each request exposes the complete selected canonical and stable command-ID
+paths, the declaring command's canonical and stable path prefixes, the
+command-local value ID, repeatability, and Sensitive metadata. It MUST NOT
+expose a higher-precedence raw value, configured Default, or Value Parser.
+
+A resolver returns one of these states:
+
+- Unresolved permits the configured Default;
+- Replace supplies one or more External raw values and suppresses Default; or
+- Merge supplies one or more External raw values followed by the configured
+  Default when one exists.
+
+A resolved result MUST have a valid source identity and at least one raw value.
+A non-repeatable Value Option accepts only Replace with exactly one raw value.
+Merge and multiple returned values are valid only for a repeatable Value
+Option. Resolver value order is preserved. Every returned raw value is parsed
+through the declaration's Value Parser before storage. Default language-native
+Debug or formatting of a resolver result MUST NOT expose its raw values or
+source identity because the result does not itself carry declaration
+sensitivity. Explicit access remains available.
+
+An invalid resolver result produces `invalid-specification`. A resolver MAY
+instead return a structured application Diagnostic. If it has no target, the
+framework adds the current Option target. The framework supplies the selected
+command path and usage, resolves target sensitivity, and preserves the
+Diagnostic code, category, message, and hints.
 
 An Invocation distinguishes resolved presence from command-line supply.
 `contains` reports a value from any source. `supplied` reports whether an
-option or positional was present in argv. A default or environment fallback is
-not supplied.
+option or positional was present in argv. An environment, external, or default
+fallback is not supplied.
 
 Implementations provide raw platform, UTF-8 string, signed 64-bit integer, and
 possible-value parsers, plus a language-native custom parser API. Invalid UTF-8
@@ -533,8 +582,8 @@ IDs, and one of these kinds:
 Option groups use command-line supply unless another basis is selected.
 Unexpected positionals fail rather than being discarded.
 
-Relationship and option-group validation runs after defaults and environment
-values have been resolved. Language-native invocation validators run after
+Relationship and option-group validation runs after environment, external, and
+default values have been resolved. Language-native invocation validators run after
 portable validation, in root-to-leaf command order. A validator receives the
 immutable typed Invocation with the defining command as its current scope and
 returns success or a structured Diagnostic. Validators do not run for help or
@@ -602,8 +651,11 @@ application explicitly assigns another category.
 
 A Diagnostic target identifies an option or positional by stable command-ID
 path and command-local value ID. Targets are machine-readable metadata and do
-not require the default renderer to expose internal IDs. Hints are
-human-readable remediation text.
+not require the default renderer to expose internal IDs. A parser-generated
+invalid-value target also carries the raw value's origin, including its
+Environment or External identity when present. Custom renderers MAY inspect
+that origin. The default plain and JSON renderers MUST NOT display or serialize
+it. Hints are human-readable remediation text.
 
 A Diagnostic also has one semantic category:
 
